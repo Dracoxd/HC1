@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { STAFF_DIRECTORY } from '../data/healthCenterData';
 import { Department } from '../types';
-import { Search, Clock, MapPin, Award, MessageSquare, ShieldCheck, User } from 'lucide-react';
+import { Search, Clock, MapPin, Award, ArrowRight } from 'lucide-react';
 
 export const StaffDirectory: React.FC = () => {
   const { t, language, setActiveSection } = useHealthCenter();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDept, setSelectedDept] = useState<Department | 'all'>('all');
+  const [selectedDept, setSelectedDept] = useState<Department | 'all'>('doctors');
 
   const filteredStaff = STAFF_DIRECTORY.filter((staff) => {
     const matchesDept = selectedDept === 'all' || staff.department === selectedDept;
@@ -101,7 +101,7 @@ export const StaffDirectory: React.FC = () => {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-bold text-slate-950 truncate">
+                      <h3 className="text-base font-bold text-slate-950 break-words">
                         {staff.name}
                       </h3>
                       {staff.isHead && (
@@ -149,19 +149,16 @@ export const StaffDirectory: React.FC = () => {
 
               {/* Bottom Quick Contact Trigger */}
               <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[11px] text-slate-400">
-                  {staff.department === 'nutrition_bns' ? 'OPT Scholar' : 'Clinical Roster'}
-                </span>
                 <button
                   onClick={() => {
-                    setActiveSection('portal');
-                    const element = document.getElementById('portal');
+                    setActiveSection('contact');
+                    const element = document.getElementById('contact');
                     if (element) element.scrollIntoView({ behavior: 'smooth' });
                   }}
                   className="text-xs font-semibold text-teal-800 hover:text-teal-900 transition-colors flex items-center gap-1 cursor-pointer"
                 >
-                  <MessageSquare className="w-3 h-3" />
-                  <span>{language === 'fil' ? 'Mag-iwan ng Mensahe' : 'Message Desk'}</span>
+                  <span>{language === 'fil' ? 'Makipag-ugnayan' : 'Contact the clinic'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>

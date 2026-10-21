@@ -1,319 +1,177 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { OUTREACH_PROGRAMS, ZONES_COVERAGE } from '../data/healthCenterData';
-import { AppointmentBooking } from '../types';
-import { X, Calendar, Clock, CheckCircle2, Ticket, QrCode } from 'lucide-react';
+import { SERVICES_DATA } from '../data/healthCenterData';
+import { AlertCircle, CalendarDays, CheckCircle2, Clock, X } from 'lucide-react';
+
+interface AppointmentReceipt {
+  referenceCode: string;
+  status: 'pending';
+  createdAt: string;
+}
+
+function localDateString() {
+  const date = new Date();
+  const offset = date.getTimezoneOffset();
+  return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 10);
+}
 
 export const OutreachBookingModal: React.FC = () => {
-  const { 
-    t, 
-    language, 
-    bookingModalOpen, 
-    setBookingModalOpen, 
-    selectedProgramForBooking, 
-    bookAppointment 
+  const {
+    t,
+    language,
+    bookingModalOpen,
+    setBookingModalOpen,
+    selectedProgramForBooking,
   } = useHealthCenter();
-
-  const [programId, setProgramId] = useState<string>(selectedProgramForBooking || OUTREACH_PROGRAMS[0].id);
+  const [serviceId, setServiceId] = useState('checkup');
   const [patientName, setPatientName] = useState('');
-  const [dob, setDob] = useState('1995-05-15');
-  const [zone, setZone] = useState('2. Magtanggol');
-  const [phone, setPhone] = useState('+63 9');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [philHealth, setPhilHealth] = useState('');
-  const [appointmentDate, setAppointmentDate] = useState('2026-03-09');
-  const [timeSlot, setTimeSlot] = useState('8:00 AM - 9:00 AM');
-  const [notes, setNotes] = useState('');
-
-  const [confirmedBooking, setConfirmedBooking] = useState<AppointmentBooking | null>(null);
+  const [zone, setZone] = useState('1. San Pedro');
+  const [preferredDate, setPreferredDate] = useState(localDateString);
+  const [preferredTime, setPreferredTime] = useState('morning');
+  const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [receipt, setReceipt] = useState<AppointmentReceipt | null>(null);
 
   useEffect(() => {
-    if (selectedProgramForBooking) {
-      setProgramId(selectedProgramForBooking);
+    if (selectedProgramForBooking && SERVICES_DATA.some((service) => service.id === selectedProgramForBooking)) {
+      setServiceId(selectedProgramForBooking);
     }
   }, [selectedProgramForBooking]);
 
+  useEffect(() => {
+    if (!bookingModalOpen) {
+      setReceipt(null);
+      setError('');
+      setPatientName('');
+      setPhone('');
+      setEmail('');
+      setPrivacyConsent(false);
+    }
+  }, [bookingModalOpen]);
+
   if (!bookingModalOpen) return null;
 
-  const selectedProgram = OUTREACH_PROGRAMS.find(p => p.id === programId) || OUTREACH_PROGRAMS[0];
+  const isFilipino = language === 'fil';
+  const selectedService = SERVICES_DATA.find((service) => service.id === serviceId) ?? SERVICES_DATA[0];
+  const today = localDateString();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!patientName.trim()) return;
+  const handleClose = () => setBookingModalOpen(false);
 
-    const newBooking = bookAppointment({
-      programId: selectedProgram.id,
-      programTitle: language === 'fil' ? selectedProgram.titleFil : selectedProgram.title,
-      patientName: patientName.trim(),
-      dateOfBirth: dob,
-      contactNumber: phone,
-      email: email.trim(),
-      zone,
-      appointmentDate,
-      timeSlot,
-      philHealthNumber: philHealth.trim(),
-      notes: notes.trim()
-    });
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+    setSubmitting(true);
 
-    setConfirmedBooking(newBooking);
-  };
-
-  const handleClose = () => {
-    setBookingModalOpen(false);
-    setConfirmedBooking(null);
+    try {
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientName,
+          phone,
+          email,
+          zone,
+          serviceId,
+          preferredDate,
+          preferredTime,
+          privacyConsent,
+        }),
+      });
+      const result = await response.json() as AppointmentReceipt & { error?: string };
+      if (!response.ok) throw new Error(result.error || 'Could not submit your appointment request.');
+      setReceipt(result);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Could not submit your appointment request.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 my-8">
-        
-        {/* Modal Header */}
-        <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" onMouseDown={(event) => { if (event.target === event.currentTarget) handleClose(); }}>
+      <section role="dialog" aria-modal="true" aria-labelledby="appointment-title" className="bg-white max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl my-5">
+        <header className="flex items-start justify-between gap-5 px-5 sm:px-7 py-5 border-b border-slate-200">
           <div>
-            <div className="text-xs font-bold text-teal-800 uppercase tracking-wider">
-              {language === 'fil' ? 'Mr. Flores Health Center Pateros' : 'Municipal Health Outreach'}
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mt-0.5">
-              {confirmedBooking ? t.bookingSuccessTitle : t.outreachTitle}
-            </h3>
+            <div className="text-xs font-bold uppercase tracking-wider text-teal-800">Mayor Moises R. Flores Health Center</div>
+            <h2 id="appointment-title" className="mt-1 text-2xl font-bold text-slate-950">{receipt ? (isFilipino ? 'Natanggap ang request' : 'Request received') : (isFilipino ? 'Online appointment request' : 'Request an appointment')}</h2>
+            {!receipt && <p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Ipadala ang iyong kahilingan. Tatawagan ka ng kawani para kumpirmahin ang oras.' : 'Send your preferred schedule. Clinic staff will contact you to confirm.'}</p>}
           </div>
-          <button
-            onClick={handleClose}
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg cursor-pointer"
-            aria-label="Close booking modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+          <button onClick={handleClose} aria-label="Close appointment form" className="p-2 text-slate-500 hover:text-slate-900"><X className="w-5 h-5" /></button>
+        </header>
 
-        {confirmedBooking ? (
-          /* Confirmation Ticket Pass */
-          <div className="space-y-6">
-            <div className="p-5 rounded-xl bg-teal-50/80 border border-teal-200 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-teal-900 font-bold text-sm">
-                  <CheckCircle2 className="w-5 h-5 text-teal-700" />
-                  <span>{t.bookingSuccessTitle}</span>
-                </div>
-                <span className="font-mono text-xs font-bold bg-white px-2 py-1 rounded border border-teal-300 text-teal-950">
-                  {confirmedBooking.referenceCode}
-                </span>
+        {receipt ? (
+          <div className="px-5 sm:px-7 py-8" aria-live="polite">
+            <div className="flex items-start gap-4">
+              <CheckCircle2 className="w-7 h-7 text-teal-800 shrink-0" />
+              <div>
+                <h3 className="text-lg font-bold text-slate-950">{isFilipino ? 'Nakatala ang iyong appointment request.' : 'Your appointment request is recorded.'}</h3>
+                <p className="mt-2 text-sm text-slate-600">{isFilipino ? 'Hindi pa ito kumpirmadong appointment. Makikipag-ugnayan ang clinic staff para kumpirmahin ang schedule.' : 'This is not a confirmed appointment yet. Clinic staff will contact you to confirm the schedule.'}</p>
+                <p className="mt-4 text-sm text-slate-700">{selectedService.title}</p>
+                <p className="mt-1 text-sm text-slate-600">{preferredDate} · {preferredTime === 'morning' ? 'Morning' : preferredTime === 'afternoon' ? 'Afternoon' : 'No preference'} · {zone}</p>
+                <p className="mt-4 text-xs text-slate-500">{isFilipino ? 'Reference number' : 'Request reference'}: <strong className="font-mono text-slate-900">{receipt.referenceCode}</strong></p>
+                <button onClick={handleClose} className="mt-6 px-4 py-2.5 bg-teal-900 text-white text-sm font-bold rounded-md hover:bg-teal-950">{isFilipino ? 'Isara' : 'Done'}</button>
               </div>
-
-              <div className="space-y-1 text-xs text-slate-700 border-t border-teal-200/60 pt-3">
-                <div className="font-bold text-slate-900 text-sm">
-                  {confirmedBooking.programTitle}
-                </div>
-                <div>Patient Name: <span className="font-semibold">{confirmedBooking.patientName}</span></div>
-                <div>Resident Zone: <span className="font-semibold">{confirmedBooking.zone}</span></div>
-                <div>Date & Time: <span className="font-semibold text-teal-900">{confirmedBooking.appointmentDate} · {confirmedBooking.timeSlot}</span></div>
-              </div>
-
-              {/* Barcode / Verification Placeholder */}
-              <div className="pt-3 border-t border-dashed border-teal-300 flex items-center justify-between text-[11px] text-slate-500">
-                <span>Facility: Mr. Flores Health Center (Pateros)</span>
-                <span className="font-mono">VERIFIED DIGITAL PASS</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-xs text-slate-600">
-              <div className="font-bold text-slate-900 uppercase tracking-wide">
-                {t.labelBringToClinic}
-              </div>
-              <ul className="space-y-1 list-disc pl-4 text-slate-600">
-                <li>Government ID or Barangay Certificate of Residency in San Pedro, Magtanggol, or Tabacalera.</li>
-                <li>Health Card / Pink Mother's Book / Yellow Child Book / Senior Citizen Card.</li>
-                <li>Arrive at least 15 minutes before your scheduled window for registration and vital signs triage.</li>
-              </ul>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={handleClose}
-                className="px-5 py-2 text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg cursor-pointer"
-              >
-                Done
-              </button>
             </div>
           </div>
         ) : (
-          /* Booking Form */
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-            {/* Program Selection */}
-            <div>
-              <label className="block font-semibold text-slate-800 mb-1">
-                Select Program or Clinic Service
-              </label>
-              <select
-                value={programId}
-                onChange={(e) => setProgramId(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-              >
-                {OUTREACH_PROGRAMS.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {language === 'fil' ? p.titleFil : p.title} ({p.scheduleDate})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Patient Name and DOB */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-800 mb-1">
-                  {t.formFullName} *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={patientName}
-                  onChange={(e) => setPatientName(e.target.value)}
-                  placeholder="e.g. Maria Santos"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-800 mb-1">
-                  {t.formDob}
-                </label>
-                <input
-                  type="date"
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-                />
-              </div>
-            </div>
-
-            {/* Resident Barangay and Phone */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-800 mb-1">
-                  {t.formZone}
-                </label>
-                <select
-                  value={zone}
-                  onChange={(e) => setZone(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-                >
-                  <option value="1. San Pedro">1. San Pedro</option>
-                  <option value="2. Magtanggol">2. Magtanggol</option>
-                  <option value="3. Tabacalera">3. Tabacalera</option>
+          <form onSubmit={handleSubmit} className="px-5 sm:px-7 py-6 space-y-5">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label htmlFor="appointment-service" className="block text-sm font-semibold text-slate-800 mb-1.5">{isFilipino ? 'Serbisyo' : 'Service'}</label>
+                <select id="appointment-service" value={serviceId} onChange={(event) => setServiceId(event.target.value)} className="w-full px-3.5 py-3 bg-white border border-slate-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-700">
+                  {SERVICES_DATA.map((service) => <option key={service.id} value={service.id}>{isFilipino ? service.titleFil : service.title}</option>)}
                 </select>
               </div>
-
               <div>
-                <label className="block font-semibold text-slate-800 mb-1">
-                  {t.formPhone} *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+63 9XX XXX XXXX"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-                />
+                <label htmlFor="appointment-name" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formFullName} *</label>
+                <input id="appointment-name" required minLength={2} maxLength={120} autoComplete="name" value={patientName} onChange={(event) => setPatientName(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
-            </div>
-
-            {/* PhilHealth & Email */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-slate-800 mb-1">
-                  {t.formPhilHealth}
-                </label>
-                <input
-                  type="text"
-                  value={philHealth}
-                  onChange={(e) => setPhilHealth(e.target.value)}
-                  placeholder="Optional / MDR number"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-                />
+                <label htmlFor="appointment-phone" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formPhone} *</label>
+                <input id="appointment-phone" required type="tel" autoComplete="tel" minLength={7} maxLength={32} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="09XX XXX XXXX" className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
-
               <div>
-                <label className="block font-semibold text-slate-800 mb-1">
-                  {t.formEmail}
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-                />
+                <label htmlFor="appointment-email" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formEmail}</label>
+                <input id="appointment-email" type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
-            </div>
-
-            {/* Date and Time Slot */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-slate-800 mb-1">
-                  {t.formDate}
-                </label>
-                <input
-                  type="date"
-                  value={appointmentDate}
-                  onChange={(e) => setAppointmentDate(e.target.value)}
-                  min="2026-03-01"
-                  max="2026-05-30"
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-                />
+                <label htmlFor="appointment-zone" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formZone} *</label>
+                <select id="appointment-zone" required value={zone} onChange={(event) => setZone(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700">
+                  <option>1. San Pedro</option><option>2. Magtanggol</option><option>3. Tabacalera</option>
+                </select>
               </div>
-
               <div>
-                <label className="block font-semibold text-slate-800 mb-1">
-                  {t.formTimeSlot}
-                </label>
-                <select
-                  value={timeSlot}
-                  onChange={(e) => setTimeSlot(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-                >
-                  <option value="7:00 AM - 8:30 AM">7:00 AM - 8:30 AM (Early Intake / 3rd Flr X-Ray)</option>
-                  <option value="8:30 AM - 10:00 AM">8:30 AM - 10:00 AM (Morning Triage)</option>
-                  <option value="10:00 AM - 11:30 AM">10:00 AM - 11:30 AM (OPT Child / Doctor)</option>
-                  <option value="1:00 PM - 2:30 PM">1:00 PM - 2:30 PM (Afternoon OPD Refills)</option>
-                  <option value="2:30 PM - 3:30 PM">2:30 PM - 3:30 PM (Late Session)</option>
+                <label htmlFor="appointment-date" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formDate} *</label>
+                <input id="appointment-date" required type="date" min={today} value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
+              </div>
+              <div>
+                <label htmlFor="appointment-time" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formTimeSlot} *</label>
+                <select id="appointment-time" value={preferredTime} onChange={(event) => setPreferredTime(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700">
+                  <option value="morning">Morning</option><option value="afternoon">Afternoon</option><option value="no preference">No preference</option>
                 </select>
               </div>
             </div>
 
-            {/* Medical Notes */}
-            <div>
-              <label className="block font-semibold text-slate-800 mb-1">
-                {t.formNotes}
-              </label>
-              <textarea
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Brief reason for consultation, symptoms, or maintenance medications needed..."
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-700"
-              />
-            </div>
+            <label className="flex items-start gap-3 border-t border-slate-200 pt-4 text-sm text-slate-600">
+              <input type="checkbox" required checked={privacyConsent} onChange={(event) => setPrivacyConsent(event.target.checked)} className="mt-0.5 h-4 w-4 accent-teal-800" />
+              <span>{isFilipino ? 'Pumapayag akong gamitin ng health center staff ang aking contact details para suriin at sagutin ang appointment request na ito.' : 'I agree that health center staff may use my contact details to review and respond to this appointment request.'}</span>
+            </label>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg shadow-xs cursor-pointer"
-              >
-                {t.btnSubmitBooking}
-              </button>
+            {error && <p role="alert" className="flex items-start gap-2 text-sm text-rose-800"><AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />{error}</p>}
+
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-slate-200 pt-4">
+              <p className="flex items-center gap-2 text-xs text-slate-500"><Clock className="w-4 h-4" />{isFilipino ? 'Pending ang request hanggang makumpirma ng staff.' : 'Requests remain pending until staff confirm.'}</p>
+              <div className="flex justify-end gap-3">
+                <button type="button" onClick={handleClose} className="px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-md">{isFilipino ? 'Kanselahin' : 'Cancel'}</button>
+                <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-teal-900 hover:bg-teal-950 disabled:opacity-60 rounded-md"><CalendarDays className="w-4 h-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send appointment request')}</button>
+              </div>
             </div>
           </form>
         )}
-
-      </div>
+      </section>
     </div>
   );
 };

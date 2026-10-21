@@ -2,8 +2,33 @@
 
 @layer base {
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: #182321;
   }
+
+  h1, h2, h3 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    letter-spacing: 0;
+  }
+}
+
+.map-dark-tiles {
+  filter: grayscale(0.65) invert(0.88) hue-rotate(180deg) brightness(0.84) contrast(0.95);
+}
+
+.route-start-pin-mode,
+.route-start-pin-mode .leaflet-interactive {
+  cursor: crosshair !important;
+}
+
+.route-live-marker {
+  animation: route-location-pulse 2s ease-out infinite;
+}
+
+@keyframes route-location-pulse {
+  0% { stroke-width: 3; }
+  50% { stroke-width: 6; }
+  100% { stroke-width: 3; }
 }
 
 /* Custom scrollbar for clean portal and directory view */

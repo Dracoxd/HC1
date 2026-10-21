@@ -1,6 +1,6 @@
 export const translations = {
   en: {
-    brand: 'Mr. Flores Health Center',
+    brand: 'Mayor Moises R. Flores Health Center',
     navHome: 'Overview',
     navServices: 'Services',
     navStaff: 'Staff Directory',
@@ -20,14 +20,14 @@ export const translations = {
     bannerDental: 'Dental Clinic: M W F Only',
 
     // Hero Section
-    heroTitle: 'Mr. Flores Health Center',
+    heroTitle: 'Mayor Moises R. Flores Health Center',
     heroSubtitle: 'Serving San Pedro, Magtanggol, and Tabacalera. Offering maternity, nutrition (BNS 0-59 months OPT), dental (M-W-F), animal bite, check-up, 3rd floor X-ray clinic, and free maintenance medications.',
     heroCtaPrimary: 'Book Outreach Appointment',
     heroCtaSecondary: 'View Services',
 
     // Services Section
     servicesTitle: 'Health Center Services',
-    servicesSubtitle: 'Programs and medical services offered at Mr. Flores Health Center.',
+    servicesSubtitle: 'Programs and medical services offered at Mayor Moises R. Flores Health Center.',
     serviceTabAll: 'All Services',
     serviceTabMaternal: 'Maternity / Pregnant',
     serviceTabNutrition: 'Nutrition (BNS)',
@@ -64,8 +64,8 @@ export const translations = {
     labelActiveResidents: 'Registered Patients',
 
     // Staff Directory
-    staffTitle: 'Head and Staff Directory',
-    staffSubtitle: 'Doctors, Barangay Nutrition Scholars, midwives, and health center personnel.',
+    staffTitle: 'Doctors & Care Team',
+    staffSubtitle: 'Check who is on the team, their clinic schedule, and where to find them.',
     staffSearchPlaceholder: 'Search by name or role...',
     deptAll: 'All Staff',
     deptDoctors: 'Doctors',
@@ -145,13 +145,13 @@ export const translations = {
     hotlineHealthCenter: 'Center Landline: (02) 8642-1923',
 
     // Footer
-    footerDescription: 'Mr. Flores Health Center serving San Pedro, Magtanggol, and Tabacalera in Pateros.',
+    footerDescription: 'Serving San Pedro, Magtanggol, and Tabacalera in Pateros.',
     footerQuickLinks: 'Quick Links',
     footerHoursNotice: 'Monday to Friday: 7:00 AM - 4:00 PM | Clinic Hours: Mon 8AM - 3PM, Tues - Fri 9AM - 3PM.',
-    copyright: 'Mr. Flores Health Center · Pateros.'
+    copyright: 'Mayor Moises R. Flores Health Center · Pateros.'
   },
   fil: {
-    brand: 'Mr. Flores Health Center',
+    brand: 'Mayor Moises R. Flores Health Center',
     navHome: 'Pangkalahatan',
     navServices: 'Mga Serbisyo',
     navStaff: 'Direktoryo ng Kawani',
@@ -171,14 +171,14 @@ export const translations = {
     bannerDental: 'Dental Clinic: M W F Lamang',
 
     // Hero Section
-    heroTitle: 'Mr. Flores Health Center',
+    heroTitle: 'Mayor Moises R. Flores Health Center',
     heroSubtitle: 'Naglilingkod sa San Pedro, Magtanggol, at Tabacalera. Nag-aalok ng maternity, nutrition (BNS 0-59 buwan OPT), dental (M-W-F), animal bite, check-up, 3rd floor X-ray clinic, at libreng gamot sa maintenance.',
     heroCtaPrimary: 'Magpa-iskedyul ng Outreach',
     heroCtaSecondary: 'Tingnan ang Serbisyo',
 
     // Services Section
     servicesTitle: 'Mga Serbisyo ng Health Center',
-    servicesSubtitle: 'Mga programa at serbisyong medikal sa Mr. Flores Health Center.',
+    servicesSubtitle: 'Mga programa at serbisyong medikal sa Mayor Moises R. Flores Health Center.',
     serviceTabAll: 'Lahat',
     serviceTabMaternal: 'Maternity / Buntis',
     serviceTabNutrition: 'Nutrisyon (BNS)',
@@ -215,8 +215,8 @@ export const translations = {
     labelActiveResidents: 'Rehistradong Pasyente',
 
     // Staff Directory
-    staffTitle: 'Direktoryo ng Head at Staff',
-    staffSubtitle: 'Mga doktor, Barangay Nutrition Scholars, kumadrona, at kawani.',
+    staffTitle: 'Mga Doktor at Pangkat Pangkalusugan',
+    staffSubtitle: 'Alamin ang iskedyul at lokasyon ng mga doktor at kawani.',
     staffSearchPlaceholder: 'Maghanap gamit ang pangalan o posisyon...',
     deptAll: 'Lahat ng Kawani',
     deptDoctors: 'Mga Doktor',
@@ -296,9 +296,9 @@ export const translations = {
     hotlineHealthCenter: 'Telepono ng Center: (02) 8642-1923',
 
     // Footer
-    footerDescription: 'Mr. Flores Health Center para sa San Pedro, Magtanggol, at Tabacalera sa Pateros.',
+    footerDescription: 'Naglilingkod sa San Pedro, Magtanggol, at Tabacalera sa Pateros.',
     footerQuickLinks: 'Mabilisang Link',
     footerHoursNotice: 'Lunes hanggang Biyernes: 7:00 AM - 4:00 PM | Clinic Hours: Lunes 8AM - 3PM, Martes - Biyernes 9AM - 3PM.',
-    copyright: 'Mr. Flores Health Center · Pateros.'
+    copyright: 'Mayor Moises R. Flores Health Center · Pateros.'
   }
 };

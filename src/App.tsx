@@ -2,15 +2,12 @@ import React from 'react';
 import { HealthCenterProvider, useHealthCenter } from './context/HealthCenterContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
+import { RouteFinder } from './components/RouteFinder';
 import { ServicesSection } from './components/ServicesSection';
 import { StaffDirectory } from './components/StaffDirectory';
-import { OutreachSection } from './components/OutreachSection';
-import { OutreachBookingModal } from './components/OutreachBookingModal';
-import { NewsSection } from './components/NewsSection';
-import { PatientPortal } from './components/PatientPortal';
-import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
+import { OutreachBookingModal } from './components/OutreachBookingModal';
 import { CheckCircle2 } from 'lucide-react';
 
 const AppContent: React.FC = () => {
@@ -24,19 +21,15 @@ const AppContent: React.FC = () => {
       {/* Main Content Sections */}
       <main className="flex-1">
         <Hero />
+        <RouteFinder />
         <ServicesSection />
         <StaffDirectory />
-        <OutreachSection />
-        <NewsSection />
-        <PatientPortal />
-        <AnalyticsDashboard />
         <ContactSection />
       </main>
 
       {/* Footer */}
       <Footer />
 
-      {/* Booking Modal */}
       <OutreachBookingModal />
 
       {/* Global Toast Notification */}

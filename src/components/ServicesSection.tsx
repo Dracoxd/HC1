@@ -1,443 +1,168 @@
 import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { SERVICES_DATA, MEDICATIONS_STOCK, ZONES_COVERAGE } from '../data/healthCenterData';
-import { ServiceDetail, MedicationStock } from '../types';
-import { 
-  Heart, 
-  Smile, 
-  ShieldAlert, 
-  Activity, 
-  Baby, 
-  Pill, 
-  Clock, 
-  MapPin, 
-  User, 
-  FileText, 
-  ArrowRight, 
-  CheckCircle2, 
-  Search,
-  Building2,
-  Calendar
-} from 'lucide-react';
+import { SERVICES_DATA } from '../data/healthCenterData';
+import { ServiceDetail } from '../types';
+import { Activity, Baby, Clock, Heart, MapPin, Pill, ShieldAlert, Smile, Stethoscope, X } from 'lucide-react';
+
+const categories = [
+  { id: 'all', label: 'All services' },
+  { id: 'checkup', label: 'Doctor visit' },
+  { id: 'maternity', label: 'Maternity' },
+  { id: 'dental', label: 'Dental' },
+  { id: 'animal_bite', label: 'Animal bite' },
+  { id: 'xray', label: 'X-ray' },
+  { id: 'nutrition', label: 'Child nutrition' },
+  { id: 'pharmacy', label: 'Medicines' },
+];
+
+const iconForService = (category: string) => {
+  switch (category) {
+    case 'maternity': return <Heart className="w-5 h-5" />;
+    case 'nutrition': return <Baby className="w-5 h-5" />;
+    case 'dental': return <Smile className="w-5 h-5" />;
+    case 'animal_bite': return <ShieldAlert className="w-5 h-5" />;
+    case 'pharmacy': return <Pill className="w-5 h-5" />;
+    case 'xray': return <Activity className="w-5 h-5" />;
+    default: return <Stethoscope className="w-5 h-5" />;
+  }
+};
 
 export const ServicesSection: React.FC = () => {
-  const { t, language, openBookingForProgram, setBookingModalOpen } = useHealthCenter();
-
-  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const { t, language, openBookingForProgram } = useHealthCenter();
+  const isFilipino = language === 'fil';
+  const [activeCategory, setActiveCategory] = useState('all');
   const [selectedService, setSelectedService] = useState<ServiceDetail | null>(null);
-  const [medCategoryFilter, setMedCategoryFilter] = useState<string>('all');
-  const [selectedZoneTab, setSelectedZoneTab] = useState<'san_pedro' | 'magtanggol' | 'tabacalera'>('magtanggol');
-
-  const filteredServices = activeCategory === 'all' 
-    ? SERVICES_DATA 
-    : SERVICES_DATA.filter(s => s.category === activeCategory);
-
-  const filteredMeds = medCategoryFilter === 'all'
-    ? MEDICATIONS_STOCK
-    : MEDICATIONS_STOCK.filter(m => m.category === medCategoryFilter);
-
-  const currentZone = ZONES_COVERAGE.find(z => z.id === selectedZoneTab) || ZONES_COVERAGE[0];
-
-  const getServiceIcon = (category: string) => {
-    switch (category) {
-      case 'maternity': return <Heart className="w-5 h-5 text-rose-600" />;
-      case 'nutrition': return <Baby className="w-5 h-5 text-amber-600" />;
-      case 'dental': return <Smile className="w-5 h-5 text-cyan-600" />;
-      case 'animal_bite': return <ShieldAlert className="w-5 h-5 text-orange-600" />;
-      case 'checkup': return <Activity className="w-5 h-5 text-teal-600" />;
-      case 'xray': return <Building2 className="w-5 h-5 text-indigo-600" />;
-      case 'pharmacy': return <Pill className="w-5 h-5 text-emerald-600" />;
-      default: return <Activity className="w-5 h-5 text-teal-600" />;
-    }
-  };
+  const filteredServices = activeCategory === 'all'
+    ? SERVICES_DATA
+    : SERVICES_DATA.filter((service) => service.category === activeCategory);
 
   return (
-    <section id="services" className="py-16 bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-        
-        {/* Section Header */}
-        <div className="max-w-3xl space-y-3">
-          <div className="text-xs font-bold text-teal-800 uppercase tracking-wider">
-            {language === 'fil' ? 'Pampublikong Serbisyong Medikal' : 'Local Patient Services'}
+    <section id="services" className="py-16 sm:py-20 bg-white border-b border-slate-200">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-8">
+          <div className="max-w-2xl">
+            <div className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-3">Care available here</div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-950">{t.servicesTitle}</h2>
+            <p className="mt-3 text-base text-slate-600">Choose a service to check its schedule, location, and what to bring.</p>
           </div>
-          <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight" style={{ textWrap: 'balance' }}>
-            {t.servicesTitle}
-          </h2>
-          <p className="text-base text-slate-600">
-            {t.servicesSubtitle}
-          </p>
+          <button onClick={() => openBookingForProgram('checkup')} className="text-sm font-bold text-teal-900 underline underline-offset-4">Request a doctor appointment</button>
         </div>
 
-        {/* Filter Bar (Interactive segmented controls, functional buttons per design constitution) */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl overflow-x-auto">
-          {[
-            { id: 'all', label: t.serviceTabAll },
-            { id: 'maternity', label: t.serviceTabMaternal },
-            { id: 'nutrition', label: t.serviceTabNutrition },
-            { id: 'dental', label: t.serviceTabDental },
-            { id: 'animal_bite', label: t.serviceTabRabies },
-            { id: 'checkup', label: t.serviceTabOPD },
-            { id: 'xray', label: t.serviceTabXray },
-            { id: 'pharmacy', label: t.serviceTabMeds },
-          ].map((tab) => (
+        <div className="flex gap-2 overflow-x-auto pb-3 mb-5" role="tablist" aria-label="Filter health services">
+          {categories.map((category) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveCategory(tab.id)}
-              className={`px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                activeCategory === tab.id
-                  ? 'bg-white text-slate-900 shadow-sm font-semibold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              key={category.id}
+              role="tab"
+              aria-selected={activeCategory === category.id}
+              onClick={() => setActiveCategory(category.id)}
+              className={`px-4 py-2 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${activeCategory === category.id ? 'border-teal-800 text-teal-900' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
             >
-              {tab.label}
+              {category.label}
             </button>
           ))}
         </div>
 
-        {/* Services Grid (Single elevation, hairline borders, rich information) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 border-l border-t border-slate-200">
           {filteredServices.map((service) => (
-            <div
-              key={service.id}
-              className="bg-white rounded-xl border border-slate-200 hover:border-slate-300 transition-all flex flex-col justify-between overflow-hidden shadow-xs"
-            >
-              {/* Optional Service Image Thumbnail */}
-              {service.image && (
-                <div className="aspect-[16/9] w-full bg-slate-100 overflow-hidden relative">
-                  <img
-                    src={service.image}
-                    alt={service.title}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                  <div className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[11px] px-2.5 py-1 rounded-md font-medium">
-                    {language === 'fil' ? service.badgeFil : service.badge}
-                  </div>
+            <article key={service.id} className="flex flex-col min-h-[230px] p-5 sm:p-6 border-r border-b border-slate-200 hover:bg-[#f7faf8] transition-colors">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 flex items-center justify-center text-teal-900 bg-[#e5f0eb] rounded-md shrink-0">
+                  {iconForService(service.category)}
                 </div>
-              )}
-
-              <div className="p-6 space-y-4 flex-1">
-                {/* Header Lockup */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                    {getServiceIcon(service.category)}
-                  </div>
-                  {!service.image && (
-                    <span className="text-xs font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded">
-                      {language === 'fil' ? service.badgeFil : service.badge}
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <h3 className="text-lg font-bold text-slate-900">
-                    {language === 'fil' ? service.titleFil : service.title}
-                  </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {language === 'fil' ? service.shortDescFil : service.shortDesc}
-                  </p>
-                </div>
-
-                {/* Quiet unboxed metadata */}
-                <div className="pt-2 border-t border-slate-100 space-y-2 text-xs text-slate-600">
-                  <div className="flex items-start gap-2">
-                    <Clock className="w-3.5 h-3.5 text-teal-700 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-slate-800">{t.labelSchedule}:</span>{' '}
-                      <span>{language === 'fil' ? service.scheduleFil : service.schedule}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-teal-700 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-slate-800">{t.labelLocation}:</span>{' '}
-                      <span>{service.location}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-2">
-                    <User className="w-3.5 h-3.5 text-teal-700 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold text-slate-800">{t.labelPersonnel}:</span>{' '}
-                      <span className="text-slate-700">{service.keyPersonnel.join(', ')}</span>
-                    </div>
-                  </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-slate-950">{language === 'fil' ? service.titleFil : service.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-600">{language === 'fil' ? service.shortDescFil : service.shortDesc}</p>
                 </div>
               </div>
-
-              {/* Card Footer Actions */}
-              <div className="px-6 py-3 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => setSelectedService(service)}
-                  className="text-xs font-semibold text-teal-800 hover:text-teal-900 transition-colors flex items-center gap-1 cursor-pointer"
-                >
-                  <span>{t.btnViewRequirements}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-
-                <button
-                  onClick={() => openBookingForProgram(service.id === 'xray' ? 'xray-early-screening' : (service.id === 'dental' ? 'dental-mwf-caravan' : (service.id === 'nutrition' ? 'opt-2026' : 'opt-2026')))}
-                  className="px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
-                >
-                  {t.btnBookThisService}
-                </button>
+              <div className="mt-5 space-y-2 text-sm text-slate-600">
+                <div className="flex items-start gap-2"><Clock className="w-4 h-4 mt-0.5 text-teal-800 shrink-0" /><span>{language === 'fil' ? service.scheduleFil : service.schedule}</span></div>
+                <div className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-teal-800 shrink-0" /><span>{service.location}</span></div>
               </div>
-            </div>
+              <button onClick={() => setSelectedService(service)} className="mt-auto pt-5 text-left text-sm font-bold text-teal-900 hover:underline underline-offset-4">
+                Service details <span aria-hidden="true">→</span>
+              </button>
+            </article>
           ))}
         </div>
 
-        {/* Free Maintenance Medications Inventory Showcase */}
-        <div className="pt-10 border-t border-slate-200 space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div className="space-y-2 max-w-2xl">
-              <div className="text-xs font-bold text-teal-800 uppercase tracking-wider">
-                {language === 'fil' ? 'Botika ng Bayan' : 'Pharmacy Dispensary'}
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900">
-                {t.medsTitle}
-              </h3>
-              <p className="text-sm text-slate-600">
-                {t.medsSubtitle}
-              </p>
-            </div>
-
-            {/* Medication Filter Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg shrink-0">
-              <button
-                onClick={() => setMedCategoryFilter('all')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md cursor-pointer ${
-                  medCategoryFilter === 'all' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600'
-                }`}
-              >
-                {t.filterAllMeds}
-              </button>
-              <button
-                onClick={() => setMedCategoryFilter('hypertension')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md cursor-pointer ${
-                  medCategoryFilter === 'hypertension' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600'
-                }`}
-              >
-                {t.filterHypertension}
-              </button>
-              <button
-                onClick={() => setMedCategoryFilter('diabetes')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md cursor-pointer ${
-                  medCategoryFilter === 'diabetes' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600'
-                }`}
-              >
-                {t.filterDiabetes}
-              </button>
-              <button
-                onClick={() => setMedCategoryFilter('tb')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md cursor-pointer ${
-                  medCategoryFilter === 'tb' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600'
-                }`}
-              >
-                {t.filterTB}
-              </button>
-            </div>
+        <section aria-labelledby="patient-flow-title" className="mt-14 border-t border-slate-200 pt-10">
+          <div className="max-w-2xl mb-8">
+            <div className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-3">{isFilipino ? 'Gabay sa pagbisita' : 'Plan your visit'}</div>
+            <h2 id="patient-flow-title" className="text-3xl sm:text-4xl font-bold text-slate-950">{isFilipino ? 'Daloy ng pasyente' : 'Patient flow'}</h2>
+            <p className="mt-3 text-base text-slate-600">{isFilipino ? 'Magsimula sa registration at susundan kayo ng kawani sa tamang serbisyo.' : 'Start at registration and staff will guide you to the right service.'}</p>
           </div>
 
-          {/* Table of Medications */}
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-600 uppercase font-semibold border-b border-slate-200">
-                <tr>
-                  <th className="py-3 px-4">Medication & Generic Name</th>
-                  <th className="py-3 px-4">Program Category</th>
-                  <th className="py-3 px-4">Dosage Form</th>
-                  <th className="py-3 px-4 text-right">Units on Hand</th>
-                  <th className="py-3 px-4">Refill Schedule</th>
-                  <th className="py-3 px-4">Required Documents</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 bg-white">
-                {filteredMeds.map((med) => (
-                  <tr key={med.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-slate-900">
-                      <div>{med.name}</div>
-                      <div className="text-[11px] font-normal text-slate-500">
-                        {language === 'fil' ? med.purposeFil : med.purpose}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 font-medium text-teal-800">
-                      {language === 'fil' ? med.categoryLabelFil : med.categoryLabel}
-                    </td>
-                    <td className="py-3.5 px-4">{med.dosage}</td>
-                    <td className="py-3.5 px-4 text-right font-mono tabular-nums font-semibold text-slate-900">
-                      {med.availableUnits.toLocaleString()} tabs
-                    </td>
-                    <td className="py-3.5 px-4">
-                      {language === 'fil' ? med.refillScheduleFil : med.refillSchedule}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600">
-                      {language === 'fil' ? med.requirementsFil : med.requirements}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Catchment Zones Explorer (San Pedro, Magtanggol, Tabacalera) */}
-        <div className="pt-10 border-t border-slate-200 space-y-6">
-          <div className="max-w-2xl space-y-2">
-            <div className="text-xs font-bold text-teal-800 uppercase tracking-wider">
-              {language === 'fil' ? 'Mga Sakop na Purok at Barangay' : 'Catchment Area Guide'}
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900">{t.zonesTitle}</h3>
-            <p className="text-sm text-slate-600">{t.zonesSubtitle}</p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Zone Selector Buttons */}
-            <div className="lg:col-span-4 space-y-2">
-              {ZONES_COVERAGE.map((zone) => (
-                <button
-                  key={zone.id}
-                  onClick={() => setSelectedZoneTab(zone.id)}
-                  className={`w-full text-left p-4 rounded-xl border transition-all cursor-pointer ${
-                    selectedZoneTab === zone.id
-                      ? 'bg-teal-50/80 border-teal-600 shadow-xs'
-                      : 'bg-white border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-900">{zone.name}</span>
-                    <span className="text-xs font-mono tabular-nums text-teal-800 font-semibold">{zone.coverageRate}</span>
-                  </div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    {zone.poblacion} · {zone.activePatients.toLocaleString()} {t.labelActiveResidents}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* Zone Details Card */}
-            <div className="lg:col-span-8 bg-slate-50 rounded-xl p-6 border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <div>
-                  <h4 className="text-lg font-bold text-slate-900">{currentZone.name}</h4>
-                  <p className="text-xs text-slate-500">{currentZone.poblacion}</p>
+          <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-10">
+            <div>
+              <div className="border-y border-slate-200 divide-y divide-slate-200">
+                <div className="flex gap-4 py-4">
+                  <span className="text-sm font-bold text-teal-800 tabular-nums">01</span>
+                  <div><h3 className="text-base font-bold text-slate-900">{isFilipino ? 'Registration' : 'Registration'}</h3><p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Ihanda ang pangalan, address, at cellphone number.' : 'Provide your name, address, and cellphone number.'}</p></div>
                 </div>
-                <div className="text-xs text-slate-600">
-                  <span className="font-semibold text-slate-900">{currentZone.activePatients}</span> patients registered
+                <div className="flex gap-4 py-4">
+                  <span className="text-sm font-bold text-teal-800 tabular-nums">02</span>
+                  <div><h3 className="text-base font-bold text-slate-900">{isFilipino ? 'Piliin ang tamang care desk' : 'Initial screening'}</h3><p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Dental, pediatric, o women’s health ang magtatakda ng susunod na hakbang.' : 'Dental, pediatric, or women’s health staff will guide the next step.'}</p></div>
+                </div>
+                <div className="grid sm:grid-cols-3 gap-5 py-5">
+                  <div><h3 className="text-sm font-bold text-slate-900">{isFilipino ? 'Dental · edad 20 pataas' : 'Dental · age 20+'}</h3><p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Risk assessment at TB FAST screening. Kung kailangan: PhilHealth enrollment, booklet, at pag-dispense ng gamot.' : 'Risk assessment and TB FAST screening. If needed: PhilHealth enrollment, a booklet, and medicine dispensing.'}</p></div>
+                  <div><h3 className="text-sm font-bold text-slate-900">{isFilipino ? 'Pedia · wala pang 20' : 'Pediatrics · under 20'}</h3><p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Vital signs, timbang, at taas. May bakuna at pagtimbang para sa well-baby.' : 'Vital signs, weight, and height. Well-baby visits include vaccination and weighing.'}</p></div>
+                  <div><h3 className="text-sm font-bold text-slate-900">{isFilipino ? 'Women’s health' : 'Women’s health'}</h3><p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Family planning, VIA, prenatal care, at konsultasyon.' : 'Family planning, VIA, prenatal care, and consultation.'}</p></div>
+                </div>
+                <div className="flex gap-4 py-4">
+                  <span className="text-sm font-bold text-teal-800 tabular-nums">03</span>
+                  <div><h3 className="text-base font-bold text-slate-900">{isFilipino ? 'Konsultasyon at follow-up' : 'Consultation and follow-up'}</h3><p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Ang mga may sakit ay sasailalim sa chief-complaint review at konsultasyon; ire-refer kung kailangan. Magpa-iskedyul ng follow-up check-up.' : 'Patients who are sick are assessed by chief complaint and seen for consultation, with referral when needed. Schedule a follow-up check-up.'}</p></div>
                 </div>
               </div>
+              <p className="mt-4 text-sm font-semibold text-teal-900">{isFilipino ? 'May iron (ferrous sulfate) at calcium na ibinibigay sa Women’s Health Clinic.' : 'Ferrous sulfate and calcium are dispensed through the Women’s Health Clinic.'}</p>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-700">
-                <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-                  <div className="text-slate-500 font-medium">{t.labelAssignedBNS}</div>
-                  <div className="font-semibold text-slate-900">
-                    {currentZone.assignedBNS.join(', ')}
-                  </div>
-                  <div className="text-[11px] text-teal-700">
-                    {language === 'fil' ? 'Nangangasiwa sa OPT 0-59 buwan' : 'Lead for 0-59 months OPT screening'}
-                  </div>
-                </div>
-
-                <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-                  <div className="text-slate-500 font-medium">{t.labelAssignedMidwife}</div>
-                  <div className="font-semibold text-slate-900">{currentZone.assignedMidwife}</div>
-                  <div className="text-[11px] text-slate-500">Maternal & prenatal care coordination</div>
-                </div>
-
-                <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-                  <div className="text-slate-500 font-medium">{t.labelAssignedNurse}</div>
-                  <div className="font-semibold text-slate-900">{currentZone.designatedNurse}</div>
-                  <div className="text-[11px] text-slate-500">Immunization & triage supervision</div>
-                </div>
-
-                <div className="p-3 bg-white rounded-lg border border-slate-200 space-y-1">
-                  <div className="text-slate-500 font-medium">{t.labelCommunityDays}</div>
-                  <div className="font-semibold text-teal-800">
-                    {language === 'fil' ? currentZone.communityOutreachDaysFil : currentZone.communityOutreachDays}
-                  </div>
-                  <div className="text-[11px] text-slate-500">Field visits & feeding programs</div>
-                </div>
+            <div className="divide-y divide-slate-200 border-y border-slate-200">
+              <details className="group py-4" open>
+                <summary className="cursor-pointer list-none text-base font-bold text-slate-900">{isFilipino ? 'Bago pumunta sa Dental' : 'Before a dental visit'}</summary>
+                <ul className="mt-3 list-disc pl-5 space-y-1.5 text-sm text-slate-600">
+                  <li>{isFilipino ? 'Kumain ng almusal; maligo at magsipilyo.' : 'Eat breakfast, bathe, and brush your teeth.'}</li>
+                  <li>{isFilipino ? 'Magsuot ng malinis na damit; bawal ang sando.' : 'Wear clean clothes; tank tops are not allowed.'}</li>
+                  <li>{isFilipino ? 'Magdala ng bimpo o panyo.' : 'Bring a small towel or handkerchief.'}</li>
+                  <li>{isFilipino ? 'Edad 19 pataas: magpa-blood pressure sa Admission Area, 3rd floor.' : 'Age 19+: have your blood pressure checked at the 3rd-floor Admission Area.'}</li>
+                </ul>
+              </details>
+              <div className="py-4">
+                <h3 className="text-base font-bold text-slate-900">{isFilipino ? 'Pateros X-ray Clinic' : 'Pateros X-ray Clinic'}</h3>
+                <p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Lunes 8:00-10:00 AM; Martes-Biyernes 7:00-10:00 AM. 3rd floor.' : 'Monday 8:00-10:00 AM; Tuesday-Friday 7:00-10:00 AM. 3rd floor.'}</p>
+                <p className="mt-1 text-sm text-slate-600">{isFilipino ? '2:00 PM ang release ng resulta. Kumpirmahin sa X-ray desk ang araw ng pagkuha kapag nagsumite ng request.' : 'Results are released at 2:00 PM. Confirm the pickup day with the X-ray desk when submitting your request.'}</p>
+              </div>
+              <div className="py-4">
+                <h3 className="text-base font-bold text-slate-900">{isFilipino ? 'Social Hygiene Clinic' : 'Social Hygiene Clinic'}</h3>
+                <p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Lunes 8:00 AM-3:00 PM; Martes-Biyernes 9:00 AM-3:00 PM.' : 'Monday 8:00 AM-3:00 PM; Tuesday-Friday 9:00 AM-3:00 PM.'}</p>
+                <p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Para sa buntis na may laboratory testing: 8:00-9:00 AM. Tumatanggap ng walk-in na buntis para sa testing.' : 'Pregnancy laboratory testing: 8:00-9:00 AM. Walk-in pregnant patients are accepted for testing.'}</p>
+              </div>
+              <div className="py-4 text-sm text-rose-900">
+                <h3 className="font-bold">{isFilipino ? 'Kagat ng hayop' : 'Animal bite care'}</h3>
+                <p className="mt-1">{isFilipino ? 'Magpatingin agad sa clinic para masuri ng health worker. Huwag magpasya online na hindi kailangan ang bakuna o follow-up.' : 'Visit the clinic promptly for assessment by a health worker. Do not use an online chart to decide that vaccination or follow-up is unnecessary.'}</p>
               </div>
             </div>
           </div>
-        </div>
-
+        </section>
       </div>
 
-      {/* Service Detail Modal */}
       {selectedService && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-xl max-h-[90vh] overflow-y-auto border border-slate-200">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4" onClick={() => setSelectedService(null)}>
+          <section role="dialog" aria-modal="true" aria-labelledby="service-dialog-title" onClick={(event) => event.stopPropagation()} className="bg-white max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
-                <div className="text-xs font-semibold text-teal-800 uppercase tracking-wide">
-                  {language === 'fil' ? selectedService.badgeFil : selectedService.badge}
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mt-1">
-                  {language === 'fil' ? selectedService.titleFil : selectedService.title}
-                </h3>
+                <div className="text-xs font-bold uppercase tracking-wider text-teal-800">{language === 'fil' ? selectedService.badgeFil : selectedService.badge}</div>
+                <h3 id="service-dialog-title" className="mt-1 text-2xl font-bold text-slate-950">{language === 'fil' ? selectedService.titleFil : selectedService.title}</h3>
               </div>
-              <button
-                onClick={() => setSelectedService(null)}
-                className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg cursor-pointer"
-              >
-                ✕
-              </button>
+              <button onClick={() => setSelectedService(null)} aria-label="Close details" className="p-2 text-slate-500 hover:text-slate-900"><X className="w-5 h-5" /></button>
             </div>
-
-            <div className="space-y-4 text-sm text-slate-700">
-              <p className="leading-relaxed">
-                {language === 'fil' ? selectedService.fullDescFil : selectedService.fullDesc}
-              </p>
-
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2 text-xs">
-                <div className="font-bold text-slate-900">{t.labelSchedule}</div>
-                <div className="text-slate-700">
-                  {language === 'fil' ? selectedService.scheduleFil : selectedService.schedule}
-                </div>
-
-                <div className="font-bold text-slate-900 pt-2">{t.labelLocation}</div>
-                <div className="text-slate-700">{selectedService.location}</div>
-
-                <div className="font-bold text-slate-900 pt-2">{t.labelPersonnel}</div>
-                <div className="text-slate-700">{selectedService.keyPersonnel.join(', ')}</div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="font-bold text-slate-900 text-xs uppercase tracking-wider">
-                  {t.labelRequirements}
-                </div>
-                <ul className="space-y-2 text-xs text-slate-600">
-                  {(language === 'fil' ? selectedService.requirementsFil : selectedService.requirements).map((req, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-teal-700 shrink-0 mt-0.5" />
-                      <span>{req}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <p className="py-5 text-sm leading-relaxed text-slate-700">{language === 'fil' ? selectedService.fullDescFil : selectedService.fullDesc}</p>
+            <div className="grid sm:grid-cols-2 gap-4 border-y border-slate-200 py-4 text-sm">
+              <div><div className="font-bold text-slate-900">Schedule</div><p className="mt-1 text-slate-600">{language === 'fil' ? selectedService.scheduleFil : selectedService.schedule}</p></div>
+              <div><div className="font-bold text-slate-900">Location</div><p className="mt-1 text-slate-600">{selectedService.location}</p></div>
+              <div className="sm:col-span-2"><div className="font-bold text-slate-900">Care team</div><p className="mt-1 text-slate-600">{selectedService.keyPersonnel.join(', ')}</p></div>
             </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-              <button
-                onClick={() => setSelectedService(null)}
-                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  const sId = selectedService.id;
-                  setSelectedService(null);
-                  openBookingForProgram(sId === 'xray' ? 'xray-early-screening' : (sId === 'dental' ? 'dental-mwf-caravan' : 'opt-2026'));
-                }}
-                className="px-4 py-2 text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg cursor-pointer"
-              >
-                {t.btnBookThisService}
-              </button>
-            </div>
-          </div>
+            <button onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex items-center justify-center px-4 py-3 bg-teal-900 text-white text-sm font-bold rounded-md hover:bg-teal-950">Request this appointment</button>
+          </section>
         </div>
       )}
     </section>

@@ -1,0 +1,6 @@
+{
+  "name": "Mr. Flores Health Center",
+  "description": "Official community health portal for Mr. Flores Health Center in Pateros, serving San Pedro, Magtanggol, and Tabacalera. Access clinic schedules, staff directory, outreach booking, medicine refills, and secure patient portal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

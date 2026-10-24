@@ -41,14 +41,14 @@ export const Header: React.FC = () => {
   return (
     <header className="header-enter sticky top-0 z-40 bg-[#fbfcfa]/95 backdrop-blur-md border-b border-[#dfe6e1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-6 h-[68px]">
+        <div className="flex h-[68px] items-center justify-between gap-2 sm:gap-6">
           <a
             href="#overview"
             onClick={(e) => { e.preventDefault(); handleNavClick('overview'); }}
-            className="text-[15px] font-bold text-[#18312e] hover:text-[#0d625a] transition-colors duration-200 whitespace-nowrap shrink-0 flex items-center gap-3"
+            className="flex min-w-0 shrink items-center gap-2 text-xs font-bold text-[#18312e] transition-colors duration-200 hover:text-[#0d625a] sm:gap-3 sm:text-[15px]"
           >
-            <img src={centerPhoto} alt="Mr. Flores Health Center" className="w-11 h-11 rounded-sm object-cover border border-[#dfe6e1]" />
-            <span title={t.brand}>Mayor Moises R. Flores <span className="hidden sm:inline">Health Center</span></span>
+            <img src={centerPhoto} alt="Mr. Flores Health Center" className="h-9 w-9 shrink-0 rounded-sm border border-[#dfe6e1] object-cover sm:h-11 sm:w-11" />
+            <span title={t.brand} className="min-w-0 truncate sm:overflow-visible sm:whitespace-nowrap">Mayor Moises R. Flores <span className="hidden sm:inline">Health Center</span></span>
           </a>
 
           <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-600">

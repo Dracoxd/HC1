@@ -91,16 +91,16 @@ export const AppointmentSchedule: React.FC = () => {
                 <span>{isFilipino ? 'Mga oras' : 'Time slots'}</span>
               </div>
               {dates.map((date) => (
-                <article key={date} className="grid gap-3 border-t border-[#dfe6e1] px-4 py-4 sm:grid-cols-[minmax(220px,0.8fr)_minmax(0,1.5fr)] sm:items-center sm:px-5">
+                <article key={date} className="grid min-w-0 gap-3 border-t border-[#dfe6e1] px-3 py-4 sm:grid-cols-[minmax(220px,0.8fr)_minmax(0,1.5fr)] sm:items-center sm:px-5">
                   <div>
                     <div className="text-[11px] font-bold text-[#17645c]">{date}</div>
                     <h3 className="mt-1 text-sm font-bold text-[#17312e]">{dateLabel(date)}</h3>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex min-w-0 flex-wrap gap-2">
                     {appointmentsByDate[date]
                       .sort((first, second) => (timeOrder[first.time] ?? 99) - (timeOrder[second.time] ?? 99))
                       .map((slot) => (
-                        <div key={slot.time} className="flex min-h-10 items-center gap-2 border border-[#cfd8d2] bg-white px-3 py-2">
+                        <div key={slot.time} className="flex min-h-10 min-w-0 max-w-full items-center gap-2 border border-[#cfd8d2] bg-white px-2.5 py-2 sm:px-3">
                           <Clock3 className="h-4 w-4 shrink-0 text-[#17645c]" />
                           <span className="text-sm font-bold text-[#17312e]">{timeLabels[slot.time] ?? slot.time}</span>
                           <span className="border-l border-[#dfe6e1] pl-2 text-xs text-[#66736f]">

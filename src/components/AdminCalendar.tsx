@@ -64,7 +64,9 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
   appointments, slotSettings, onSaveSettings, onSelectAppointment,
 }) => {
   const [selectedDate, setSelectedDate] = useState(todayString);
-  const [view, setView] = useState<CalendarView>('month');
+  const [view, setView] = useState<CalendarView>(() => (
+    window.matchMedia('(max-width: 639px)').matches ? 'day' : 'month'
+  ));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const settingsByKey = useMemo(() => new Map(
@@ -177,15 +179,15 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
     <section className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.8fr)]">
       <div className="min-w-0 border border-[#dfe6e1] bg-white">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#dfe6e1] p-4">
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => moveCalendar(-1)} aria-label="Previous date range" className="border border-[#d9e1dc] p-2 hover:bg-[#f4f6f3]"><ChevronLeft className="h-4 w-4" /></button>
-            <button type="button" onClick={() => setSelectedDate(todayString())} className="border border-[#d9e1dc] px-3 py-2 text-xs font-bold hover:bg-[#f4f6f3]">Today</button>
-            <button type="button" onClick={() => moveCalendar(1)} aria-label="Next date range" className="border border-[#d9e1dc] p-2 hover:bg-[#f4f6f3]"><ChevronRight className="h-4 w-4" /></button>
-            <h2 className="ml-2 text-base font-bold">{calendarTitle}</h2>
+          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+            <button type="button" onClick={() => moveCalendar(-1)} aria-label="Previous date range" className="shrink-0 border border-[#d9e1dc] p-2 hover:bg-[#f4f6f3]"><ChevronLeft className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setSelectedDate(todayString())} className="shrink-0 border border-[#d9e1dc] px-2.5 py-2 text-xs font-bold hover:bg-[#f4f6f3] sm:px-3">Today</button>
+            <button type="button" onClick={() => moveCalendar(1)} aria-label="Next date range" className="shrink-0 border border-[#d9e1dc] p-2 hover:bg-[#f4f6f3]"><ChevronRight className="h-4 w-4" /></button>
+            <h2 className="ml-1 min-w-0 truncate text-sm font-bold sm:ml-2 sm:text-base">{calendarTitle}</h2>
           </div>
-          <div className="flex border border-[#d9e1dc] p-0.5">
+          <div className="flex shrink-0 border border-[#d9e1dc] p-0.5">
             {(['month', 'week', 'day'] as const).map((option) => (
-              <button key={option} type="button" onClick={() => setView(option)} className={`px-3 py-1.5 text-xs font-bold capitalize ${view === option ? 'bg-[#173a37] text-white' : 'text-[#66736f] hover:bg-[#f4f6f3]'}`}>{option}</button>
+              <button key={option} type="button" onClick={() => setView(option)} className={`px-2.5 py-1.5 text-[11px] font-bold capitalize sm:px-3 sm:text-xs ${view === option ? 'bg-[#173a37] text-white' : 'text-[#66736f] hover:bg-[#f4f6f3]'}`}>{option}</button>
             ))}
           </div>
         </div>
@@ -206,16 +208,16 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 key={date}
                 type="button"
                 onClick={() => setSelectedDate(date)}
-                className={`${view === 'day' ? 'flex w-full items-center gap-3 border-b border-[#edf1ee] px-2 py-3 text-left' : 'min-h-[76px] border-b border-r border-[#edf1ee] p-1.5 text-left sm:min-h-[104px] sm:p-2'} ${view === 'month' && !inSelectedMonth ? 'bg-[#f8faf8] text-[#a0aaa3]' : ''} ${date === selectedDate ? 'bg-[#edf5f1] ring-1 ring-inset ring-[#17645c]' : 'hover:bg-[#f6f9f6]'}`}
+                className={`${view === 'day' ? 'flex min-h-11 w-full items-center gap-3 border-b border-[#edf1ee] px-2 py-3 text-left' : 'min-h-[52px] border-b border-r border-[#edf1ee] p-1 text-left sm:min-h-[104px] sm:p-2'} ${view === 'month' && !inSelectedMonth ? 'bg-[#f8faf8] text-[#a0aaa3]' : ''} ${date === selectedDate ? 'bg-[#edf5f1] ring-1 ring-inset ring-[#17645c]' : 'hover:bg-[#f6f9f6]'}`}
               >
-                <span className={`inline-flex h-6 min-w-6 items-center justify-center text-xs font-bold ${date === todayString() ? 'rounded-full bg-[#17645c] text-white' : ''}`}>{Number(date.slice(-2))}</span>
+                <span className={`inline-flex h-6 min-w-6 items-center justify-center text-[11px] font-bold sm:text-xs ${date === todayString() ? 'rounded-full bg-[#17645c] text-white' : ''}`}>{Number(date.slice(-2))}</span>
                 {dateBlocked && <Ban className="h-3.5 w-3.5 text-rose-700" aria-label="Date blocked" />}
                 {view === 'day' && <span className="text-xs text-[#66736f]">{events.length} appointment{events.length === 1 ? '' : 's'}{dateBlocked ? ' · blocked' : ''}</span>}
                 {view !== 'day' && (
                   <span className="mt-1 flex flex-col gap-0.5 text-[9px] font-semibold sm:text-[10px]">
-                    {confirmedCount > 0 && <span className="truncate text-emerald-800">{confirmedCount} accepted</span>}
-                    {pendingCount > 0 && <span className="truncate text-amber-800">{pendingCount} pending</span>}
-                    {dateBlocked && <span className="truncate text-rose-700">Blocked</span>}
+                    {confirmedCount > 0 && <span className="truncate text-emerald-800"><span className="sm:hidden" aria-label={`${confirmedCount} accepted`}>{confirmedCount}✓</span><span className="hidden sm:inline">{confirmedCount} accepted</span></span>}
+                    {pendingCount > 0 && <span className="truncate text-amber-800"><span className="sm:hidden" aria-label={`${pendingCount} pending`}>{pendingCount}…</span><span className="hidden sm:inline">{pendingCount} pending</span></span>}
+                    {dateBlocked && <span className="truncate text-rose-700"><span className="sm:hidden">Blocked</span><span className="hidden sm:inline">Blocked</span></span>}
                   </span>
                 )}
               </button>

@@ -214,19 +214,19 @@ export const AdminPanel: React.FC = () => {
   return (
     <main className="min-h-screen bg-[#f4f6f3] text-[#17312e]">
       <header className="border-b border-[#dfe6e1] bg-white px-5 py-4 sm:px-8">
-        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center bg-[#17645c] text-white"><CalendarCheck2 className="h-5 w-5" /></div>
-            <div><div className="flex items-center gap-2"><span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#17645c]">Health center staff</span><span className="border border-[#b7d6cc] bg-[#edf7f2] px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-[#17645c]">ADMIN</span></div><h1 className="mt-0.5 text-lg font-bold">Appointment management</h1></div>
+        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-2 sm:gap-4">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#17645c] text-white sm:h-10 sm:w-10"><CalendarCheck2 className="h-5 w-5" /></div>
+            <div className="min-w-0"><div className="flex flex-wrap items-center gap-x-2 gap-y-0.5"><span className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#17645c] sm:text-[11px] sm:tracking-[0.16em]">Health center staff</span><span className="border border-[#b7d6cc] bg-[#edf7f2] px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider text-[#17645c] sm:px-2 sm:text-[10px]">ADMIN</span></div><h1 className="mt-0.5 truncate text-sm font-bold sm:text-lg">Appointment management</h1></div>
           </div>
-          <button type="button" onClick={() => void auth.signOut()} className="border border-[#d9e1dc] px-4 py-2 text-sm font-bold text-[#66736f] hover:bg-[#f4f6f3] hover:text-[#17312e]">Sign out</button>
+          <button type="button" onClick={() => void auth.signOut()} className="shrink-0 border border-[#d9e1dc] px-2.5 py-2 text-xs font-bold text-[#66736f] hover:bg-[#f4f6f3] hover:text-[#17312e] sm:px-4 sm:text-sm">Sign out</button>
         </div>
       </header>
 
       <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-8 sm:py-8">
         <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <p className="text-sm text-[#66736f]">Review appointment requests, contact patients, and manage confirmations.</p>
-          <div className="flex items-center gap-3 border border-[#dfe6e1] bg-white px-4 py-3">
+          <div className="flex items-center gap-2 border border-[#dfe6e1] bg-white px-3 py-3 sm:gap-3 sm:px-4">
             <span className={`h-3 w-3 rounded-full ${clinicOpen === null ? 'bg-slate-400' : clinicOpen ? 'bg-emerald-500' : 'bg-rose-500'}`} />
             <div className="mr-2"><div className="text-xs font-bold">{clinicOpen === null ? 'LOADING STATUS' : clinicOpen ? 'OPEN NOW' : 'CLOSED NOW'}</div><div className="text-[10px] text-[#66736f]">Public website status</div></div>
             <button type="button" disabled={clinicStatusSaving || clinicOpen === null} onClick={() => void updateClinicStatus(!clinicOpen)} className={`h-9 px-4 text-xs font-bold text-white disabled:opacity-60 ${clinicOpen ? 'bg-rose-700 hover:bg-rose-800' : 'bg-[#17645c] hover:bg-[#104f49]'}`}>
@@ -235,25 +235,25 @@ export const AdminPanel: React.FC = () => {
           </div>
         </div>
 
-        <section aria-label="Appointment summary" className="mb-6 grid gap-3 sm:grid-cols-3">
+        <section aria-label="Appointment summary" className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
           {[
             { label: 'Awaiting review', value: counts.pending, icon: Clock3, color: 'text-amber-700', bg: 'bg-amber-50' },
             { label: 'Accepted', value: counts.confirmed, icon: Check, color: 'text-emerald-700', bg: 'bg-emerald-50' },
             { label: 'Rejected or cancelled', value: counts.rejected, icon: X, color: 'text-rose-700', bg: 'bg-rose-50' },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <div key={label} className="flex items-center gap-4 border border-[#dfe6e1] bg-white p-4">
-              <div className={`flex h-10 w-10 items-center justify-center ${bg} ${color}`}><Icon className="h-5 w-5" /></div>
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center ${bg} ${color} sm:h-10 sm:w-10`}><Icon className="h-5 w-5" /></div>
               <div><div className="text-2xl font-bold leading-none">{value}</div><div className="mt-1.5 text-xs font-medium text-[#66736f]">{label}</div></div>
             </div>
           ))}
         </section>
 
-        <nav aria-label="Admin sections" className="mb-4 flex gap-2 border-b border-[#dfe6e1]">
+        <nav aria-label="Admin sections" className="mb-4 flex gap-1 overflow-x-auto border-b border-[#dfe6e1]">
           {[
             { id: 'requests', label: 'Appointment requests' },
             { id: 'calendar', label: 'Calendar & availability' },
           ].map(({ id, label }) => (
-            <button key={id} type="button" onClick={() => setActiveTab(id as 'requests' | 'calendar')} className={`border-b-2 px-4 py-3 text-sm font-bold ${activeTab === id ? 'border-[#17645c] text-[#17645c]' : 'border-transparent text-[#66736f] hover:text-[#17312e]'}`}>{label}</button>
+            <button key={id} type="button" onClick={() => setActiveTab(id as 'requests' | 'calendar')} className={`shrink-0 border-b-2 px-3 py-3 text-xs font-bold sm:px-4 sm:text-sm ${activeTab === id ? 'border-[#17645c] text-[#17645c]' : 'border-transparent text-[#66736f] hover:text-[#17312e]'}`}>{label}</button>
           ))}
         </nav>
 

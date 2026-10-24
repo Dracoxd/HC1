@@ -1,6 +1,7 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { auth } from '../firebase';
 import { CalendarCheck2, CalendarDays, Check, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, Trash2, X } from 'lucide-react';
+import { AdminCalendar, SlotSetting, SlotSettingsForm } from './AdminCalendar';
 
 interface AppointmentRow {
   id: string;
@@ -31,6 +32,8 @@ interface ChatMessage {
 export const AdminPanel: React.FC = () => {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [slotSettings, setSlotSettings] = useState<SlotSetting[]>([]);
+  const [activeTab, setActiveTab] = useState<'requests' | 'calendar'>('requests');
   const [selectedId, setSelectedId] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -47,10 +50,11 @@ export const AdminPanel: React.FC = () => {
       const token = await user.getIdToken();
       const response = await fetch('/api/admin', { headers: { Authorization: `Bearer ${token}` } });
       if (!response.ok) throw new Error(response.status === 403 ? 'This account is not an admin.' : 'Admin workspace could not be loaded.');
-      const data = await response.json() as { role: string; appointments: AppointmentRow[]; messages: ChatMessage[] };
+      const data = await response.json() as { role: string; appointments: AppointmentRow[]; messages: ChatMessage[]; slotSettings?: SlotSetting[] };
       if (data.role !== 'admin') throw new Error('This account is not an admin.');
       setAppointments(data.appointments);
       setMessages(data.messages);
+      setSlotSettings(data.slotSettings ?? []);
       const statusToken = await user.getIdToken();
       const statusResponse = await fetch('/api/admin?mode=clinic_status', {
         headers: { Authorization: `Bearer ${statusToken}` },
@@ -98,7 +102,25 @@ export const AdminPanel: React.FC = () => {
   }, [appointments, search, statusFilter]);
 
   const performAction = async (action: string, appointment: AppointmentRow) => {
-    if (action === 'delete_chat' && !window.confirm('Delete all messages in this chat for both you and the patient? This cannot be undone.')) return;
+    if (action === 'delete_chat' && !window.confirm('Delete this conversation for both accounts? Its messages will be permanently removed and it will disappear from the patient inbox. The appointment request itself will remain in your records.')) return;
+    if (action === 'approve') {
+      const dateSettings = slotSettings.filter((setting) => setting.appointment_date === appointment.preferred_date);
+      const fullDateBlocked = dateSettings.some((setting) => setting.time_slot === 'all_day' && Number(setting.blocked) === 1);
+      const slotSetting = dateSettings.find((setting) => setting.time_slot === appointment.preferred_time);
+      const slotBlocked = Number(slotSetting?.blocked) === 1;
+      const acceptedCount = appointments.filter((item) => item.status === 'confirmed'
+        && item.preferred_date === appointment.preferred_date
+        && item.preferred_time === appointment.preferred_time).length;
+      const slotCapacity = Number(slotSetting?.capacity ?? 0);
+      if (fullDateBlocked || slotBlocked) {
+        setError('This appointment date or time slot is blocked. Unblock it in Calendar & availability before accepting.');
+        return;
+      }
+      if (slotCapacity > 0 && acceptedCount >= slotCapacity) {
+        setError('This time slot has reached its appointment limit. Increase the capacity in Calendar & availability before accepting.');
+        return;
+      }
+    }
     try {
       const user = auth.currentUser;
       if (!user) return;
@@ -111,6 +133,11 @@ export const AdminPanel: React.FC = () => {
       if (!response.ok) {
         const result = await response.json() as { error?: string };
         throw new Error(result.error || 'The action could not be completed.');
+      }
+      if (action === 'delete_chat') {
+        setAppointments((current) => current.map((item) => item.id === appointment.id ? { ...item, chat_status: 'deleted' } : item));
+        setMessages((current) => current.filter((message) => message.appointment_id !== appointment.id));
+        setChatInput('');
       }
       await loadWorkspace();
     } catch (caught) {
@@ -140,6 +167,26 @@ export const AdminPanel: React.FC = () => {
     } finally {
       setClinicStatusSaving(false);
     }
+  };
+
+  const saveSlotSettings = async (date: string, settings: SlotSettingsForm) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Sign in to manage appointment availability.');
+    const token = await user.getIdToken();
+    const response = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ action: 'save_slot_settings', date, ...settings }),
+    });
+    const result = await response.json() as { slotSettings?: SlotSetting[]; error?: string };
+    const updatedSettings = result.slotSettings;
+    if (!response.ok || !Array.isArray(updatedSettings)) {
+      throw new Error(result.error || 'Slot settings could not be saved.');
+    }
+    setSlotSettings((current) => [
+      ...current.filter((item) => item.appointment_date !== date),
+      ...updatedSettings,
+    ]);
   };
 
   const sendMessage = async (event: FormEvent) => {
@@ -199,6 +246,23 @@ export const AdminPanel: React.FC = () => {
           ))}
         </section>
 
+        <nav aria-label="Admin sections" className="mb-4 flex gap-2 border-b border-[#dfe6e1]">
+          {[
+            { id: 'requests', label: 'Appointment requests' },
+            { id: 'calendar', label: 'Calendar & availability' },
+          ].map(({ id, label }) => (
+            <button key={id} type="button" onClick={() => setActiveTab(id as 'requests' | 'calendar')} className={`border-b-2 px-4 py-3 text-sm font-bold ${activeTab === id ? 'border-[#17645c] text-[#17645c]' : 'border-transparent text-[#66736f] hover:text-[#17312e]'}`}>{label}</button>
+          ))}
+        </nav>
+
+        {activeTab === 'calendar' ? (
+          <AdminCalendar
+            appointments={appointments}
+            slotSettings={slotSettings}
+            onSaveSettings={saveSlotSettings}
+            onSelectAppointment={(id) => { setSelectedId(id); setActiveTab('requests'); }}
+          />
+        ) : (
         <section className="grid overflow-hidden border border-[#dfe6e1] bg-white lg:min-h-[640px] lg:grid-cols-[350px_minmax(0,1fr)]">
           <aside className="border-b border-[#dfe6e1] lg:border-b-0 lg:border-r">
             <div className="border-b border-[#edf1ee] p-4">
@@ -252,30 +316,31 @@ export const AdminPanel: React.FC = () => {
                   <div className="mt-5 grid gap-2">
                     <button type="button" disabled={selected.status === 'confirmed' || selected.status === 'rejected' || selected.status === 'cancelled'} onClick={() => void performAction('approve', selected)} className="flex h-10 items-center justify-center gap-2 bg-[#17645c] text-sm font-bold text-white hover:bg-[#104f49] disabled:cursor-not-allowed disabled:opacity-50"><Check className="h-4 w-4" />Accept request</button>
                     <button type="button" disabled={selected.status === 'rejected' || selected.status === 'cancelled'} onClick={() => void performAction('reject', selected)} className="flex h-10 items-center justify-center gap-2 border border-rose-200 text-sm font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"><X className="h-4 w-4" />Reject request</button>
-                    <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex h-10 items-center justify-center gap-2 border border-[#d9e1dc] text-sm font-bold hover:bg-[#f4f6f3]"><LockKeyhole className="h-4 w-4" />{selected.chat_status === 'closed' ? 'Open patient chat' : 'Close patient chat'}</button>
+                    {selected.chat_status !== 'deleted' && <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex h-10 items-center justify-center gap-2 border border-[#d9e1dc] text-sm font-bold hover:bg-[#f4f6f3]"><LockKeyhole className="h-4 w-4" />{selected.chat_status === 'closed' ? 'Open patient chat' : 'Close patient chat'}</button>}
                   </div>
                 </div>
 
                 <div className="flex min-h-[520px] flex-col">
                   <div className="flex items-center gap-3 border-b border-[#dfe6e1] bg-white px-5 py-4">
                     <div className="flex h-9 w-9 items-center justify-center bg-[#edf3ef] text-[#17645c]"><MessageCircle className="h-4 w-4" /></div>
-                    <div><h3 className="text-sm font-bold">Patient conversation</h3><p className="mt-0.5 text-[11px] text-[#66736f]">{selected.chat_status === 'closed' ? 'Open chat to send messages' : 'Chat is open with the patient'}</p></div>
-                    <button type="button" onClick={() => void performAction('delete_chat', selected)} className="ml-auto inline-flex items-center gap-1.5 border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50" title="Delete this chat for both accounts"><Trash2 className="h-4 w-4" /><span className="hidden sm:inline">Delete chat</span></button>
+                    <div><h3 className="text-sm font-bold">Patient conversation</h3><p className="mt-0.5 text-[11px] text-[#66736f]">{selected.chat_status === 'deleted' ? 'Deleted for both accounts' : selected.chat_status === 'closed' ? 'Open chat to send messages' : 'Chat is open with the patient'}</p></div>
+                    {selected.chat_status !== 'deleted' && <button type="button" onClick={() => void performAction('delete_chat', selected)} className="ml-auto inline-flex items-center gap-1.5 border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50" title="Delete this chat for both accounts"><Trash2 className="h-4 w-4" /><span className="hidden sm:inline">Delete chat</span></button>}
                   </div>
                   <div className="flex-1 space-y-3 overflow-y-auto px-5 py-5">
                     {selectedMessages.map((message) => (
                       <div key={message.id} className={`flex ${message.sender_role === 'admin' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${message.sender_role === 'admin' ? 'rounded-br-sm bg-[#17645c] text-white' : 'rounded-bl-sm border border-[#e5ebe6] bg-white text-[#17312e]'}`}><div className="whitespace-pre-wrap break-words">{message.message}</div><div className={`mt-1.5 text-[10px] ${message.sender_role === 'admin' ? 'text-white/70' : 'text-[#66736f]'}`}>{message.sender_name}</div></div></div>
                     ))}
-                    {selectedMessages.length === 0 && <div className="flex h-full min-h-40 items-center justify-center text-center text-xs text-[#87938c]">No messages for this request yet.</div>}
+                    {selectedMessages.length === 0 && <div className="flex h-full min-h-40 items-center justify-center text-center text-xs text-[#87938c]">{selected.chat_status === 'deleted' ? 'This conversation was deleted for both accounts.' : 'No messages for this request yet.'}</div>}
                   </div>
                   {selected.chat_status === 'open' ? (
                     <form onSubmit={sendMessage} className="flex gap-2 border-t border-[#dfe6e1] bg-white p-4"><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} maxLength={2000} placeholder="Write a message to the patient..." className="min-w-0 flex-1 border border-[#d9e1dc] px-4 text-sm outline-none focus:border-[#17645c]" /><button type="submit" disabled={!chatInput.trim()} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#17645c] text-white hover:bg-[#104f49] disabled:opacity-50"><Send className="h-4 w-4" /></button></form>
-                  ) : <div className="border-t border-[#dfe6e1] bg-white px-5 py-4 text-center text-xs text-[#66736f]">This conversation is closed. Open patient chat to reply.</div>}
+                  ) : <div className="border-t border-[#dfe6e1] bg-white px-5 py-4 text-center text-xs text-[#66736f]">{selected.chat_status === 'deleted' ? 'This conversation has been deleted and cannot be reopened.' : 'This conversation is closed. Open patient chat to reply.'}</div>}
                 </div>
               </div>
             )}
           </section>
         </section>
+        )}
       </div>
       {error && <div role="alert" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 border border-rose-200 bg-white px-4 py-3 text-sm text-rose-800 shadow-lg">{error}</div>}
     </main>

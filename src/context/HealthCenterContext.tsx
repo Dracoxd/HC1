@@ -76,6 +76,15 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     localStorage.setItem('mfhc_language', language);
   }, [language]);
 
+  const setBookingAvailabilityModal = (open: boolean) => {
+    if (open && clinicOpen !== true) return;
+    setBookingModalOpen(open);
+  };
+
+  useEffect(() => {
+    if (clinicOpen !== true) setBookingModalOpen(false);
+  }, [clinicOpen]);
+
   useEffect(() => {
     let active = true;
     const loadClinicStatus = async () => {
@@ -410,8 +419,9 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const openBookingForProgram = (programId: string) => {
+    if (clinicOpen !== true) return;
     setSelectedProgramForBooking(programId);
-    setBookingModalOpen(true);
+    setBookingAvailabilityModal(true);
   };
 
   return (
@@ -437,7 +447,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         contactSubmissions,
         submitContact,
         bookingModalOpen,
-        setBookingModalOpen,
+        setBookingModalOpen: setBookingAvailabilityModal,
         messagesOpen,
         setMessagesOpen,
         clinicOpen,

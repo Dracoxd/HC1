@@ -9,9 +9,11 @@ export const OutreachSection: React.FC = () => {
     language,
     openBookingForProgram,
     setBookingModalOpen,
+    clinicOpen,
     appointments,
     cancelAppointment
   } = useHealthCenter();
+  const bookingEnabled = clinicOpen === true;
 
   return (
     <section id="outreach" className="py-16 bg-white border-b border-slate-200">
@@ -32,11 +34,12 @@ export const OutreachSection: React.FC = () => {
           </div>
 
           <button
+            disabled={!bookingEnabled}
             onClick={() => setBookingModalOpen(true)}
-            className="px-5 py-2.5 text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg shadow-sm transition-colors flex items-center gap-2 cursor-pointer self-start md:self-auto"
+            className="px-5 py-2.5 text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg shadow-sm transition-colors flex items-center gap-2 cursor-pointer self-start md:self-auto disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Calendar className="w-4 h-4" />
-            <span>{t.btnBookOutreach}</span>
+            <span>{bookingEnabled ? t.btnBookOutreach : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</span>
           </button>
         </div>
 
@@ -96,10 +99,11 @@ export const OutreachSection: React.FC = () => {
                 </span>
 
                 <button
+                  disabled={!bookingEnabled}
                   onClick={() => openBookingForProgram(program.id)}
-                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                  className="px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {language === 'fil' ? 'Pumili ng Slot' : 'Reserve Slot'}
+                  {bookingEnabled ? (language === 'fil' ? 'Pumili ng Slot' : 'Reserve Slot') : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}
                 </button>
               </div>
             </div>

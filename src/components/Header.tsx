@@ -13,8 +13,10 @@ export const Header: React.FC = () => {
     activeSection,
     setActiveSection,
     setBookingModalOpen,
+    clinicOpen,
     setMessagesOpen,
   } = useHealthCenter();
+  const bookingEnabled = clinicOpen === true;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -72,9 +74,9 @@ export const Header: React.FC = () => {
               <Globe className="w-4 h-4" />
               <span className="text-sm font-medium">{language === 'en' ? 'Filipino' : 'English'}</span>
             </button>
-            <button onClick={() => setBookingModalOpen(true)} className="px-4 py-2.5 text-sm font-bold text-white bg-[#17645c] hover:bg-[#104f49] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2">
+            <button disabled={!bookingEnabled} onClick={() => setBookingModalOpen(true)} title={bookingEnabled ? 'Request an appointment' : 'Appointment requests are currently unavailable'} className="px-4 py-2.5 text-sm font-bold text-white bg-[#17645c] hover:bg-[#104f49] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
               <CalendarDays className="w-4 h-4" />
-              <span>Request appointment</span>
+              <span>{bookingEnabled ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</span>
             </button>
             <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-slate-600 hover:bg-[#edf3ef] hover:text-[#17645c]" aria-label="Messages" title="Messages">
               <Mail className="h-5 w-5" />
@@ -129,9 +131,9 @@ export const Header: React.FC = () => {
           </div>
 
           <div className="pt-3 border-t border-slate-100">
-            <button onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded-md flex items-center justify-center gap-2">
+            <button disabled={!bookingEnabled} onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded-md flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
               <CalendarDays className="w-4 h-4" />
-              <span>Request appointment</span>
+              <span>{bookingEnabled ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</span>
             </button>
           </div>
         </div>

@@ -111,7 +111,7 @@ export const UserAppointmentChat: React.FC = () => {
                 <div className="mt-2 text-xs text-[#66736f]">{appointment.preferred_date} · {appointment.preferred_time}</div>
               </button>
             ))}
-            {appointments.length === 0 && <p className="p-4 text-sm text-[#66736f]">No appointment requests yet</p>}
+            {appointments.length === 0 && <p className="p-4 text-sm text-[#66736f]">No conversations yet</p>}
           </aside>
 
           <div className={`${selected ? 'block' : 'hidden'} lg:block`}>

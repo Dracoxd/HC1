@@ -28,7 +28,8 @@ const iconForService = (category: string) => {
 };
 
 export const ServicesSection: React.FC = () => {
-  const { t, language, openBookingForProgram } = useHealthCenter();
+  const { t, language, openBookingForProgram, clinicOpen } = useHealthCenter();
+  const bookingEnabled = clinicOpen === true;
   const isFilipino = language === 'fil';
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedService, setSelectedService] = useState<ServiceDetail | null>(null);
@@ -161,7 +162,7 @@ export const ServicesSection: React.FC = () => {
               <div><div className="font-bold text-slate-900">Location</div><p className="mt-1 text-slate-600">{selectedService.location}</p></div>
               <div className="sm:col-span-2"><div className="font-bold text-slate-900">Care team</div><p className="mt-1 text-slate-600">{selectedService.keyPersonnel.join(', ')}</p></div>
             </div>
-            <button onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex items-center justify-center px-4 py-3 bg-[#17645c] text-white text-sm font-bold rounded-sm hover:bg-[#104f49]">Request this appointment</button>
+            <button disabled={!bookingEnabled} onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex items-center justify-center px-4 py-3 bg-[#17645c] text-white text-sm font-bold rounded-sm hover:bg-[#104f49] disabled:cursor-not-allowed disabled:opacity-50">{bookingEnabled ? 'Request this appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</button>
           </section>
         </div>
       )}

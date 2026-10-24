@@ -87,6 +87,28 @@ async function ensureAppointmentTable(db: ReturnType<typeof createClient>) {
   if (!columnNames.has('chat_status')) {
     await db.execute("ALTER TABLE appointment_requests ADD COLUMN chat_status TEXT NOT NULL DEFAULT 'closed'");
   }
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS appointment_slot_settings (
+      appointment_date TEXT NOT NULL,
+      time_slot TEXT NOT NULL,
+      capacity INTEGER NOT NULL DEFAULT 0,
+      blocked INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (appointment_date, time_slot)
+    )
+  `);
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS clinic_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `);
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO clinic_settings (setting_key, setting_value, updated_at)
+          VALUES ('clinic_open', '0', ?)`,
+    args: [new Date().toISOString()],
+  });
 }
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
@@ -113,15 +135,28 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         time: String(row.preferred_time),
         bookedCount: Number(row.booked_count),
       }));
+      const settingResult = await db.execute({
+        sql: `SELECT appointment_date, time_slot, capacity, blocked
+              FROM appointment_slot_settings
+              WHERE appointment_date >= ?
+              ORDER BY appointment_date ASC, time_slot ASC`,
+        args: [new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date())],
+      });
+      const slotSettings = settingResult.rows.map((row) => ({
+        date: String(row.appointment_date),
+        time: String(row.time_slot),
+        capacity: Number(row.capacity),
+        blocked: Number(row.blocked) === 1,
+      }));
 
       if (decoded) {
         const appointments = await db.execute({
           sql: `SELECT * FROM appointment_requests WHERE owner_uid = ? ORDER BY preferred_date ASC, preferred_time ASC`,
           args: [decoded.uid],
         });
-        return response.status(200).json({ slots, appointments: appointments.rows });
+        return response.status(200).json({ slots, slotSettings, appointments: appointments.rows });
       }
-      return response.status(200).json({ slots });
+      return response.status(200).json({ slots, slotSettings });
     } catch {
       return response.status(500).json({ error: 'Schedule data could not be loaded.' });
     }
@@ -195,6 +230,18 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
   try {
     await ensureAppointmentTable(db);
+    const clinicStatus = await db.execute("SELECT setting_value FROM clinic_settings WHERE setting_key = 'clinic_open'");
+    if (clinicStatus.rows[0]?.setting_value !== '1') {
+      return response.status(409).json({ error: 'Appointment requests are currently closed by the health center.' });
+    }
+    const slotSettings = await db.execute({
+      sql: `SELECT time_slot, blocked FROM appointment_slot_settings
+            WHERE appointment_date = ? AND time_slot IN ('all_day', ?)`,
+      args: [preferredDate, preferredTime],
+    });
+    if (slotSettings.rows.some((setting) => Number(setting.blocked) === 1)) {
+      return response.status(409).json({ error: 'The selected date or time slot is unavailable. Please choose another.' });
+    }
     await db.execute({
       sql: `INSERT INTO appointment_requests (
         id, owner_uid, reference_code, patient_name, phone, email, zone, service_id,

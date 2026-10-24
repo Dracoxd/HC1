@@ -10,6 +10,12 @@ interface AppointmentReceipt {
   createdAt: string;
 }
 
+interface PublicSlotSetting {
+  date: string;
+  time: string;
+  blocked: boolean;
+}
+
 function localDateString() {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Manila',
@@ -25,6 +31,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
     language,
     bookingModalOpen,
     setBookingModalOpen,
+    clinicOpen,
     selectedProgramForBooking,
   } = useHealthCenter();
   const [serviceId, setServiceId] = useState('checkup');
@@ -37,7 +44,9 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   const [privacyConsent, setPrivacyConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [availabilityError, setAvailabilityError] = useState('');
   const [receipt, setReceipt] = useState<AppointmentReceipt | null>(null);
+  const [slotSettings, setSlotSettings] = useState<PublicSlotSetting[]>([]);
 
   useEffect(() => {
     if (selectedProgramForBooking && SERVICES_DATA.some((service) => service.id === selectedProgramForBooking)) {
@@ -56,19 +65,57 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
     }
   }, [bookingModalOpen]);
 
+  useEffect(() => {
+    if (!bookingModalOpen) return;
+    let active = true;
+    const loadAvailability = async () => {
+      try {
+        const response = await fetch('/api/appointments', { cache: 'no-store' });
+        const result = await response.json() as { slotSettings?: PublicSlotSetting[]; error?: string };
+        if (!response.ok || !Array.isArray(result.slotSettings)) {
+          throw new Error(result.error || 'Appointment availability could not be loaded.');
+        }
+        if (active) {
+          setSlotSettings(result.slotSettings);
+          setAvailabilityError('');
+        }
+      } catch (caught) {
+        if (active) setAvailabilityError(caught instanceof Error ? caught.message : 'Appointment availability could not be loaded.');
+      }
+    };
+    void loadAvailability();
+    const timer = window.setInterval(() => void loadAvailability(), 3000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [bookingModalOpen]);
+
   if (!bookingModalOpen) return null;
 
   const isFilipino = language === 'fil';
+  const canSubmitAppointment = clinicOpen === true;
   const selectedService = SERVICES_DATA.find((service) => service.id === serviceId) ?? SERVICES_DATA[0];
   const today = localDateString();
+  const dateBlocked = slotSettings.some((setting) => setting.date === preferredDate && setting.time === 'all_day' && setting.blocked);
+  const timeBlocked = slotSettings.some((setting) => setting.date === preferredDate && setting.time === preferredTime && setting.blocked);
+  const slotUnavailable = dateBlocked || timeBlocked;
 
   const handleClose = () => setBookingModalOpen(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+    if (!canSubmitAppointment) {
+      setError(isFilipino ? 'Sarado muna ang pagtanggap ng appointment request.' : 'The clinic is not currently accepting appointment requests.');
+      return;
+    }
     if (phone.replace(/\D/g, '').length < 7) {
       setError(isFilipino ? 'Maglagay ng wastong contact number na may hindi bababa sa 7 digit.' : 'Enter a valid contact number with at least 7 digits.');
+      return;
+    }
+    if (slotUnavailable) {
+      setError(isFilipino ? 'Hindi available ang napiling petsa o oras. Pumili ng ibang schedule.' : 'The selected date or time is unavailable. Please choose another schedule.');
       return;
     }
     setSubmitting(true);
@@ -140,6 +187,13 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="px-5 sm:px-7 py-6 space-y-5">
+            {!canSubmitAppointment && (
+              <p role="status" className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+                {clinicOpen === false
+                  ? (isFilipino ? 'Sarado ngayon ang pagtanggap ng appointment request. Subukan muli kapag bukas na.' : 'The clinic is currently closed to appointment requests. Please try again when it is open.')
+                  : (isFilipino ? 'Tinitingnan ang availability ng appointment...' : 'Checking appointment availability...')}
+              </p>
+            )}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
                 <label htmlFor="appointment-service" className="block text-sm font-semibold text-slate-800 mb-1.5">{isFilipino ? 'Serbisyo' : 'Service'}</label>
@@ -177,6 +231,9 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
               </div>
             </div>
 
+            {slotUnavailable && <p role="status" className="text-sm font-semibold text-rose-800">{isFilipino ? 'Sarado ang napiling petsa o time slot. Pumili ng ibang schedule.' : 'This date or time slot is blocked by clinic staff. Choose a different schedule.'}</p>}
+            {availabilityError && <p role="status" className="text-xs text-amber-800">{isFilipino ? 'Hindi ma-check ang availability. Susuriin muli ang napiling schedule kapag ipinadala.' : 'Availability could not be checked. The server will verify your selected schedule when you submit.'}</p>}
+
             <label className="flex items-start gap-3 border-t border-slate-200 pt-4 text-sm text-slate-600">
               <input type="checkbox" required checked={privacyConsent} onChange={(event) => setPrivacyConsent(event.target.checked)} className="mt-0.5 h-4 w-4 accent-teal-800" />
               <span>{isFilipino ? 'Pumapayag akong gamitin ng health center staff ang aking contact details para suriin at sagutin ang appointment request na ito.' : 'I agree that health center staff may use my contact details to review and respond to this appointment request.'}</span>
@@ -188,7 +245,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
               <p className="flex items-center gap-2 text-xs text-slate-500"><Clock className="w-4 h-4" />{isFilipino ? 'Pending ang request hanggang makumpirma ng staff.' : 'Requests remain pending until staff confirm.'}</p>
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={handleClose} className="px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-md">{isFilipino ? 'Kanselahin' : 'Cancel'}</button>
-                <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-teal-900 hover:bg-teal-950 disabled:opacity-60 rounded-md"><CalendarDays className="w-4 h-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send appointment request')}</button>
+                <button type="submit" disabled={submitting || !canSubmitAppointment} className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-teal-900 hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-60 rounded-md"><CalendarDays className="w-4 h-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send appointment request')}</button>
               </div>
             </div>
           </form>

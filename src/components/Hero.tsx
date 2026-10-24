@@ -5,6 +5,7 @@ import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const Hero: React.FC = () => {
   const { language, setActiveSection, setBookingModalOpen, clinicOpen, clinicStatusError } = useHealthCenter();
+  const bookingEnabled = clinicOpen === true;
 
   const handleScrollTo = (id: string) => {
     setActiveSection(id);
@@ -26,8 +27,8 @@ export const Hero: React.FC = () => {
               Mayor Moises R. Flores Health Center
             </h1>
             <div className="hero-actions mt-7 flex flex-wrap gap-3">
-              <button onClick={() => setBookingModalOpen(true)} className="inline-flex items-center gap-2 bg-white text-[#173a37] px-5 py-3 text-sm font-bold rounded-sm border border-white hover:bg-[#edf3ef] transition-colors">
-                <CalendarDays className="w-4 h-4" /> Request appointment
+              <button disabled={!bookingEnabled} onClick={() => setBookingModalOpen(true)} title={bookingEnabled ? 'Request an appointment' : 'Appointment requests are currently unavailable'} className="inline-flex items-center gap-2 bg-white text-[#173a37] px-5 py-3 text-sm font-bold rounded-sm border border-white hover:bg-[#edf3ef] transition-colors disabled:cursor-not-allowed disabled:opacity-60">
+                <CalendarDays className="w-4 h-4" /> {bookingEnabled ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}
               </button>
               <button onClick={() => handleScrollTo('services')} className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white border border-white/40 rounded-sm hover:border-white hover:bg-white/10 transition-colors">
                 View services <ArrowDown className="w-4 h-4" />

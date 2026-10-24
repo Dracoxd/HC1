@@ -36,6 +36,8 @@ export const AdminPanel: React.FC = () => {
   const [search, setSearch] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [loading, setLoading] = useState(true);
+  const [clinicOpen, setClinicOpen] = useState<boolean | null>(null);
+  const [clinicStatusSaving, setClinicStatusSaving] = useState(false);
   const [error, setError] = useState('');
 
   const loadWorkspace = async () => {
@@ -49,6 +51,16 @@ export const AdminPanel: React.FC = () => {
       if (data.role !== 'admin') throw new Error('This account is not an admin.');
       setAppointments(data.appointments);
       setMessages(data.messages);
+      const statusToken = await user.getIdToken();
+      const statusResponse = await fetch('/api/admin?mode=clinic_status', {
+        headers: { Authorization: `Bearer ${statusToken}` },
+        cache: 'no-store',
+      });
+      const statusData = await statusResponse.json() as { clinicOpen?: boolean; error?: string };
+      if (!statusResponse.ok || typeof statusData.clinicOpen !== 'boolean') {
+        throw new Error(statusData.error || 'Clinic status could not be loaded.');
+      }
+      setClinicOpen(statusData.clinicOpen);
       setError('');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Admin workspace could not be loaded.');
@@ -106,6 +118,30 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
+  const updateClinicStatus = async (isOpen: boolean) => {
+    setClinicStatusSaving(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('Sign in to update clinic status.');
+      const token = await user.getIdToken();
+      const response = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'set_clinic_status', isOpen }),
+      });
+      const result = await response.json() as { clinicOpen?: boolean; error?: string };
+      if (!response.ok || typeof result.clinicOpen !== 'boolean') {
+        throw new Error(result.error || 'Clinic status could not be updated.');
+      }
+      setClinicOpen(result.clinicOpen);
+      setError('');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Clinic status could not be updated.');
+    } finally {
+      setClinicStatusSaving(false);
+    }
+  };
+
   const sendMessage = async (event: FormEvent) => {
     event.preventDefault();
     if (!selected || !chatInput.trim()) return;
@@ -139,7 +175,16 @@ export const AdminPanel: React.FC = () => {
       </header>
 
       <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-8 sm:py-8">
-        <p className="mb-6 text-sm text-[#66736f]">Review appointment requests, contact patients, and manage confirmations.</p>
+        <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <p className="text-sm text-[#66736f]">Review appointment requests, contact patients, and manage confirmations.</p>
+          <div className="flex items-center gap-3 border border-[#dfe6e1] bg-white px-4 py-3">
+            <span className={`h-3 w-3 rounded-full ${clinicOpen === null ? 'bg-slate-400' : clinicOpen ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+            <div className="mr-2"><div className="text-xs font-bold">{clinicOpen === null ? 'LOADING STATUS' : clinicOpen ? 'OPEN NOW' : 'CLOSED NOW'}</div><div className="text-[10px] text-[#66736f]">Public website status</div></div>
+            <button type="button" disabled={clinicStatusSaving || clinicOpen === null} onClick={() => void updateClinicStatus(!clinicOpen)} className={`h-9 px-4 text-xs font-bold text-white disabled:opacity-60 ${clinicOpen ? 'bg-rose-700 hover:bg-rose-800' : 'bg-[#17645c] hover:bg-[#104f49]'}`}>
+              {clinicStatusSaving ? 'Saving...' : clinicOpen === null ? 'Loading...' : clinicOpen ? 'Close now' : 'Open now'}
+            </button>
+          </div>
+        </div>
 
         <section aria-label="Appointment summary" className="mb-6 grid gap-3 sm:grid-cols-3">
           {[

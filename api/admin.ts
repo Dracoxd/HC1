@@ -12,6 +12,7 @@ type ApiResponse = ServerResponse & {
 };
 
 let database: ReturnType<typeof createClient> | undefined;
+let clinicSettingsReady: Promise<void> | null = null;
 
 function getDatabase() {
   const url = process.env.TURSO_DATABASE_URL;
@@ -19,6 +20,25 @@ function getDatabase() {
   if (!url || !authToken) return null;
   database ??= createClient({ url, authToken });
   return database;
+}
+
+async function ensureClinicSettings(db: ReturnType<typeof createClient>) {
+  clinicSettingsReady ??= (async () => {
+    await db.execute(`CREATE TABLE IF NOT EXISTS clinic_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`);
+    await db.execute({
+      sql: `INSERT OR IGNORE INTO clinic_settings (setting_key, setting_value, updated_at)
+            VALUES ('clinic_open', '0', ?)`,
+      args: [new Date().toISOString()],
+    });
+  })().catch((error: unknown) => {
+    clinicSettingsReady = null;
+    throw error;
+  });
+  await clinicSettingsReady;
 }
 
 function text(value: unknown, limit: number) {
@@ -63,7 +83,17 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       message TEXT NOT NULL,
       created_at TEXT NOT NULL
     )`,
+    `CREATE TABLE IF NOT EXISTS clinic_settings (
+      setting_key TEXT PRIMARY KEY,
+      setting_value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )`,
   ], 'write');
+  await db.execute({
+    sql: `INSERT OR IGNORE INTO clinic_settings (setting_key, setting_value, updated_at)
+          VALUES ('clinic_open', '0', ?)`,
+    args: [new Date().toISOString()],
+  });
   const columns = await db.execute('PRAGMA table_info(appointment_requests)');
   const columnNames = new Set(columns.rows.map((column) => String(column.name)));
   if (!columnNames.has('owner_uid')) {
@@ -106,9 +136,25 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
   const db = getDatabase();
   if (!db) return response.status(503).json({ error: 'Turso database is not configured.' });
-  await initializeAdminDatabase(db);
 
+  const mode = new URL(request.url ?? '/', 'http://localhost').searchParams.get('mode');
+  if (request.method === 'GET' && mode === 'clinic_status') {
+    try {
+      await ensureClinicSettings(db);
+      const result = await db.execute("SELECT setting_value, updated_at FROM clinic_settings WHERE setting_key = 'clinic_open'");
+      const setting = result.rows[0];
+      return response.status(200).json({
+        clinicOpen: setting?.setting_value === '1',
+        updatedAt: setting?.updated_at ?? null,
+      });
+    } catch {
+      return response.status(500).json({ error: 'Clinic status could not be loaded.' });
+    }
+  }
+
+  await initializeAdminDatabase(db);
   const admin = isAdmin(decoded);
+
   const body = request.body && typeof request.body === 'object' ? request.body as Record<string, unknown> : {};
   const appointmentId = text(body.appointmentId, 128);
   const referenceCode = text(body.referenceCode, 80);
@@ -145,6 +191,19 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
   const action = text(body.action, 30);
   try {
+    if (action === 'set_clinic_status') {
+      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
+      if (typeof body.isOpen !== 'boolean') return response.status(400).json({ error: 'A valid clinic status is required.' });
+      const updatedAt = new Date().toISOString();
+      await db.execute({
+        sql: `INSERT INTO clinic_settings (setting_key, setting_value, updated_at)
+              VALUES ('clinic_open', ?, ?)
+              ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value, updated_at = excluded.updated_at`,
+        args: [body.isOpen ? '1' : '0', updatedAt],
+      });
+      return response.status(200).json({ clinicOpen: body.isOpen, updatedAt });
+    }
+
     if (action === 'delete_chat') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (!appointmentId) return response.status(400).json({ error: 'Appointment is required.' });

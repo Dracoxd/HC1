@@ -34,6 +34,8 @@ interface HealthCenterContextType {
   setBookingModalOpen: (open: boolean) => void;
   messagesOpen: boolean;
   setMessagesOpen: (open: boolean) => void;
+  clinicOpen: boolean | null;
+  clinicStatusError: string;
   selectedProgramForBooking: string | null;
   openBookingForProgram: (programId: string) => void;
   notificationToast: string | null;
@@ -65,12 +67,45 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
+  const [clinicOpen, setClinicOpen] = useState<boolean | null>(null);
+  const [clinicStatusError, setClinicStatusError] = useState('');
   const [selectedProgramForBooking, setSelectedProgramForBooking] = useState<string | null>(null);
   const [notificationToast, setNotificationToast] = useState<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem('mfhc_language', language);
   }, [language]);
+
+  useEffect(() => {
+    let active = true;
+    const loadClinicStatus = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        const token = await user.getIdToken();
+        const response = await fetch('/api/admin?mode=clinic_status', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+        const result = await response.json() as { clinicOpen?: boolean; error?: string };
+        if (!response.ok || typeof result.clinicOpen !== 'boolean') {
+          throw new Error(result.error || 'Clinic status could not be loaded.');
+        }
+        if (!active) return;
+        setClinicOpen(result.clinicOpen);
+        setClinicStatusError('');
+      } catch (caught) {
+        if (!active) return;
+        setClinicStatusError(caught instanceof Error ? caught.message : 'Clinic status could not be loaded.');
+      }
+    };
+    void loadClinicStatus();
+    const timer = window.setInterval(() => void loadClinicStatus(), 3000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -405,6 +440,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setBookingModalOpen,
         messagesOpen,
         setMessagesOpen,
+        clinicOpen,
+        clinicStatusError,
         selectedProgramForBooking,
         openBookingForProgram,
         notificationToast,

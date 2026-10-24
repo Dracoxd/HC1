@@ -4,14 +4,7 @@ import { CalendarDays, ArrowDown } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const Hero: React.FC = () => {
-  const { language, setActiveSection, setBookingModalOpen } = useHealthCenter();
-  const philippineTime = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Manila', weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: false,
-  }).formatToParts(new Date());
-  const dayName = philippineTime.find((part) => part.type === 'weekday')?.value ?? '';
-  const hour = Number(philippineTime.find((part) => part.type === 'hour')?.value ?? '0');
-  const minute = Number(philippineTime.find((part) => part.type === 'minute')?.value ?? '0');
-  const centerOpen = !['Sat', 'Sun'].includes(dayName) && hour * 60 + minute >= 420 && hour * 60 + minute < 960;
+  const { language, setActiveSection, setBookingModalOpen, clinicOpen, clinicStatusError } = useHealthCenter();
 
   const handleScrollTo = (id: string) => {
     setActiveSection(id);
@@ -41,9 +34,13 @@ export const Hero: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className={`shrink-0 items-center gap-3 border px-6 py-4 text-base font-bold sm:flex ${centerOpen ? 'border-emerald-300/50 bg-emerald-950/45 text-white' : 'border-white/30 bg-slate-950/35 text-white'} md:px-7 md:text-lg max-sm:hidden`}>
-            <span className={`h-4 w-4 rounded-full ${centerOpen ? 'bg-green-500' : 'bg-red-500'}`} />
-            {centerOpen ? (language === 'fil' ? 'Bukas ngayon' : 'Open now') : (language === 'fil' ? 'Sarado ngayon' : 'Closed now')}
+          <div className={`shrink-0 items-center gap-3 border px-6 py-4 text-base font-bold sm:flex ${clinicOpen ? 'border-emerald-300/50 bg-emerald-950/45 text-white' : 'border-white/30 bg-slate-950/35 text-white'} md:px-7 md:text-lg max-sm:hidden`}>
+            <span className={`h-4 w-4 rounded-full ${clinicStatusError ? 'bg-slate-400' : clinicOpen ? 'bg-green-500' : 'bg-red-500'}`} />
+            {clinicStatusError || clinicOpen === null
+              ? (language === 'fil' ? 'Hindi available ang status' : 'Status unavailable')
+              : clinicOpen
+                ? (language === 'fil' ? 'Bukas ngayon' : 'Open now')
+                : (language === 'fil' ? 'Sarado ngayon' : 'Closed now')}
           </div>
           </div>
         </div>

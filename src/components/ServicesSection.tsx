@@ -45,7 +45,6 @@ export const ServicesSection: React.FC = () => {
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-950">{t.servicesTitle}</h2>
             <p className="mt-3 text-base text-slate-600">Schedules, locations, and service requirements.</p>
           </div>
-          <button onClick={() => openBookingForProgram('checkup')} className="text-sm font-bold text-teal-900 underline underline-offset-4">Request a doctor appointment</button>
         </div>
 
         <div className="flex gap-1 overflow-x-auto border-y border-[#dfe6e1] mb-6" role="tablist" aria-label="Filter health services">

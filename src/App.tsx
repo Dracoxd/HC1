@@ -4,7 +4,7 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { RouteFinder } from './components/RouteFinder';
 import { ServicesSection } from './components/ServicesSection';
-
+import { PublicInformation } from './components/PublicInformation';
 import { Footer } from './components/Footer';
 import { OutreachBookingModal } from './components/OutreachBookingModal';
 import { CheckCircle2 } from 'lucide-react';
@@ -19,6 +19,7 @@ const AppContent: React.FC = () => {
       <main className="flex-1">
         <Hero />
         <RouteFinder />
+        <PublicInformation />
         <ServicesSection />
       </main>
 

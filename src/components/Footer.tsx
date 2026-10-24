@@ -1,10 +1,10 @@
 import React from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { CalendarDays } from 'lucide-react';
+
 import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const Footer: React.FC = () => {
-  const { t, setActiveSection, setBookingModalOpen } = useHealthCenter();
+  const { t, setActiveSection } = useHealthCenter();
 
   const handleNavClick = (id: string) => {
     setActiveSection(id);
@@ -24,7 +24,6 @@ export const Footer: React.FC = () => {
           <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-white/80">
             <button onClick={() => handleNavClick('overview')} className="hover:text-white">Home</button>
             <button onClick={() => handleNavClick('services')} className="hover:text-white">{t.navServices}</button>
-            <button onClick={() => setBookingModalOpen(true)} className="inline-flex items-center gap-1.5 font-semibold text-white"><CalendarDays className="w-4 h-4" />Request appointment</button>
           </nav>
         </div>
         <div className="mt-7 pt-5 border-t border-white/15 text-xs text-white/60">

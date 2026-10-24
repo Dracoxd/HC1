@@ -17,6 +17,7 @@ export const Header: React.FC = () => {
 
   const navLinks = [
     { id: 'overview', label: 'Home' },
+    { id: 'clinic-information', label: 'Information' },
     { id: 'services', label: t.navServices },
   ];
 

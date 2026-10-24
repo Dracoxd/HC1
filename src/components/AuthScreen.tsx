@@ -33,39 +33,43 @@ export const AuthScreen: React.FC = () => {
 
     setBusy(true);
     try {
-      const baseName = name.trim();
-      let createdOrSignedIn = false;
-      let lastInvalidError: unknown = null;
+      const identifier = name.trim();
+      if (identifier.includes('@')) {
+        await signInWithEmailAndPassword(auth, identifier.toLowerCase(), password);
+      } else {
+        let createdOrSignedIn = false;
+        let lastInvalidError: unknown = null;
 
-      for (let suffix = 0; suffix < 1000 && !createdOrSignedIn; suffix += 1) {
-        const candidateName = suffix === 0 ? baseName : `${baseName}${suffix}`;
-        const email = usernameToEmail(candidateName);
+        for (let suffix = 0; suffix < 1000 && !createdOrSignedIn; suffix += 1) {
+          const candidateName = suffix === 0 ? identifier : `${identifier}${suffix}`;
+          const email = usernameToEmail(candidateName);
 
-        try {
-          await signInWithEmailAndPassword(auth, email, password);
-          createdOrSignedIn = true;
-        } catch (signInError) {
-          lastInvalidError = signInError;
-          const code = signInError instanceof Error && 'code' in signInError ? String((signInError as { code: string }).code) : '';
-
-          if (code === 'auth/user-not-found') {
-            const credential = await createUserWithEmailAndPassword(auth, email, password);
-            await updateProfile(credential.user, { displayName: candidateName });
+          try {
+            await signInWithEmailAndPassword(auth, email, password);
             createdOrSignedIn = true;
-          } else if (code === 'auth/invalid-credential') {
-            const methods = await fetchSignInMethodsForEmail(auth, email);
-            if (methods.length === 0) {
+          } catch (signInError) {
+            lastInvalidError = signInError;
+            const code = signInError instanceof Error && 'code' in signInError ? String((signInError as { code: string }).code) : '';
+
+            if (code === 'auth/user-not-found') {
               const credential = await createUserWithEmailAndPassword(auth, email, password);
               await updateProfile(credential.user, { displayName: candidateName });
               createdOrSignedIn = true;
+            } else if (code === 'auth/invalid-credential') {
+              const methods = await fetchSignInMethodsForEmail(auth, email);
+              if (methods.length === 0) {
+                const credential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(credential.user, { displayName: candidateName });
+                createdOrSignedIn = true;
+              }
+            } else {
+              throw signInError;
             }
-          } else {
-            throw signInError;
           }
         }
-      }
 
-      if (!createdOrSignedIn) throw lastInvalidError;
+        if (!createdOrSignedIn) throw lastInvalidError;
+      }
     } catch (caught) {
       const code = caught instanceof Error && 'code' in caught ? String((caught as { code: string }).code) : '';
       if (code === 'auth/operation-not-allowed') setError('Enable Email/Password and Anonymous sign-in in Firebase Console.');
@@ -106,15 +110,15 @@ export const AuthScreen: React.FC = () => {
         <div className="px-6 py-7 sm:px-8">
           <h1 className="text-2xl font-bold">Sign in</h1>
           <p className="mt-2 text-sm leading-relaxed text-[#66736f]">
-            Enter your name and password. Duplicate names receive a number automatically.
+            Enter your name and password, or sign in with your email account.
           </p>
 
           <form onSubmit={submit} className="mt-6 space-y-4">
             <label className="block">
-              <span className="mb-2 block text-xs font-bold text-[#17312e]">Name</span>
+              <span className="mb-2 block text-xs font-bold text-[#17312e]">Name or email</span>
               <div className="relative">
                 <UserRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#66736f]" />
-                <input value={name} onChange={(event) => setName(event.target.value)} autoComplete="username" placeholder="Enter your name" className="h-11 w-full border border-[#cfd8d2] bg-white pl-10 pr-3 text-sm outline-none transition-colors focus:border-[#17645c] focus:ring-2 focus:ring-[#17645c]/15" />
+                <input value={name} onChange={(event) => setName(event.target.value)} autoComplete="username" placeholder="Enter your name or email" className="h-11 w-full border border-[#cfd8d2] bg-white pl-10 pr-3 text-sm outline-none transition-colors focus:border-[#17645c] focus:ring-2 focus:ring-[#17645c]/15" />
               </div>
             </label>
 

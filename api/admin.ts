@@ -84,7 +84,11 @@ async function authenticate(request: ApiRequest) {
 function isAdmin(decoded: Awaited<ReturnType<ReturnType<typeof getFirebaseAdmin>['verifyIdToken']>>) {
   if (decoded.admin === true) return true;
   const allowedUid = process.env.ADMIN_UIDS?.split(',').map((uid) => uid.trim()).filter(Boolean) ?? [];
-  return allowedUid.includes(decoded.uid);
+  if (allowedUid.includes(decoded.uid)) return true;
+  const allowedEmails = process.env.ADMIN_EMAILS?.split(',').map((email) => email.trim().toLowerCase()).filter(Boolean) ?? [];
+  return decoded.email_verified === true
+    && typeof decoded.email === 'string'
+    && allowedEmails.includes(decoded.email.toLowerCase());
 }
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {

@@ -116,7 +116,7 @@ export const AdminPanel: React.FC = () => {
           <div className="max-h-[260px] overflow-y-auto lg:max-h-[calc(100vh-125px)]">
             {loading ? <p className="p-4 text-sm text-[#66736f]">Loading...</p> : appointments.map((appointment) => (
               <button key={appointment.id} type="button" onClick={() => setSelectedId(appointment.id)} className={`w-full border-b border-[#edf1ee] px-4 py-4 text-left hover:bg-[#f4f7f4] ${selectedId === appointment.id ? 'bg-[#edf3ef]' : 'bg-white'}`}>
-                <div className="flex items-start justify-between gap-3"><div><div className="text-sm font-bold">{appointment.patient_name}</div><div className="mt-1 text-xs text-[#66736f]">{appointment.service_name}</div></div><span className={`mt-0.5 px-2 py-1 text-[10px] font-bold ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status}</span></div>
+                <div className="flex items-start justify-between gap-3"><div><div className="text-sm font-bold">{appointment.patient_name}</div><div className="mt-1 text-xs text-[#66736f]">{appointment.service_name}</div></div><span className={`mt-0.5 px-2 py-1 text-[10px] font-bold ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'cancelled' || appointment.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status}</span></div>
                 <div className="mt-2 text-xs text-[#66736f]">{appointment.preferred_date} · {appointment.preferred_time}</div>
               </button>
             ))}
@@ -135,8 +135,8 @@ export const AdminPanel: React.FC = () => {
                 <p className="mt-1 text-sm text-[#66736f]">{selected.service_name}</p>
                 <div className="mt-5 space-y-2 text-xs text-[#66736f]"><div>{selected.preferred_date}</div><div>{selected.preferred_time}</div><div>{selected.zone}</div><div>{selected.phone}</div>{selected.email && <div>{selected.email}</div>}</div>
                 <div className="mt-6 grid gap-2">
-                  <button type="button" disabled={selected.status === 'confirmed'} onClick={() => void performAction('approve', selected)} className="flex h-10 items-center justify-center gap-2 bg-[#17645c] text-sm font-bold text-white disabled:opacity-50"><Check className="h-4 w-4" />Approve</button>
-                  <button type="button" disabled={selected.status === 'cancelled'} onClick={() => void performAction('cancel', selected)} className="flex h-10 items-center justify-center gap-2 border border-rose-300 text-sm font-bold text-rose-700 disabled:opacity-50"><X className="h-4 w-4" />Cancel</button>
+                  <button type="button" disabled={selected.status === 'confirmed' || selected.status === 'rejected' || selected.status === 'cancelled'} onClick={() => void performAction('approve', selected)} className="flex h-10 items-center justify-center gap-2 bg-[#17645c] text-sm font-bold text-white disabled:opacity-50"><Check className="h-4 w-4" />Accept</button>
+                  <button type="button" disabled={selected.status === 'rejected' || selected.status === 'cancelled'} onClick={() => void performAction('reject', selected)} className="flex h-10 items-center justify-center gap-2 border border-rose-300 text-sm font-bold text-rose-700 disabled:opacity-50"><X className="h-4 w-4" />Reject</button>
                   <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex h-10 items-center justify-center gap-2 border border-[#cfd8d2] text-sm font-bold text-[#17312e]"><LockKeyhole className="h-4 w-4" />{selected.chat_status === 'closed' ? 'Open chat' : 'Close chat'}</button>
                 </div>
               </div>

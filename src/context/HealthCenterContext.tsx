@@ -75,13 +75,14 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const loadData = async () => {
       try {
+        const token = await user.getIdToken();
         const [patientsResponse, contactsResponse, appointmentsResponse] = await Promise.all([
           fetch('/api/health-data', { headers: { 'x-user-id': user.uid, 'x-resource': 'patients' } }),
           fetch('/api/health-data', { headers: { 'x-user-id': user.uid, 'x-resource': 'contacts' } }),
-          fetch('/api/appointments', { headers: { 'x-user-id': user.uid } }),
+          fetch('/api/appointments', { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         if (appointmentsResponse.ok) {
-          const result = await appointmentsResponse.json() as { appointments?: Array<{ id: string; reference_code: string; service_name: string; patient_name: string; zone: string; preferred_date: string; preferred_time: string; status: 'pending' | 'Confirmed' | 'Cancelled'; created_at: string }> };
+          const result = await appointmentsResponse.json() as { appointments?: Array<{ id: string; reference_code: string; service_name: string; patient_name: string; zone: string; preferred_date: string; preferred_time: string; status: string; created_at: string }> };
           setAppointments((result.appointments ?? []).map((item) => ({
             id: item.id,
             referenceCode: item.reference_code,
@@ -94,7 +95,13 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
             zone: item.zone,
             appointmentDate: item.preferred_date,
             timeSlot: item.preferred_time,
-            status: item.status === 'Cancelled' ? 'Cancelled' : item.status === 'Confirmed' ? 'Confirmed' : 'Pending',
+            status: item.status.toLowerCase() === 'cancelled'
+              ? 'Cancelled'
+              : item.status.toLowerCase() === 'rejected'
+                ? 'Rejected'
+                : item.status.toLowerCase() === 'confirmed'
+                  ? 'Confirmed'
+                  : 'Pending',
             createdAt: item.created_at,
           })));
         }

@@ -37,10 +37,6 @@ function getFirebaseAdmin() {
 
 async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
   await db.batch([
-    `ALTER TABLE appointment_requests ADD COLUMN owner_uid TEXT`,
-    `ALTER TABLE appointment_requests ADD COLUMN chat_status TEXT NOT NULL DEFAULT 'open'`,
-  ], 'write').catch(() => undefined);
-  await db.batch([
     `CREATE TABLE IF NOT EXISTS appointment_requests (
       id TEXT PRIMARY KEY,
       owner_uid TEXT,
@@ -68,6 +64,14 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       created_at TEXT NOT NULL
     )`,
   ], 'write');
+  const columns = await db.execute('PRAGMA table_info(appointment_requests)');
+  const columnNames = new Set(columns.rows.map((column) => String(column.name)));
+  if (!columnNames.has('owner_uid')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN owner_uid TEXT');
+  }
+  if (!columnNames.has('chat_status')) {
+    await db.execute("ALTER TABLE appointment_requests ADD COLUMN chat_status TEXT NOT NULL DEFAULT 'closed'");
+  }
 }
 
 async function authenticate(request: ApiRequest) {
@@ -104,7 +108,6 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   const body = request.body && typeof request.body === 'object' ? request.body as Record<string, unknown> : {};
   const appointmentId = text(body.appointmentId, 128);
   const referenceCode = text(body.referenceCode, 80);
-  const ownerUid = text(body.ownerUid, 128);
 
   if (request.method === 'GET') {
     try {
@@ -138,10 +141,10 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
   const action = text(body.action, 30);
   try {
-    if (action === 'approve' || action === 'cancel') {
+    if (action === 'approve' || action === 'reject' || action === 'cancel') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (!appointmentId && !referenceCode) return response.status(400).json({ error: 'Appointment is required.' });
-      const status = action === 'approve' ? 'confirmed' : 'cancelled';
+      const status = action === 'approve' ? 'confirmed' : action === 'reject' ? 'rejected' : 'cancelled';
       const result = appointmentId
         ? await db.execute({ sql: 'UPDATE appointment_requests SET status = ? WHERE id = ?', args: [status, appointmentId] })
         : await db.execute({ sql: 'UPDATE appointment_requests SET status = ? WHERE reference_code = ?', args: [status, referenceCode] });

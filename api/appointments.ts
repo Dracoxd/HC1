@@ -2,8 +2,10 @@ import 'dotenv/config';
 import { createClient } from '@libsql/client';
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
-type ApiRequest = IncomingMessage & { body?: unknown };
+type ApiRequest = IncomingMessage & { body?: unknown; headers: IncomingMessage['headers'] & { authorization?: string } };
 type ApiResponse = ServerResponse & {
   status: (code: number) => ApiResponse;
   json: (body: unknown) => void;
@@ -35,32 +37,69 @@ function text(value: unknown, limit: number) {
   return typeof value === 'string' ? value.trim().slice(0, limit) : '';
 }
 
+function getFirebaseAdmin() {
+  if (getApps().length > 0) return getAuth();
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const credential = serviceAccountJson
+    ? cert(JSON.parse(serviceAccountJson))
+    : applicationDefault();
+  initializeApp({ credential });
+  return getAuth();
+}
+
+async function authenticate(request: ApiRequest) {
+  const authorization = text(request.headers.authorization, 2000);
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  if (!token) return null;
+  try {
+    return await getFirebaseAdmin().verifyIdToken(token);
+  } catch {
+    return null;
+  }
+}
+
+async function ensureAppointmentTable(db: ReturnType<typeof createClient>) {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS appointment_requests (
+      id TEXT PRIMARY KEY,
+      owner_uid TEXT,
+      reference_code TEXT NOT NULL UNIQUE,
+      patient_name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      email TEXT,
+      zone TEXT NOT NULL,
+      service_id TEXT NOT NULL,
+      service_name TEXT NOT NULL,
+      preferred_date TEXT NOT NULL,
+      preferred_time TEXT NOT NULL,
+      privacy_consent INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      chat_status TEXT NOT NULL DEFAULT 'closed',
+      created_at TEXT NOT NULL
+    )
+  `);
+  const columns = await db.execute('PRAGMA table_info(appointment_requests)');
+  const columnNames = new Set(columns.rows.map((column) => String(column.name)));
+  if (!columnNames.has('owner_uid')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN owner_uid TEXT');
+  }
+  if (!columnNames.has('chat_status')) {
+    await db.execute("ALTER TABLE appointment_requests ADD COLUMN chat_status TEXT NOT NULL DEFAULT 'closed'");
+  }
+}
+
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   response.setHeader('Cache-Control', 'no-store');
 
   if (request.method === 'GET') {
+    const token = text(request.headers.authorization, 2000);
+    const decoded = token ? await authenticate(request) : null;
+    if (token && !decoded) return response.status(401).json({ error: 'Authentication is required.' });
     const db = getDatabase();
     if (!db) return response.status(503).json({ error: 'Schedule data is temporarily unavailable.' });
 
     try {
-      await db.execute(`
-        CREATE TABLE IF NOT EXISTS appointment_requests (
-          id TEXT PRIMARY KEY,
-          owner_uid TEXT,
-          reference_code TEXT NOT NULL UNIQUE,
-          patient_name TEXT NOT NULL,
-          phone TEXT NOT NULL,
-          email TEXT,
-          zone TEXT NOT NULL,
-          service_id TEXT NOT NULL,
-          service_name TEXT NOT NULL,
-          preferred_date TEXT NOT NULL,
-          preferred_time TEXT NOT NULL,
-          privacy_consent INTEGER NOT NULL,
-          status TEXT NOT NULL DEFAULT 'pending',
-          created_at TEXT NOT NULL
-        )
-      `);
+      await ensureAppointmentTable(db);
       const result = await db.execute(`
         SELECT preferred_date, preferred_time, COUNT(*) AS booked_count
         FROM appointment_requests
@@ -74,11 +113,10 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         bookedCount: Number(row.booked_count),
       }));
 
-      const ownerUid = text(request.headers['x-user-id'], 128);
-      if (ownerUid) {
+      if (decoded) {
         const appointments = await db.execute({
           sql: `SELECT * FROM appointment_requests WHERE owner_uid = ? ORDER BY preferred_date ASC, preferred_time ASC`,
-          args: [ownerUid],
+          args: [decoded.uid],
         });
         return response.status(200).json({ slots, appointments: appointments.rows });
       }
@@ -93,6 +131,9 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     return response.status(405).json({ error: 'Method not allowed.' });
   }
 
+  const decoded = await authenticate(request);
+  if (!decoded) return response.status(401).json({ error: 'Sign in before requesting an appointment.' });
+
   const body = request.body && typeof request.body === 'object'
     ? request.body as Record<string, unknown>
     : {};
@@ -103,7 +144,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   const serviceId = text(body.serviceId, 40);
   const preferredDate = text(body.preferredDate, 10);
   const preferredTime = text(body.preferredTime, 30);
-  const ownerUid = text(request.headers['x-user-id'], 128);
+  const ownerUid = decoded.uid;
 
   if (body.action === 'cancel') {
     const referenceCode = text(body.referenceCode, 80);
@@ -122,20 +163,21 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   const dateIsValid = /^\d{4}-\d{2}-\d{2}$/.test(preferredDate)
     && !Number.isNaN(Date.parse(`${preferredDate}T00:00:00Z`))
     && new Date(`${preferredDate}T00:00:00Z`).toISOString().slice(0, 10) === preferredDate;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
 
-  if (
-    patientName.length < 2 ||
-    phoneDigits.length < 7 ||
-    (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ||
-    !zones.has(zone) ||
-    !services[serviceId] ||
-    !dateIsValid || preferredDate < today ||
-    !preferredTimes.has(preferredTime) ||
-    body.privacyConsent !== true
-  ) {
-    return response.status(400).json({ error: 'Check the form fields and consent, then try again.' });
-  }
+  if (patientName.length < 2) return response.status(400).json({ error: 'Enter a valid full name.' });
+  if (phoneDigits.length < 7) return response.status(400).json({ error: 'Enter a contact number with at least 7 digits.' });
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return response.status(400).json({ error: 'Enter a valid email address or leave it blank.' });
+  if (!zones.has(zone)) return response.status(400).json({ error: 'Select a valid zone or barangay.' });
+  if (!services[serviceId]) return response.status(400).json({ error: 'Select a valid service.' });
+  if (!dateIsValid || preferredDate < today) return response.status(400).json({ error: 'Choose a valid appointment date that is today or later.' });
+  if (!preferredTimes.has(preferredTime)) return response.status(400).json({ error: 'Select a valid time slot.' });
+  if (body.privacyConsent !== true) return response.status(400).json({ error: 'Please agree to the contact and privacy consent.' });
 
   const db = getDatabase();
   if (!db) return response.status(503).json({ error: 'Appointment requests are temporarily unavailable.' });
@@ -145,24 +187,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   const createdAt = new Date().toISOString();
 
   try {
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS appointment_requests (
-        id TEXT PRIMARY KEY,
-        reference_code TEXT NOT NULL UNIQUE,
-        patient_name TEXT NOT NULL,
-        phone TEXT NOT NULL,
-        email TEXT,
-        zone TEXT NOT NULL,
-        service_id TEXT NOT NULL,
-        service_name TEXT NOT NULL,
-        preferred_date TEXT NOT NULL,
-        preferred_time TEXT NOT NULL,
-        privacy_consent INTEGER NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending',
-        chat_status TEXT NOT NULL DEFAULT 'closed',
-        created_at TEXT NOT NULL
-      )
-    `);
+    await ensureAppointmentTable(db);
     await db.execute({
       sql: `INSERT INTO appointment_requests (
         id, owner_uid, reference_code, patient_name, phone, email, zone, service_id,

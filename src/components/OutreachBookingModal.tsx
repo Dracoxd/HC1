@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { SERVICES_DATA } from '../data/healthCenterData';
 import { AlertCircle, CalendarDays, CheckCircle2, Clock, X } from 'lucide-react';
+import { auth } from '../firebase';
 
 interface AppointmentReceipt {
   referenceCode: string;
@@ -10,9 +11,12 @@ interface AppointmentReceipt {
 }
 
 function localDateString() {
-  const date = new Date();
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 10);
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
 }
 
 export const OutreachBookingModal: React.FC = () => {
@@ -63,12 +67,19 @@ export const OutreachBookingModal: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+    if (phone.replace(/\D/g, '').length < 7) {
+      setError(isFilipino ? 'Maglagay ng wastong contact number na may hindi bababa sa 7 digit.' : 'Enter a valid contact number with at least 7 digits.');
+      return;
+    }
     setSubmitting(true);
 
     try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('Sign in before requesting an appointment.');
+      const token = await user.getIdToken();
       const response = await fetch('/api/appointments', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           patientName,
           phone,
@@ -131,7 +142,7 @@ export const OutreachBookingModal: React.FC = () => {
               </div>
               <div>
                 <label htmlFor="appointment-phone" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formPhone} *</label>
-                <input id="appointment-phone" required type="tel" autoComplete="tel" minLength={7} maxLength={32} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="09XX XXX XXXX" className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
+                <input id="appointment-phone" required type="tel" inputMode="tel" autoComplete="tel" minLength={7} maxLength={32} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="09XX XXX XXXX" className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
               <div>
                 <label htmlFor="appointment-email" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formEmail}</label>

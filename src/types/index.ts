@@ -105,7 +105,7 @@ export interface AppointmentBooking {
   timeSlot: string;
   philHealthNumber?: string;
   notes?: string;
-  status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled';
+  status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'Rejected';
   createdAt: string;
 }
 

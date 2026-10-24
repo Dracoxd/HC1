@@ -61,11 +61,51 @@ const AppContent: React.FC<{ user: User }> = ({ user }) => {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [accountRole, setAccountRole] = useState<'checking' | 'admin' | 'user' | 'error'>('checking');
+  const [roleError, setRoleError] = useState('');
 
   useEffect(() => onAuthStateChanged(auth, (nextUser) => {
     setUser(nextUser);
     setAuthLoading(false);
   }), []);
+
+  useEffect(() => {
+    if (!user) {
+      setAccountRole('checking');
+      setRoleError('');
+      return;
+    }
+
+    let active = true;
+    setAccountRole('checking');
+    void (async () => {
+      try {
+        const token = await user.getIdToken();
+        const response = await fetch('/api/admin?mode=role', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+        const data = await response.json() as { role?: string; error?: string };
+        if (!response.ok || (data.role !== 'admin' && data.role !== 'user')) {
+          throw new Error(data.error || 'Your account role could not be verified.');
+        }
+        if (!active) return;
+        setAccountRole(data.role);
+        setRoleError('');
+        if (data.role === 'user' && window.location.pathname === '/admin') {
+          window.history.replaceState(null, '', '/');
+        }
+      } catch (caught) {
+        if (!active) return;
+        setRoleError(caught instanceof Error ? caught.message : 'Your account role could not be verified.');
+        setAccountRole('error');
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   if (authLoading) {
     return (
@@ -77,7 +117,24 @@ export default function App() {
 
   if (!user) return <AuthScreen />;
 
-  if (window.location.pathname === '/admin') return <AdminPanel />;
+  if (accountRole === 'checking') {
+    return (
+      <main className="flex min-h-dvh items-center justify-center bg-[#eef2ee] text-sm font-bold text-[#173a37]">
+        Checking account access...
+      </main>
+    );
+  }
+
+  if (accountRole === 'error') {
+    return (
+      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[#eef2ee] px-5 text-center text-[#173a37]">
+        <p role="alert" className="max-w-md text-sm">{roleError}</p>
+        <button type="button" onClick={() => void auth.signOut()} className="border border-[#b9c7be] px-4 py-2 text-sm font-bold">Sign out and try again</button>
+      </main>
+    );
+  }
+
+  if (accountRole === 'admin') return <AdminPanel />;
 
   return (
     <HealthCenterProvider>

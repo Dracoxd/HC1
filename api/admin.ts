@@ -100,6 +100,10 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   const decoded = await authenticate(request);
   if (!decoded) return response.status(401).json({ error: 'Authentication is required.' });
 
+  if (request.method === 'GET' && new URL(request.url ?? '/', 'http://localhost').searchParams.get('mode') === 'role') {
+    return response.status(200).json({ role: isAdmin(decoded) ? 'admin' : 'user' });
+  }
+
   const db = getDatabase();
   if (!db) return response.status(503).json({ error: 'Turso database is not configured.' });
   await initializeAdminDatabase(db);

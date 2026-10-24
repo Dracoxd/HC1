@@ -35,7 +35,29 @@ export const AuthScreen: React.FC = () => {
     try {
       const identifier = name.trim();
       if (identifier.includes('@')) {
-        await signInWithEmailAndPassword(auth, identifier.toLowerCase(), password);
+        const email = identifier.toLowerCase();
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (signInError) {
+          const code = signInError instanceof Error && 'code' in signInError
+            ? String((signInError as { code: string }).code)
+            : '';
+          if (code !== 'auth/user-not-found' && code !== 'auth/invalid-credential') {
+            throw signInError;
+          }
+
+          try {
+            const credential = await createUserWithEmailAndPassword(auth, email, password);
+            const displayName = email.slice(0, email.indexOf('@')).replace(/[._-]+/g, ' ').trim();
+            await updateProfile(credential.user, { displayName });
+          } catch (createError) {
+            const createCode = createError instanceof Error && 'code' in createError
+              ? String((createError as { code: string }).code)
+              : '';
+            if (createCode === 'auth/email-already-in-use') throw signInError;
+            throw createError;
+          }
+        }
       } else {
         let createdOrSignedIn = false;
         let lastInvalidError: unknown = null;
@@ -73,6 +95,8 @@ export const AuthScreen: React.FC = () => {
     } catch (caught) {
       const code = caught instanceof Error && 'code' in caught ? String((caught as { code: string }).code) : '';
       if (code === 'auth/operation-not-allowed') setError('Enable Email/Password and Anonymous sign-in in Firebase Console.');
+      else if (code === 'auth/email-already-in-use') setError('An account already uses this email. Sign in with its password.');
+      else if (code === 'auth/invalid-email') setError('Enter a valid email address.');
       else if (code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password') setError('Name or password is incorrect.');
 
       else setError('Authentication could not be completed.');

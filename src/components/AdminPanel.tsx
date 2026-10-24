@@ -112,7 +112,7 @@ export const AdminPanel: React.FC = () => {
       const response = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ action: 'message', appointmentId: selected.id, message: chatInput.trim(), senderName: 'Clinic Staff' }),
+        body: JSON.stringify({ action: 'message', appointmentId: selected.id, message: chatInput.trim(), senderName: 'ADMIN' }),
       });
       if (!response.ok) throw new Error('Message could not be sent.');
       setChatInput('');
@@ -128,7 +128,7 @@ export const AdminPanel: React.FC = () => {
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center bg-[#17645c] text-white"><CalendarCheck2 className="h-5 w-5" /></div>
-            <div><div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#17645c]">Health center staff</div><h1 className="mt-0.5 text-lg font-bold">Appointment management</h1></div>
+            <div><div className="flex items-center gap-2"><span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#17645c]">Health center staff</span><span className="border border-[#b7d6cc] bg-[#edf7f2] px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-[#17645c]">ADMIN</span></div><h1 className="mt-0.5 text-lg font-bold">Appointment management</h1></div>
           </div>
           <button type="button" onClick={() => void auth.signOut()} className="border border-[#d9e1dc] px-4 py-2 text-sm font-bold text-[#66736f] hover:bg-[#f4f6f3] hover:text-[#17312e]">Sign out</button>
         </div>

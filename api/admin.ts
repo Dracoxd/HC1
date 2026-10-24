@@ -176,7 +176,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       await db.execute({
         sql: `INSERT INTO appointment_messages (id, appointment_id, sender_uid, sender_role, sender_name, message, created_at)
               VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        args: [id, appointmentId, decoded.uid, admin ? 'admin' : 'user', admin ? 'Clinic Staff' : text(body.senderName, 120) || 'Patient', message, new Date().toISOString()],
+        args: [id, appointmentId, decoded.uid, admin ? 'admin' : 'user', admin ? 'ADMIN' : text(body.senderName, 120) || 'Patient', message, new Date().toISOString()],
       });
       return response.status(201).json({ id, message });
     }

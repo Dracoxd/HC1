@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { Menu, X, Globe, CalendarDays, LogOut } from 'lucide-react';
+import { Menu, X, Globe, CalendarDays, LogOut, Mail } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -12,7 +12,8 @@ export const Header: React.FC = () => {
     toggleLanguage,
     activeSection,
     setActiveSection,
-    setBookingModalOpen
+    setBookingModalOpen,
+    setMessagesOpen,
   } = useHealthCenter();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -75,6 +76,9 @@ export const Header: React.FC = () => {
               <CalendarDays className="w-4 h-4" />
               <span>Request appointment</span>
             </button>
+            <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-slate-600 hover:bg-[#edf3ef] hover:text-[#17645c]" aria-label="Messages" title="Messages">
+              <Mail className="h-5 w-5" />
+            </button>
             <button type="button" onClick={() => void signOut(auth)} className="p-2 text-slate-600 hover:text-[#173a37]" aria-label="Sign out" title="Sign out">
               <LogOut className="w-4 h-4" />
             </button>
@@ -88,6 +92,9 @@ export const Header: React.FC = () => {
               title={language === 'en' ? 'Filipino' : 'English'}
             >
               <Globe className="w-5 h-5" />
+            </button>
+            <button type="button" onClick={() => setMessagesOpen(true)} className="sm:hidden p-2 text-slate-600 hover:text-[#17645c]" aria-label="Messages" title="Messages">
+              <Mail className="h-5 w-5" />
             </button>
             <button type="button" onClick={() => void signOut(auth)} className="sm:hidden p-2 text-slate-600 hover:text-[#173a37]" aria-label="Sign out" title="Sign out">
               <LogOut className="w-5 h-5" />

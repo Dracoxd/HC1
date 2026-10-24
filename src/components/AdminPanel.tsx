@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { auth } from '../firebase';
-import { CalendarCheck2, CalendarDays, Check, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, X } from 'lucide-react';
+import { CalendarCheck2, CalendarDays, Check, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, Trash2, X } from 'lucide-react';
 
 interface AppointmentRow {
   id: string;
@@ -86,6 +86,7 @@ export const AdminPanel: React.FC = () => {
   }, [appointments, search, statusFilter]);
 
   const performAction = async (action: string, appointment: AppointmentRow) => {
+    if (action === 'delete_chat' && !window.confirm('Delete all messages in this chat for both you and the patient? This cannot be undone.')) return;
     try {
       const user = auth.currentUser;
       if (!user) return;
@@ -95,7 +96,10 @@ export const AdminPanel: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ action, appointmentId: appointment.id }),
       });
-      if (!response.ok) throw new Error('The action could not be completed.');
+      if (!response.ok) {
+        const result = await response.json() as { error?: string };
+        throw new Error(result.error || 'The action could not be completed.');
+      }
       await loadWorkspace();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'The action could not be completed.');
@@ -211,6 +215,7 @@ export const AdminPanel: React.FC = () => {
                   <div className="flex items-center gap-3 border-b border-[#dfe6e1] bg-white px-5 py-4">
                     <div className="flex h-9 w-9 items-center justify-center bg-[#edf3ef] text-[#17645c]"><MessageCircle className="h-4 w-4" /></div>
                     <div><h3 className="text-sm font-bold">Patient conversation</h3><p className="mt-0.5 text-[11px] text-[#66736f]">{selected.chat_status === 'closed' ? 'Open chat to send messages' : 'Chat is open with the patient'}</p></div>
+                    <button type="button" onClick={() => void performAction('delete_chat', selected)} className="ml-auto inline-flex items-center gap-1.5 border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50" title="Delete this chat for both accounts"><Trash2 className="h-4 w-4" /><span className="hidden sm:inline">Delete chat</span></button>
                   </div>
                   <div className="flex-1 space-y-3 overflow-y-auto px-5 py-5">
                     {selectedMessages.map((message) => (

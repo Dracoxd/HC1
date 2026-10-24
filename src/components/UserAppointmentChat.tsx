@@ -1,6 +1,7 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, MessageCircle, Send } from 'lucide-react';
+import { ChevronLeft, MessageCircle, Send, X } from 'lucide-react';
 import { auth } from '../firebase';
+import { useHealthCenter } from '../context/HealthCenterContext';
 
 interface UserAppointment {
   id: string;
@@ -23,6 +24,7 @@ interface UserMessage {
 }
 
 export const UserAppointmentChat: React.FC = () => {
+  const { messagesOpen, setMessagesOpen } = useHealthCenter();
   const [appointments, setAppointments] = useState<UserAppointment[]>([]);
   const [messages, setMessages] = useState<UserMessage[]>([]);
   const [selectedId, setSelectedId] = useState('');
@@ -59,13 +61,16 @@ export const UserAppointmentChat: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!messagesOpen) return;
     void loadChat();
     const timer = window.setInterval(() => void loadChat(), 3000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [messagesOpen]);
 
   const selected = useMemo(() => appointments.find((appointment) => appointment.id === selectedId), [appointments, selectedId]);
   const selectedMessages = useMemo(() => messages.filter((message) => message.appointment_id === selectedId), [messages, selectedId]);
+
+  if (!messagesOpen) return null;
 
   const sendMessage = async (event: FormEvent) => {
     event.preventDefault();
@@ -91,10 +96,14 @@ export const UserAppointmentChat: React.FC = () => {
   };
 
   return (
-    <section className="border-b border-[#dfe6e1] bg-[#f8faf7] py-10">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-        <div className="mb-5"><div className="text-xs font-bold text-[#17645c]">Your appointments</div><h2 className="mt-1 text-2xl font-bold text-[#17312e]">Messages</h2></div>
-        <div className="overflow-hidden border border-[#dfe6e1] bg-white lg:grid lg:grid-cols-[300px_1fr]">
+    <section role="dialog" aria-modal="true" aria-labelledby="messages-title" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setMessagesOpen(false); }}>
+      <div className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden border border-[#dfe6e1] bg-[#f8faf7] shadow-2xl">
+        <header className="flex items-center justify-between border-b border-[#dfe6e1] bg-white px-5 py-4">
+          <div><div className="text-xs font-bold text-[#17645c]">Your appointments</div><h2 id="messages-title" className="mt-1 text-xl font-bold text-[#17312e]">Messages</h2></div>
+          <button type="button" onClick={() => setMessagesOpen(false)} aria-label="Close messages" className="p-2 text-[#66736f] hover:bg-[#f1f4f1]"><X className="h-5 w-5" /></button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="overflow-hidden bg-white lg:grid lg:grid-cols-[300px_1fr]">
           <aside className={`${selected ? 'hidden lg:block' : 'block'} border-b border-[#dfe6e1] lg:border-b-0 lg:border-r`}>
             {appointments.map((appointment) => (
               <button key={appointment.id} type="button" onClick={() => setSelectedId(appointment.id)} className={`w-full border-b border-[#edf1ee] px-4 py-4 text-left hover:bg-[#f4f7f4] ${selectedId === appointment.id ? 'bg-[#edf3ef]' : ''}`}>
@@ -122,6 +131,7 @@ export const UserAppointmentChat: React.FC = () => {
           </div>
         </div>
         {error && <p role="alert" className="mt-3 text-xs text-rose-800">{error}</p>}
+        </div>
       </div>
     </section>
   );

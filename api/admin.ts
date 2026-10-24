@@ -145,6 +145,21 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
   const action = text(body.action, 30);
   try {
+    if (action === 'delete_chat') {
+      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
+      if (!appointmentId) return response.status(400).json({ error: 'Appointment is required.' });
+      const appointment = await db.execute({
+        sql: 'SELECT id FROM appointment_requests WHERE id = ?',
+        args: [appointmentId],
+      });
+      if (appointment.rows.length === 0) return response.status(404).json({ error: 'Appointment not found.' });
+      await db.batch([
+        { sql: 'DELETE FROM appointment_messages WHERE appointment_id = ?', args: [appointmentId] },
+        { sql: "UPDATE appointment_requests SET chat_status = 'closed' WHERE id = ?", args: [appointmentId] },
+      ], 'write');
+      return response.status(200).json({ appointmentId, deleted: true });
+    }
+
     if (action === 'approve' || action === 'reject' || action === 'cancel') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (!appointmentId && !referenceCode) return response.status(400).json({ error: 'Appointment is required.' });

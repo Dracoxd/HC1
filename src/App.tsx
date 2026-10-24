@@ -40,12 +40,12 @@ const AppContent: React.FC<{ user: User }> = ({ user }) => {
         <RouteFinder />
         <PublicInformation />
         <AppointmentSchedule />
-        <UserAppointmentChat />
         <ServicesSection />
       </main>
 
       <Footer />
 
+      <UserAppointmentChat />
       <OutreachBookingModal user={user} />
 
       {notificationToast && (

@@ -32,6 +32,8 @@ interface HealthCenterContextType {
   submitContact: (data: { name: string; phone: string; email: string; zone: string; topic: string; message: string }) => ContactSubmission;
   bookingModalOpen: boolean;
   setBookingModalOpen: (open: boolean) => void;
+  messagesOpen: boolean;
+  setMessagesOpen: (open: boolean) => void;
   selectedProgramForBooking: string | null;
   openBookingForProgram: (programId: string) => void;
   notificationToast: string | null;
@@ -62,6 +64,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [contactSubmissions, setContactSubmissions] = useState<ContactSubmission[]>([]);
 
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [messagesOpen, setMessagesOpen] = useState(false);
   const [selectedProgramForBooking, setSelectedProgramForBooking] = useState<string | null>(null);
   const [notificationToast, setNotificationToast] = useState<string | null>(null);
 
@@ -400,6 +403,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         submitContact,
         bookingModalOpen,
         setBookingModalOpen,
+        messagesOpen,
+        setMessagesOpen,
         selectedProgramForBooking,
         openBookingForProgram,
         notificationToast,

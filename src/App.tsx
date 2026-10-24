@@ -23,6 +23,8 @@ const AppContent: React.FC<{ user: User }> = ({ user }) => {
       const detail = (event as CustomEvent<{ status: string; referenceCode: string }>).detail;
       setNotificationToast(detail.status === 'confirmed'
         ? `Appointment ${detail.referenceCode} approved.`
+        : detail.status === 'completed'
+          ? `Appointment ${detail.referenceCode} marked completed and removed from the public schedule.`
         : detail.status === 'rejected' || detail.status === 'cancelled'
           ? `Appointment ${detail.referenceCode} ${detail.status}.`
           : `Appointment ${detail.referenceCode} updated.`);

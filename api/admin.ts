@@ -96,6 +96,12 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       updated_at TEXT NOT NULL,
       PRIMARY KEY (appointment_date, time_slot)
     )`,
+    `CREATE TABLE IF NOT EXISTS appointment_chat_reads (
+      appointment_id TEXT NOT NULL,
+      user_uid TEXT NOT NULL,
+      read_at TEXT NOT NULL,
+      PRIMARY KEY (appointment_id, user_uid)
+    )`,
   ], 'write');
   await db.execute({
     sql: `INSERT OR IGNORE INTO clinic_settings (setting_key, setting_value, updated_at)
@@ -163,6 +169,27 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   await initializeAdminDatabase(db);
   const admin = isAdmin(decoded);
 
+  if (request.method === 'GET' && mode === 'unread_messages') {
+    if (admin) return response.status(200).json({ unreadCount: 0 });
+    try {
+      const result = await db.execute({
+        sql: `SELECT COUNT(*) AS unread_count
+              FROM appointment_messages AS message
+              JOIN appointment_requests AS appointment ON appointment.id = message.appointment_id
+              LEFT JOIN appointment_chat_reads AS chat_read
+                ON chat_read.appointment_id = appointment.id AND chat_read.user_uid = ?
+              WHERE appointment.owner_uid = ?
+                AND appointment.chat_status != 'deleted'
+                AND message.sender_role = 'admin'
+                AND (chat_read.read_at IS NULL OR message.created_at > chat_read.read_at)`,
+        args: [decoded.uid, decoded.uid],
+      });
+      return response.status(200).json({ unreadCount: Number(result.rows[0]?.unread_count ?? 0) });
+    } catch {
+      return response.status(500).json({ error: 'Unread messages could not be loaded.' });
+    }
+  }
+
   const body = request.body && typeof request.body === 'object' ? request.body as Record<string, unknown> : {};
   const appointmentId = text(body.appointmentId, 128);
   const referenceCode = text(body.referenceCode, 80);
@@ -170,7 +197,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   if (request.method === 'GET') {
     try {
       if (admin) {
-        const appointments = await db.execute(`SELECT * FROM appointment_requests ORDER BY created_at DESC`);
+        const appointments = await db.execute(`SELECT * FROM appointment_requests ORDER BY created_at DESC, id DESC`);
         const messages = await db.execute(`SELECT * FROM appointment_messages ORDER BY created_at ASC`);
         const slotSettings = await db.execute(`SELECT appointment_date, time_slot, capacity, blocked FROM appointment_slot_settings ORDER BY appointment_date ASC, time_slot ASC`);
         return response.status(200).json({
@@ -201,6 +228,29 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
   const action = text(body.action, 30);
   try {
+    if (action === 'mark_chat_read') {
+      if (admin) return response.status(403).json({ error: 'Only patient accounts can mark patient messages as read.' });
+      if (!appointmentId) return response.status(400).json({ error: 'Appointment is required.' });
+      const appointment = await db.execute({
+        sql: "SELECT id FROM appointment_requests WHERE id = ? AND owner_uid = ? AND chat_status != 'deleted'",
+        args: [appointmentId, decoded.uid],
+      });
+      if (appointment.rows.length === 0) return response.status(404).json({ error: 'Appointment conversation not found.' });
+      const latestMessage = await db.execute({
+        sql: "SELECT MAX(created_at) AS latest_read_at FROM appointment_messages WHERE appointment_id = ? AND sender_role = 'admin'",
+        args: [appointmentId],
+      });
+      const readAt = latestMessage.rows[0]?.latest_read_at;
+      if (typeof readAt !== 'string') return response.status(200).json({ appointmentId, markedRead: true });
+      await db.execute({
+        sql: `INSERT INTO appointment_chat_reads (appointment_id, user_uid, read_at)
+              VALUES (?, ?, ?)
+              ON CONFLICT(appointment_id, user_uid) DO UPDATE SET read_at = excluded.read_at`,
+        args: [appointmentId, decoded.uid, readAt],
+      });
+      return response.status(200).json({ appointmentId, markedRead: true });
+    }
+
     if (action === 'set_clinic_status') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (typeof body.isOpen !== 'boolean') return response.status(400).json({ error: 'A valid clinic status is required.' });
@@ -277,10 +327,13 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       return response.status(200).json({ appointmentId, deleted: true });
     }
 
-    if (action === 'approve' || action === 'reject' || action === 'cancel') {
+    if (action === 'approve' || action === 'reject' || action === 'cancel' || action === 'complete') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (!appointmentId && !referenceCode) return response.status(400).json({ error: 'Appointment is required.' });
-      const status = action === 'approve' ? 'confirmed' : action === 'reject' ? 'rejected' : 'cancelled';
+      const status = action === 'approve' ? 'confirmed'
+        : action === 'reject' ? 'rejected'
+          : action === 'complete' ? 'completed'
+            : 'cancelled';
       const result = action === 'approve'
         ? await db.execute({
           sql: `UPDATE appointment_requests SET status = 'confirmed'
@@ -310,6 +363,10 @@ export default async function handler(request: ApiRequest, response: ApiResponse
                 )`,
           args: [appointmentId || referenceCode],
         })
+        : action === 'complete'
+          ? appointmentId
+            ? await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed' WHERE id = ? AND status = 'confirmed'", args: [appointmentId] })
+            : await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed' WHERE reference_code = ? AND status = 'confirmed'", args: [referenceCode] })
         : appointmentId
           ? await db.execute({ sql: 'UPDATE appointment_requests SET status = ? WHERE id = ?', args: [status, appointmentId] })
           : await db.execute({ sql: 'UPDATE appointment_requests SET status = ? WHERE reference_code = ?', args: [status, referenceCode] });
@@ -334,6 +391,13 @@ export default async function handler(request: ApiRequest, response: ApiResponse
           return response.status(409).json({ error: 'This time slot has reached its appointment limit. Increase the capacity or choose another request.' });
         }
         return response.status(409).json({ error: 'This appointment could not be accepted. Refresh and try again.' });
+      }
+      if (result.rowsAffected === 0 && action === 'complete') {
+        const target = appointmentId
+          ? await db.execute({ sql: 'SELECT status FROM appointment_requests WHERE id = ?', args: [appointmentId] })
+          : await db.execute({ sql: 'SELECT status FROM appointment_requests WHERE reference_code = ?', args: [referenceCode] });
+        if (target.rows.length === 0) return response.status(404).json({ error: 'Appointment not found.' });
+        return response.status(409).json({ error: 'Only accepted appointments can be marked completed.' });
       }
       if (result.rowsAffected === 0) return response.status(404).json({ error: 'Appointment not found.' });
       return response.status(200).json({ appointmentId, status });

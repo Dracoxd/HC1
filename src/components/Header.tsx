@@ -15,6 +15,8 @@ export const Header: React.FC = () => {
     setBookingModalOpen,
     clinicOpen,
     setMessagesOpen,
+    unreadAdminMessageCount,
+    unreadMessagesError,
   } = useHealthCenter();
   const bookingEnabled = clinicOpen === true;
 
@@ -78,8 +80,9 @@ export const Header: React.FC = () => {
               <CalendarDays className="w-4 h-4" />
               <span>{bookingEnabled ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</span>
             </button>
-            <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-slate-600 hover:bg-[#edf3ef] hover:text-[#17645c]" aria-label="Messages" title="Messages">
+            <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-slate-600 hover:bg-[#edf3ef] hover:text-[#17645c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
               <Mail className="h-5 w-5" />
+              {unreadAdminMessageCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">{unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}</span>}
             </button>
             <button type="button" onClick={() => void signOut(auth)} className="p-2 text-slate-600 hover:text-[#173a37]" aria-label="Sign out" title="Sign out">
               <LogOut className="w-4 h-4" />
@@ -95,8 +98,9 @@ export const Header: React.FC = () => {
             >
               <Globe className="w-5 h-5" />
             </button>
-            <button type="button" onClick={() => setMessagesOpen(true)} className="sm:hidden p-2 text-slate-600 hover:text-[#17645c]" aria-label="Messages" title="Messages">
+            <button type="button" onClick={() => setMessagesOpen(true)} className="sm:hidden relative p-2 text-slate-600 hover:text-[#17645c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
               <Mail className="h-5 w-5" />
+              {unreadAdminMessageCount > 0 && <span aria-hidden="true" className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">{unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}</span>}
             </button>
             <button type="button" onClick={() => void signOut(auth)} className="sm:hidden p-2 text-slate-600 hover:text-[#173a37]" aria-label="Sign out" title="Sign out">
               <LogOut className="w-5 h-5" />

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useState, useEffect } from 'react';
 import { auth } from '../firebase';
 import {
   Language,
@@ -36,6 +36,9 @@ interface HealthCenterContextType {
   setMessagesOpen: (open: boolean) => void;
   clinicOpen: boolean | null;
   clinicStatusError: string;
+  unreadAdminMessageCount: number;
+  unreadMessagesError: string;
+  markAppointmentMessagesRead: (appointmentId: string) => Promise<void>;
   selectedProgramForBooking: string | null;
   openBookingForProgram: (programId: string) => void;
   notificationToast: string | null;
@@ -69,6 +72,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [messagesOpen, setMessagesOpen] = useState(false);
   const [clinicOpen, setClinicOpen] = useState<boolean | null>(null);
   const [clinicStatusError, setClinicStatusError] = useState('');
+  const [unreadAdminMessageCount, setUnreadAdminMessageCount] = useState(0);
+  const [unreadMessagesError, setUnreadMessagesError] = useState('');
   const [selectedProgramForBooking, setSelectedProgramForBooking] = useState<string | null>(null);
   const [notificationToast, setNotificationToast] = useState<string | null>(null);
 
@@ -116,6 +121,54 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   }, []);
 
+  const refreshUnreadAdminMessages = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    const token = await user.getIdToken();
+    const response = await fetch('/api/admin?mode=unread_messages', {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+    const result = await response.json() as { unreadCount?: number; error?: string };
+    if (!response.ok || typeof result.unreadCount !== 'number') {
+      throw new Error(result.error || 'Unread messages could not be loaded.');
+    }
+    setUnreadAdminMessageCount(result.unreadCount);
+    setUnreadMessagesError('');
+  }, []);
+
+  const markAppointmentMessagesRead = useCallback(async (appointmentId: string) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Sign in to view appointment messages.');
+    const token = await user.getIdToken();
+    const response = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action: 'mark_chat_read', appointmentId }),
+    });
+    const result = await response.json() as { error?: string };
+    if (!response.ok) throw new Error(result.error || 'Messages could not be marked as read.');
+    await refreshUnreadAdminMessages();
+  }, [refreshUnreadAdminMessages]);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      try {
+        await refreshUnreadAdminMessages();
+      } catch (caught) {
+        if (!active) return;
+        setUnreadMessagesError(caught instanceof Error ? caught.message : 'Unread messages could not be loaded.');
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 3000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [refreshUnreadAdminMessages]);
+
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
@@ -146,6 +199,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
               ? 'Cancelled'
               : item.status.toLowerCase() === 'rejected'
                 ? 'Rejected'
+                : item.status.toLowerCase() === 'completed'
+                  ? 'Completed'
                 : item.status.toLowerCase() === 'confirmed'
                   ? 'Confirmed'
                   : 'Pending',
@@ -452,6 +507,9 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setMessagesOpen,
         clinicOpen,
         clinicStatusError,
+        unreadAdminMessageCount,
+        unreadMessagesError,
+        markAppointmentMessagesRead,
         selectedProgramForBooking,
         openBookingForProgram,
         notificationToast,

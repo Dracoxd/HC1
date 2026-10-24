@@ -37,7 +37,7 @@ export const ServicesSection: React.FC = () => {
     : SERVICES_DATA.filter((service) => service.category === activeCategory);
 
   return (
-    <section id="services" className="py-14 sm:py-18 bg-[#fbfcfa] border-b border-[#dfe6e1]">
+    <section id="services" className="services-enter py-14 sm:py-18 bg-[#fbfcfa] border-b border-[#dfe6e1]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-8">
           <div className="max-w-2xl">
@@ -55,7 +55,7 @@ export const ServicesSection: React.FC = () => {
               role="tab"
               aria-selected={activeCategory === category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`px-4 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${activeCategory === category.id ? 'border-[#17645c] text-[#173a37]' : 'border-transparent text-[#66736f] hover:text-[#173a37]'}`}
+              className={`px-4 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition-colors duration-200 ${activeCategory === category.id ? 'border-[#17645c] text-[#173a37]' : 'border-transparent text-[#66736f] hover:text-[#173a37]'}`}
             >
               {category.label}
             </button>
@@ -64,7 +64,7 @@ export const ServicesSection: React.FC = () => {
 
         <div className="border-t border-[#cfd8d2]">
           {filteredServices.map((service, index) => (
-            <article key={service.id} className="grid md:grid-cols-[minmax(220px,1.2fr)_minmax(260px,0.8fr)_auto] gap-4 md:gap-8 items-center py-5 border-b border-[#dfe6e1]">
+            <article key={service.id} className="service-row grid md:grid-cols-[minmax(220px,1.2fr)_minmax(260px,0.8fr)_auto] gap-4 md:gap-8 items-center py-5 border-b border-[#dfe6e1] transition-colors duration-200 hover:bg-[#f2f6f2]">
               <div className="flex items-start gap-4">
                 <div className="w-9 h-9 flex items-center justify-center text-[#17645c] border border-[#bfd0c5] shrink-0">
                   {iconForService(service.category)}

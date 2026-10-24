@@ -30,13 +30,13 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#fbfcfa]/95 backdrop-blur-md border-b border-[#dfe6e1]">
+    <header className="header-enter sticky top-0 z-40 bg-[#fbfcfa]/95 backdrop-blur-md border-b border-[#dfe6e1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-6 h-[68px]">
           <a
             href="#overview"
             onClick={(e) => { e.preventDefault(); handleNavClick('overview'); }}
-            className="text-[15px] font-bold text-[#18312e] hover:text-[#0d625a] transition-colors whitespace-nowrap shrink-0 flex items-center gap-3"
+            className="text-[15px] font-bold text-[#18312e] hover:text-[#0d625a] transition-colors duration-200 whitespace-nowrap shrink-0 flex items-center gap-3"
           >
             <img src={centerPhoto} alt="Mr. Flores Health Center" className="w-11 h-11 rounded-sm object-cover border border-[#dfe6e1]" />
             <span title={t.brand}>Mayor Moises R. Flores <span className="hidden sm:inline">Health Center</span></span>

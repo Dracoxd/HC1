@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { auth } from '../firebase';
-import { CalendarCheck2, Check, ChevronLeft, LockKeyhole, MessageCircle, Send, X } from 'lucide-react';
+import { CalendarCheck2, CalendarDays, Check, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, X } from 'lucide-react';
 
 interface AppointmentRow {
   id: string;
@@ -32,6 +32,8 @@ export const AdminPanel: React.FC = () => {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -63,6 +65,25 @@ export const AdminPanel: React.FC = () => {
 
   const selected = useMemo(() => appointments.find((appointment) => appointment.id === selectedId), [appointments, selectedId]);
   const selectedMessages = useMemo(() => messages.filter((message) => message.appointment_id === selectedId), [messages, selectedId]);
+  const counts = useMemo(() => ({
+    pending: appointments.filter((appointment) => appointment.status === 'pending').length,
+    confirmed: appointments.filter((appointment) => appointment.status === 'confirmed').length,
+    rejected: appointments.filter((appointment) => appointment.status === 'rejected' || appointment.status === 'cancelled').length,
+  }), [appointments]);
+  const filteredAppointments = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return appointments.filter((appointment) => {
+      const matchesStatus = statusFilter === 'all'
+        || (statusFilter === 'rejected' ? ['rejected', 'cancelled'].includes(appointment.status) : appointment.status === statusFilter);
+      const matchesSearch = !query || [
+        appointment.patient_name,
+        appointment.reference_code,
+        appointment.service_name,
+        appointment.phone,
+      ].some((value) => value.toLowerCase().includes(query));
+      return matchesStatus && matchesSearch;
+    });
+  }, [appointments, search, statusFilter]);
 
   const performAction = async (action: string, appointment: AppointmentRow) => {
     try {
@@ -102,59 +123,108 @@ export const AdminPanel: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[#eef2ee] text-[#17312e]">
-      <header className="border-b border-[#dfe6e1] bg-[#fbfcfa] px-5 py-4 sm:px-8">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div><div className="text-xs font-bold text-[#17645c]">Clinic administration</div><h1 className="mt-1 text-xl font-bold">Appointments</h1></div>
-          <button type="button" onClick={() => void auth.signOut()} className="text-sm font-bold text-[#66736f] hover:text-[#17312e]">Sign out</button>
+    <main className="min-h-screen bg-[#f4f6f3] text-[#17312e]">
+      <header className="border-b border-[#dfe6e1] bg-white px-5 py-4 sm:px-8">
+        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center bg-[#17645c] text-white"><CalendarCheck2 className="h-5 w-5" /></div>
+            <div><div className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#17645c]">Health center staff</div><h1 className="mt-0.5 text-lg font-bold">Appointment management</h1></div>
+          </div>
+          <button type="button" onClick={() => void auth.signOut()} className="border border-[#d9e1dc] px-4 py-2 text-sm font-bold text-[#66736f] hover:bg-[#f4f6f3] hover:text-[#17312e]">Sign out</button>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl lg:grid-cols-[320px_1fr]">
-        <aside className="border-b border-[#dfe6e1] bg-white lg:min-h-[calc(100vh-73px)] lg:border-b-0 lg:border-r">
-          <div className="border-b border-[#dfe6e1] px-4 py-3 text-xs font-bold text-[#66736f]">Requests</div>
-          <div className="max-h-[260px] overflow-y-auto lg:max-h-[calc(100vh-125px)]">
-            {loading ? <p className="p-4 text-sm text-[#66736f]">Loading...</p> : appointments.map((appointment) => (
-              <button key={appointment.id} type="button" onClick={() => setSelectedId(appointment.id)} className={`w-full border-b border-[#edf1ee] px-4 py-4 text-left hover:bg-[#f4f7f4] ${selectedId === appointment.id ? 'bg-[#edf3ef]' : 'bg-white'}`}>
-                <div className="flex items-start justify-between gap-3"><div><div className="text-sm font-bold">{appointment.patient_name}</div><div className="mt-1 text-xs text-[#66736f]">{appointment.service_name}</div></div><span className={`mt-0.5 px-2 py-1 text-[10px] font-bold ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'cancelled' || appointment.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status}</span></div>
-                <div className="mt-2 text-xs text-[#66736f]">{appointment.preferred_date} · {appointment.preferred_time}</div>
-              </button>
-            ))}
-          </div>
-        </aside>
+      <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-8 sm:py-8">
+        <p className="mb-6 text-sm text-[#66736f]">Review appointment requests, contact patients, and manage confirmations.</p>
 
-        <section className="min-h-[520px] bg-[#f6f8f5]">
-          {!selected ? (
-            <div className="flex min-h-[520px] items-center justify-center text-sm text-[#66736f]">Select a request</div>
-          ) : (
-            <div className="grid min-h-[520px] lg:grid-cols-[280px_1fr]">
-              <div className="border-b border-[#dfe6e1] bg-white p-5 lg:border-b-0 lg:border-r">
-                <button type="button" onClick={() => setSelectedId('')} className="mb-4 flex items-center gap-1 text-xs font-bold text-[#17645c] lg:hidden"><ChevronLeft className="h-4 w-4" />Back</button>
-                <div className="text-xs font-bold text-[#17645c]">{selected.reference_code}</div>
-                <h2 className="mt-1 text-lg font-bold">{selected.patient_name}</h2>
-                <p className="mt-1 text-sm text-[#66736f]">{selected.service_name}</p>
-                <div className="mt-5 space-y-2 text-xs text-[#66736f]"><div>{selected.preferred_date}</div><div>{selected.preferred_time}</div><div>{selected.zone}</div><div>{selected.phone}</div>{selected.email && <div>{selected.email}</div>}</div>
-                <div className="mt-6 grid gap-2">
-                  <button type="button" disabled={selected.status === 'confirmed' || selected.status === 'rejected' || selected.status === 'cancelled'} onClick={() => void performAction('approve', selected)} className="flex h-10 items-center justify-center gap-2 bg-[#17645c] text-sm font-bold text-white disabled:opacity-50"><Check className="h-4 w-4" />Accept</button>
-                  <button type="button" disabled={selected.status === 'rejected' || selected.status === 'cancelled'} onClick={() => void performAction('reject', selected)} className="flex h-10 items-center justify-center gap-2 border border-rose-300 text-sm font-bold text-rose-700 disabled:opacity-50"><X className="h-4 w-4" />Reject</button>
-                  <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex h-10 items-center justify-center gap-2 border border-[#cfd8d2] text-sm font-bold text-[#17312e]"><LockKeyhole className="h-4 w-4" />{selected.chat_status === 'closed' ? 'Open chat' : 'Close chat'}</button>
-                </div>
-              </div>
+        <section aria-label="Appointment summary" className="mb-6 grid gap-3 sm:grid-cols-3">
+          {[
+            { label: 'Awaiting review', value: counts.pending, icon: Clock3, color: 'text-amber-700', bg: 'bg-amber-50' },
+            { label: 'Accepted', value: counts.confirmed, icon: Check, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+            { label: 'Rejected or cancelled', value: counts.rejected, icon: X, color: 'text-rose-700', bg: 'bg-rose-50' },
+          ].map(({ label, value, icon: Icon, color, bg }) => (
+            <div key={label} className="flex items-center gap-4 border border-[#dfe6e1] bg-white p-4">
+              <div className={`flex h-10 w-10 items-center justify-center ${bg} ${color}`}><Icon className="h-5 w-5" /></div>
+              <div><div className="text-2xl font-bold leading-none">{value}</div><div className="mt-1.5 text-xs font-medium text-[#66736f]">{label}</div></div>
+            </div>
+          ))}
+        </section>
 
-              <div className="flex min-h-[520px] flex-col">
-                <div className="flex items-center gap-2 border-b border-[#dfe6e1] bg-white px-5 py-3 text-sm font-bold"><MessageCircle className="h-4 w-4 text-[#17645c]" />Messages<span className="ml-auto text-xs font-normal text-[#66736f]">{selected.chat_status === 'closed' ? 'Chat closed' : 'Chat open'}</span></div>
-                <div className="flex-1 space-y-2 overflow-y-auto px-5 py-5">
-                  {selectedMessages.map((message) => (
-                    <div key={message.id} className={`flex ${message.sender_role === 'admin' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm ${message.sender_role === 'admin' ? 'rounded-br-sm bg-[#17645c] text-white' : 'rounded-bl-sm bg-white text-[#17312e] shadow-sm'}`}><div>{message.message}</div><div className={`mt-1 text-[10px] ${message.sender_role === 'admin' ? 'text-white/70' : 'text-[#66736f]'}`}>{message.sender_name}</div></div></div>
-                  ))}
-                  {selectedMessages.length === 0 && <p className="text-center text-xs text-[#66736f]">No messages yet</p>}
-                </div>
-                {selected.chat_status === 'open' && (
-                  <form onSubmit={sendMessage} className="flex gap-2 border-t border-[#dfe6e1] bg-white p-3"><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Message patient" className="min-w-0 flex-1 rounded-full border border-[#cfd8d2] px-4 text-sm outline-none focus:border-[#17645c]" /><button type="submit" aria-label="Send message" className="flex h-10 w-10 items-center justify-center rounded-full bg-[#17645c] text-white"><Send className="h-4 w-4" /></button></form>
-                )}
+        <section className="grid overflow-hidden border border-[#dfe6e1] bg-white lg:min-h-[640px] lg:grid-cols-[350px_minmax(0,1fr)]">
+          <aside className="border-b border-[#dfe6e1] lg:border-b-0 lg:border-r">
+            <div className="border-b border-[#edf1ee] p-4">
+              <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">Appointment requests</h2><span className="text-xs text-[#66736f]">{filteredAppointments.length} shown</span></div>
+              <label className="flex h-10 items-center gap-2 border border-[#d9e1dc] px-3 text-[#66736f] focus-within:border-[#17645c]">
+                <Search className="h-4 w-4 shrink-0" />
+                <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search patient or reference" className="min-w-0 flex-1 text-xs text-[#17312e] outline-none" />
+              </label>
+              <div className="mt-3 flex gap-1 overflow-x-auto">
+                {[
+                  ['all', 'All'],
+                  ['pending', 'Pending'],
+                  ['confirmed', 'Accepted'],
+                  ['rejected', 'Rejected'],
+                ].map(([value, label]) => (
+                  <button key={value} type="button" onClick={() => setStatusFilter(value)} className={`whitespace-nowrap px-3 py-1.5 text-xs font-bold ${statusFilter === value ? 'bg-[#173a37] text-white' : 'bg-[#f1f4f1] text-[#66736f] hover:bg-[#e7ede8]'}`}>{label}</button>
+                ))}
               </div>
             </div>
-          )}
+            <div className="max-h-[420px] overflow-y-auto lg:max-h-[calc(100vh-360px)]">
+              {loading ? <p className="p-5 text-sm text-[#66736f]">Loading requests...</p> : filteredAppointments.map((appointment) => (
+                <button key={appointment.id} type="button" onClick={() => setSelectedId(appointment.id)} className={`w-full border-b border-[#edf1ee] border-l-2 px-4 py-4 text-left transition-colors hover:bg-[#f5f8f5] ${selectedId === appointment.id ? 'border-l-[#17645c] bg-[#f0f5f1]' : 'border-l-transparent'}`}>
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="truncate text-sm font-bold">{appointment.patient_name}</div><div className="mt-1 truncate text-xs text-[#66736f]">{appointment.service_name}</div></div><span className={`shrink-0 px-2 py-1 text-[10px] font-bold uppercase ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'cancelled' || appointment.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status}</span></div>
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-[#66736f]"><span>{appointment.preferred_date} · {appointment.preferred_time}</span><span className="font-mono">{appointment.reference_code}</span></div>
+                </button>
+              ))}
+              {!loading && filteredAppointments.length === 0 && <p className="p-5 text-sm text-[#66736f]">{appointments.length ? 'No requests match these filters.' : 'No appointment requests yet.'}</p>}
+            </div>
+          </aside>
+
+          <section className="min-w-0 bg-[#f8faf8]">
+            {!selected ? (
+              <div className="flex min-h-[420px] flex-col items-center justify-center px-6 text-center">
+                <CalendarDays className="h-9 w-9 text-[#9aaba0]" />
+                <h2 className="mt-4 text-base font-bold">Select an appointment request</h2>
+                <p className="mt-1 max-w-sm text-sm text-[#66736f]">Patient details, review actions, and messages will appear here.</p>
+              </div>
+            ) : (
+              <div className="grid min-h-[640px] xl:grid-cols-[minmax(230px,0.7fr)_minmax(320px,1.3fr)]">
+                <div className="border-b border-[#dfe6e1] bg-white p-5 xl:border-b-0 xl:border-r">
+                  <button type="button" onClick={() => setSelectedId('')} className="mb-4 flex items-center gap-1 text-xs font-bold text-[#17645c] lg:hidden"><ChevronLeft className="h-4 w-4" />Back to requests</button>
+                  <div className="flex items-start justify-between gap-3"><div><div className="text-[11px] font-bold uppercase tracking-wide text-[#17645c]">Request details</div><div className="mt-1 font-mono text-xs text-[#66736f]">{selected.reference_code}</div></div><span className={`px-2 py-1 text-[10px] font-bold uppercase ${selected.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : selected.status === 'cancelled' || selected.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{selected.status}</span></div>
+                  <h2 className="mt-5 text-xl font-bold">{selected.patient_name}</h2>
+                  <p className="mt-1 text-sm text-[#66736f]">{selected.service_name}</p>
+                  <dl className="mt-6 space-y-4 border-y border-[#edf1ee] py-5 text-sm">
+                    <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Preferred appointment</dt><dd className="mt-1 font-medium">{selected.preferred_date} · {selected.preferred_time}</dd></div>
+                    <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Barangay</dt><dd className="mt-1 font-medium">{selected.zone}</dd></div>
+                    <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Contact number</dt><dd className="mt-1 font-medium">{selected.phone}</dd></div>
+                    {selected.email && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Email</dt><dd className="mt-1 break-all font-medium">{selected.email}</dd></div>}
+                  </dl>
+                  <div className="mt-5 grid gap-2">
+                    <button type="button" disabled={selected.status === 'confirmed' || selected.status === 'rejected' || selected.status === 'cancelled'} onClick={() => void performAction('approve', selected)} className="flex h-10 items-center justify-center gap-2 bg-[#17645c] text-sm font-bold text-white hover:bg-[#104f49] disabled:cursor-not-allowed disabled:opacity-50"><Check className="h-4 w-4" />Accept request</button>
+                    <button type="button" disabled={selected.status === 'rejected' || selected.status === 'cancelled'} onClick={() => void performAction('reject', selected)} className="flex h-10 items-center justify-center gap-2 border border-rose-200 text-sm font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"><X className="h-4 w-4" />Reject request</button>
+                    <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex h-10 items-center justify-center gap-2 border border-[#d9e1dc] text-sm font-bold hover:bg-[#f4f6f3]"><LockKeyhole className="h-4 w-4" />{selected.chat_status === 'closed' ? 'Open patient chat' : 'Close patient chat'}</button>
+                  </div>
+                </div>
+
+                <div className="flex min-h-[520px] flex-col">
+                  <div className="flex items-center gap-3 border-b border-[#dfe6e1] bg-white px-5 py-4">
+                    <div className="flex h-9 w-9 items-center justify-center bg-[#edf3ef] text-[#17645c]"><MessageCircle className="h-4 w-4" /></div>
+                    <div><h3 className="text-sm font-bold">Patient conversation</h3><p className="mt-0.5 text-[11px] text-[#66736f]">{selected.chat_status === 'closed' ? 'Open chat to send messages' : 'Chat is open with the patient'}</p></div>
+                  </div>
+                  <div className="flex-1 space-y-3 overflow-y-auto px-5 py-5">
+                    {selectedMessages.map((message) => (
+                      <div key={message.id} className={`flex ${message.sender_role === 'admin' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${message.sender_role === 'admin' ? 'rounded-br-sm bg-[#17645c] text-white' : 'rounded-bl-sm border border-[#e5ebe6] bg-white text-[#17312e]'}`}><div className="whitespace-pre-wrap break-words">{message.message}</div><div className={`mt-1.5 text-[10px] ${message.sender_role === 'admin' ? 'text-white/70' : 'text-[#66736f]'}`}>{message.sender_name}</div></div></div>
+                    ))}
+                    {selectedMessages.length === 0 && <div className="flex h-full min-h-40 items-center justify-center text-center text-xs text-[#87938c]">No messages for this request yet.</div>}
+                  </div>
+                  {selected.chat_status === 'open' ? (
+                    <form onSubmit={sendMessage} className="flex gap-2 border-t border-[#dfe6e1] bg-white p-4"><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} maxLength={2000} placeholder="Write a message to the patient..." className="min-w-0 flex-1 border border-[#d9e1dc] px-4 text-sm outline-none focus:border-[#17645c]" /><button type="submit" disabled={!chatInput.trim()} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#17645c] text-white hover:bg-[#104f49] disabled:opacity-50"><Send className="h-4 w-4" /></button></form>
+                  ) : <div className="border-t border-[#dfe6e1] bg-white px-5 py-4 text-center text-xs text-[#66736f]">This conversation is closed. Open patient chat to reply.</div>}
+                </div>
+              </div>
+            )}
+          </section>
         </section>
       </div>
       {error && <div role="alert" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 border border-rose-200 bg-white px-4 py-3 text-sm text-rose-800 shadow-lg">{error}</div>}

@@ -91,7 +91,15 @@ export const OutreachBookingModal: React.FC = () => {
           privacyConsent,
         }),
       });
-      const result = await response.json() as AppointmentReceipt & { error?: string };
+      const responseBody = await response.text();
+      let result: AppointmentReceipt & { error?: string };
+      try {
+        result = JSON.parse(responseBody) as AppointmentReceipt & { error?: string };
+      } catch {
+        throw new Error(isFilipino
+          ? 'Pansamantalang hindi magamit ang serbisyo ng appointment. Subukan muli mamaya.'
+          : `Appointment service is temporarily unavailable (HTTP ${response.status}). Please try again later.`);
+      }
       if (!response.ok) throw new Error(result.error || 'Could not submit your appointment request.');
       setReceipt(result);
     } catch (submitError) {

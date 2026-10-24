@@ -16,7 +16,7 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-9">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-7">
           <div className="flex items-center gap-4">
-            <img src={centerPhoto} alt="" className="w-14 h-14 rounded-sm object-cover border border-white/15" />
+            <img src={centerPhoto} alt="" className="h-14 w-14 rounded-full border border-white/15 object-cover" />
             <div>
               <div className="font-bold">Mayor Moises R. Flores Health Center</div>
             </div>

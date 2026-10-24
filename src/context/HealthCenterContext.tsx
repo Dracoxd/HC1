@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  Language, 
-  AppointmentBooking, 
-  PatientRecord, 
-  ChatMessage, 
-  ContactSubmission 
+import {
+  Language,
+  AppointmentBooking,
+  PatientRecord,
+  ChatMessage,
+  ContactSubmission
 } from '../types';
 import { translations } from '../i18n/translations';
 
@@ -18,7 +18,7 @@ interface HealthCenterContextType {
   appointments: AppointmentBooking[];
   bookAppointment: (data: Omit<AppointmentBooking, 'id' | 'referenceCode' | 'status' | 'createdAt'>) => AppointmentBooking;
   cancelAppointment: (id: string) => void;
-  // Patient Portal State (User-managed, zero hardcoded records)
+
   patientRecords: PatientRecord[];
   activePatient: PatientRecord | null;
   registerPatientRecord: (data: Omit<PatientRecord, 'id' | 'patientNumber' | 'vitalsHistory' | 'prescriptions' | 'radiologyReports'>) => PatientRecord;
@@ -47,7 +47,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const [activeSection, setActiveSection] = useState<string>('overview');
 
-  // Appointments start clean with NO hardcoded entries; stored in localStorage
+
   const [appointments, setAppointments] = useState<AppointmentBooking[]>(() => {
     const saved = localStorage.getItem('mfhc_appointments');
     if (saved) {
@@ -60,7 +60,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return [];
   });
 
-  // Patient Records: Zero hardcoded entries; saved in localStorage as patients register
+
   const [patientRecords, setPatientRecords] = useState<PatientRecord[]>(() => {
     const saved = localStorage.getItem('mfhc_patient_records');
     if (saved) {
@@ -87,7 +87,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return null;
   });
 
-  // Chat messages stored per patient in localStorage
+
   const [chatStore, setChatStore] = useState<Record<string, ChatMessage[]>>(() => {
     const saved = localStorage.getItem('mfhc_chats');
     if (saved) {
@@ -144,7 +144,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     localStorage.setItem('mfhc_contacts', JSON.stringify(contactSubmissions));
   }, [contactSubmissions]);
 
-  // Toast auto dismissal
+
   useEffect(() => {
     if (notificationToast) {
       const timer = setTimeout(() => setNotificationToast(null), 4000);
@@ -174,8 +174,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     setAppointments(prev => [newAppointment, ...prev]);
     setNotificationToast(
-      language === 'fil' 
-        ? `Naitakda ang iskedyul: ${refCode}` 
+      language === 'fil'
+        ? `Naitakda ang iskedyul: ${refCode}`
         : `Appointment confirmed: ${refCode}`
     );
     return newAppointment;
@@ -284,7 +284,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const updated = [...(chatStore[patientId] || []), newMsg];
     setChatStore(prev => ({ ...prev, [patientId]: updated }));
 
-    // Real-time reply from health center desk
+
     setTimeout(() => {
       const botReply: ChatMessage = {
         id: `m-${Date.now() + 1}`,

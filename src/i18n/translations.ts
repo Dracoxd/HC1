@@ -12,20 +12,20 @@ export const translations = {
     btnBookOutreach: 'Book Outreach',
     btnAccessPortal: 'Patient Portal',
     btnSwitchLanguage: 'Filipino',
-    
-    // Operating Hours Summary
+
+
     bannerHours: 'Monday to Friday: 7:00 AM - 4:00 PM',
     bannerDoctors: 'Clinic Hours: Mon 8AM - 3PM | Tues - Fri 9AM - 3PM',
     bannerXray: 'Pateros X-ray Clinic (3rd Floor): Mon - Fri, 7AM - 10AM',
     bannerDental: 'Dental Clinic: M W F Only',
 
-    // Hero Section
+
     heroTitle: 'Mayor Moises R. Flores Health Center',
     heroSubtitle: 'Serving San Pedro, Magtanggol, and Tabacalera. Offering maternity, nutrition (BNS 0-59 months OPT), dental (M-W-F), animal bite, check-up, 3rd floor X-ray clinic, and free maintenance medications.',
     heroCtaPrimary: 'Book Outreach Appointment',
     heroCtaSecondary: 'View Services',
 
-    // Services Section
+
     servicesTitle: 'Health Center Services',
     servicesSubtitle: 'Programs and medical services offered at Mayor Moises R. Flores Health Center.',
     serviceTabAll: 'All Services',
@@ -43,7 +43,7 @@ export const translations = {
     btnBookThisService: 'Book Appointment',
     btnViewRequirements: 'Details',
 
-    // Medications
+
     medsTitle: 'Available Medications (Meds)',
     medsSubtitle: 'High blood maintenance, Diabetics, and TB program medications.',
     filterAllMeds: 'All Meds',
@@ -51,7 +51,7 @@ export const translations = {
     filterDiabetes: 'Diabetics',
     filterTB: 'TB Program',
 
-    // Coverage Zones
+
     zonesTitle: 'Covered Zones (Zones na Sakop)',
     zonesSubtitle: '1. San Pedro, 2. Magtanggol, 3. Tabacalera.',
     zoneSanPedro: '1. San Pedro',
@@ -63,7 +63,7 @@ export const translations = {
     labelCommunityDays: 'Outreach Schedule',
     labelActiveResidents: 'Registered Patients',
 
-    // Staff Directory
+
     staffTitle: 'Doctors & Care Team',
     staffSubtitle: 'Check who is on the team, their clinic schedule, and where to find them.',
     staffSearchPlaceholder: 'Search by name or role...',
@@ -78,7 +78,7 @@ export const translations = {
     labelOfficeRoom: 'Room / Floor',
     badgeHead: 'Head',
 
-    // Outreach Booking
+
     outreachTitle: 'Outreach & Clinic Appointments',
     outreachSubtitle: 'Book a scheduled slot for community outreach and health center services.',
     formFullName: 'Patient Full Name',
@@ -96,14 +96,14 @@ export const translations = {
     labelRefCode: 'Reference Code',
     labelBringToClinic: 'Requirements to Bring',
 
-    // News
+
     newsTitle: 'Health Updates & Advisories',
     newsSubtitle: 'Schedules and announcements for our covered barangays.',
     newsSearchPlaceholder: 'Search updates...',
     btnReadArticle: 'Read Details',
     btnCloseArticle: 'Close',
 
-    // Patient Portal
+
     portalTitle: 'Patient Portal',
     portalSubtitle: 'Patient record management and direct messaging.',
     tabRecords: 'Vitals Record',
@@ -116,7 +116,7 @@ export const translations = {
     messagePlaceholder: 'Type a message to the clinic desk...',
     switchPatientLabel: 'Patient Profile',
 
-    // Analytics Dashboard
+
     analyticsTitle: 'Health Center Analytics',
     analyticsSubtitle: 'Monitoring service engagement, zone distribution, and medication supplies.',
     kpiConsultations: 'Monthly Consultations',
@@ -128,7 +128,7 @@ export const translations = {
     chartNutritionStatus: 'OPT Nutritional Status (0-59 Months)',
     chartInventoryStatus: 'Meds Stock Levels',
 
-    // Contact
+
     contactTitle: 'Contact Health Center',
     contactSubtitle: 'Reach the front desk for questions and assistance.',
     contactFormName: 'Your Full Name',
@@ -144,7 +144,7 @@ export const translations = {
     hotlineAnimalBite: 'Animal Bite Hotline: (02) 8641-7640',
     hotlineHealthCenter: 'Center Landline: (02) 8642-1923',
 
-    // Footer
+
     footerDescription: 'Serving San Pedro, Magtanggol, and Tabacalera in Pateros.',
     footerQuickLinks: 'Quick Links',
     footerHoursNotice: 'Monday to Friday: 7:00 AM - 4:00 PM | Clinic Hours: Mon 8AM - 3PM, Tues - Fri 9AM - 3PM.',
@@ -164,19 +164,19 @@ export const translations = {
     btnAccessPortal: 'Patient Portal',
     btnSwitchLanguage: 'English',
 
-    // Operating Hours Summary
+
     bannerHours: 'Lunes hanggang Biyernes: 7:00 AM - 4:00 PM',
     bannerDoctors: 'Clinic Hours: Lunes 8AM - 3PM | Martes - Biyernes 9AM - 3PM',
     bannerXray: 'Pateros X-ray Clinic (3rd Floor): Lunes - Biyernes, 7AM - 10AM',
     bannerDental: 'Dental Clinic: M W F Lamang',
 
-    // Hero Section
+
     heroTitle: 'Mayor Moises R. Flores Health Center',
     heroSubtitle: 'Naglilingkod sa San Pedro, Magtanggol, at Tabacalera. Nag-aalok ng maternity, nutrition (BNS 0-59 buwan OPT), dental (M-W-F), animal bite, check-up, 3rd floor X-ray clinic, at libreng gamot sa maintenance.',
     heroCtaPrimary: 'Magpa-iskedyul ng Outreach',
     heroCtaSecondary: 'Tingnan ang Serbisyo',
 
-    // Services Section
+
     servicesTitle: 'Mga Serbisyo ng Health Center',
     servicesSubtitle: 'Mga programa at serbisyong medikal sa Mayor Moises R. Flores Health Center.',
     serviceTabAll: 'Lahat',
@@ -194,7 +194,7 @@ export const translations = {
     btnBookThisService: 'Magpa-iskedyul',
     btnViewRequirements: 'Detalye',
 
-    // Medications
+
     medsTitle: 'Mga Gamot na Mayroon (Meds)',
     medsSubtitle: 'High blood maintenance, Diabetics, at TB program.',
     filterAllMeds: 'Lahat ng Gamot',
@@ -202,7 +202,7 @@ export const translations = {
     filterDiabetes: 'Diabetics',
     filterTB: 'TB Program',
 
-    // Coverage Zones
+
     zonesTitle: 'Zones na Sakop',
     zonesSubtitle: '1. San Pedro, 2. Magtanggol, 3. Tabacalera.',
     zoneSanPedro: '1. San Pedro',
@@ -214,7 +214,7 @@ export const translations = {
     labelCommunityDays: 'Iskedyul ng Outreach',
     labelActiveResidents: 'Rehistradong Pasyente',
 
-    // Staff Directory
+
     staffTitle: 'Mga Doktor at Pangkat Pangkalusugan',
     staffSubtitle: 'Alamin ang iskedyul at lokasyon ng mga doktor at kawani.',
     staffSearchPlaceholder: 'Maghanap gamit ang pangalan o posisyon...',
@@ -229,7 +229,7 @@ export const translations = {
     labelOfficeRoom: 'Kuwarto / Floor',
     badgeHead: 'Head',
 
-    // Outreach Booking
+
     outreachTitle: 'Outreach at Iskedyul sa Klinika',
     outreachSubtitle: 'Magpa-reserve ng slot para sa outreach at serbisyo sa health center.',
     formFullName: 'Buong Pangalan',
@@ -247,14 +247,14 @@ export const translations = {
     labelRefCode: 'Reference Code',
     labelBringToClinic: 'Mga Kailangang Dalhin',
 
-    // News
+
     newsTitle: 'Balitang Pangkalusugan',
     newsSubtitle: 'Mga pabatid at iskedyul para sa mga sakop na barangay.',
     newsSearchPlaceholder: 'Maghanap sa balita...',
     btnReadArticle: 'Basahin',
     btnCloseArticle: 'Isara',
 
-    // Patient Portal
+
     portalTitle: 'Patient Portal',
     portalSubtitle: 'Talaan ng kalusugan at pag-message sa kawani.',
     tabRecords: 'Rekord ng Vitals',
@@ -267,7 +267,7 @@ export const translations = {
     messagePlaceholder: 'Magtanong sa clinic desk...',
     switchPatientLabel: 'Pasyente',
 
-    // Analytics Dashboard
+
     analyticsTitle: 'Estadistika ng Health Center',
     analyticsSubtitle: 'Pagsubaybay sa serbisyo, bawat zone, at suplay ng gamot.',
     kpiConsultations: 'Buwanang Konsultasyon',
@@ -279,7 +279,7 @@ export const translations = {
     chartNutritionStatus: 'Nutrisyon ng Bata (0-59 Buwan)',
     chartInventoryStatus: 'Suplay ng Gamot',
 
-    // Contact
+
     contactTitle: 'Makipag-ugnayan sa Center',
     contactSubtitle: 'Tawagan o padalhan ng mensahe ang tanggapan.',
     contactFormName: 'Buong Pangalan',
@@ -295,7 +295,7 @@ export const translations = {
     hotlineAnimalBite: 'Animal Bite Hotline: (02) 8641-7640',
     hotlineHealthCenter: 'Telepono ng Center: (02) 8642-1923',
 
-    // Footer
+
     footerDescription: 'Naglilingkod sa San Pedro, Magtanggol, at Tabacalera sa Pateros.',
     footerQuickLinks: 'Mabilisang Link',
     footerHoursNotice: 'Lunes hanggang Biyernes: 7:00 AM - 4:00 PM | Clinic Hours: Lunes 8AM - 3PM, Martes - Biyernes 9AM - 3PM.',

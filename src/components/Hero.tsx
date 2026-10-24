@@ -16,24 +16,19 @@ export const Hero: React.FC = () => {
 
   return (
     <section id="overview" className="bg-[#123b39] text-white">
-      <div className="relative min-h-[390px] sm:min-h-[430px] flex items-center overflow-hidden">
-        <img src={centerPhoto} alt="Exterior of Mr. Flores Health Center" className="absolute inset-0 w-full h-full object-cover object-center" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0b2827]/95 via-[#0b2827]/75 to-[#0b2827]/10" />
-        <div className="relative w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-14 sm:py-20">
+      <div className="relative min-h-[320px] sm:min-h-[360px] flex items-center overflow-hidden border-b border-white/10">
+        <img src={centerPhoto} alt="Mayor Moises R. Flores Health Center" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-[#102f2d]/80" />
+        <div className="relative w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-14">
           <div className="max-w-2xl">
-            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-200 mb-4">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase text-white/75 mb-3">
               <MapPin className="w-4 h-4" />
-              <span>Community care in Pateros</span>
+              <span>Pateros, Metro Manila</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] text-white">
-              Mayor Moises R.<br className="hidden sm:block" /> Flores Health Center
+            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-tight text-white">
+              Mayor Moises R. Flores Health Center
             </h1>
-            <p className="mt-5 max-w-xl text-base sm:text-lg leading-relaxed text-white/85">
-              {language === 'fil'
-                ? 'Serbisyong pangkalusugan para sa San Pedro, Magtanggol, at Tabacalera.'
-                : 'Accessible community healthcare for San Pedro, Magtanggol, and Tabacalera.'}
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap gap-3">
               <button onClick={() => setBookingModalOpen(true)} className="inline-flex items-center gap-2 bg-white text-[#123b39] px-5 py-3 text-sm font-bold rounded-md hover:bg-emerald-50 transition-colors">
                 <CalendarDays className="w-4 h-4" /> Request appointment
               </button>
@@ -44,7 +39,7 @@ export const Hero: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="bg-[#f3f7f4] text-slate-900">
+      <div className="bg-white text-slate-900 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 grid sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
           <div className="flex items-center gap-3 py-4 sm:py-5 sm:pr-6">
             <Clock className="w-5 h-5 text-teal-800 shrink-0" />

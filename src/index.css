@@ -1,14 +1,35 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
-    font-family: 'DM Sans', system-ui, sans-serif;
+  :root {
+    font-family: 'Manrope', sans-serif;
     color: #182321;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    font-family: inherit;
+  }
+
+  button, a, input, select, textarea {
+    font: inherit;
   }
 
   h1, h2, h3 {
-    font-family: 'DM Serif Display', Georgia, serif;
+    font-family: inherit;
     letter-spacing: 0;
+    text-wrap: balance;
+  }
+
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 3px solid rgba(15, 118, 110, 0.4);
+    outline-offset: 2px;
   }
 }
 
@@ -25,13 +46,29 @@
   animation: route-location-pulse 2s ease-out infinite;
 }
 
+.route-user-marker {
+  position: relative;
+}
+
+.route-heading-arrow {
+  position: absolute;
+  left: 50%;
+  top: -9px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid #fff;
+  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.45));
+}
+
 @keyframes route-location-pulse {
   0% { stroke-width: 3; }
   50% { stroke-width: 6; }
   100% { stroke-width: 3; }
 }
 
-/* Custom scrollbar for clean portal and directory view */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

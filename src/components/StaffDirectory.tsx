@@ -13,7 +13,7 @@ export const StaffDirectory: React.FC = () => {
   const filteredStaff = STAFF_DIRECTORY.filter((staff) => {
     const matchesDept = selectedDept === 'all' || staff.department === selectedDept;
     const query = searchQuery.toLowerCase().trim();
-    const matchesSearch = 
+    const matchesSearch =
       staff.name.toLowerCase().includes(query) ||
       staff.role.toLowerCase().includes(query) ||
       staff.roleFil.toLowerCase().includes(query) ||
@@ -36,8 +36,8 @@ export const StaffDirectory: React.FC = () => {
   return (
     <section id="staff" className="py-16 bg-slate-50 border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        
-        {/* Header */}
+
+
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-2xl space-y-2">
             <div className="text-xs font-bold text-teal-800 uppercase tracking-wider">
@@ -51,7 +51,7 @@ export const StaffDirectory: React.FC = () => {
             </p>
           </div>
 
-          {/* Search Box */}
+
           <div className="w-full md:w-80 relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -64,7 +64,7 @@ export const StaffDirectory: React.FC = () => {
           </div>
         </div>
 
-        {/* Department Filter Tabs (Functional segmented controls) */}
+
         <div className="flex items-center gap-1.5 p-1 bg-slate-200/70 rounded-xl overflow-x-auto">
           {departmentTabs.map((tab) => (
             <button
@@ -81,7 +81,7 @@ export const StaffDirectory: React.FC = () => {
           ))}
         </div>
 
-        {/* Staff Grid */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStaff.map((staff) => (
             <div
@@ -89,11 +89,11 @@ export const StaffDirectory: React.FC = () => {
               className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-between hover:shadow-xs hover:border-slate-300 transition-all"
             >
               <div className="space-y-4">
-                {/* Header Lockup */}
+
                 <div className="flex items-start gap-3.5">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs ${
-                    staff.isHead 
-                      ? 'bg-teal-700 text-white' 
+                    staff.isHead
+                      ? 'bg-teal-700 text-white'
                       : (staff.department === 'nutrition_bns' ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-800')
                   }`}>
                     {staff.avatarInitials}
@@ -119,13 +119,13 @@ export const StaffDirectory: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Qualifications */}
+
                 <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-600 flex items-start gap-2">
                   <Award className="w-3.5 h-3.5 text-teal-700 shrink-0 mt-0.5" />
                   <span className="line-clamp-2">{staff.qualifications}</span>
                 </div>
 
-                {/* Schedule & Station */}
+
                 <div className="space-y-1.5 text-xs text-slate-600 pt-1">
                   <div className="flex items-start gap-2">
                     <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
@@ -147,7 +147,7 @@ export const StaffDirectory: React.FC = () => {
                 </div>
               </div>
 
-              {/* Bottom Quick Contact Trigger */}
+
               <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
                 <button
                   onClick={() => {

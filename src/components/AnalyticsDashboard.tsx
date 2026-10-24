@@ -11,8 +11,8 @@ export const AnalyticsDashboard: React.FC = () => {
   return (
     <section id="analytics" className="py-16 bg-slate-50 border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        
-        {/* Header & Filter */}
+
+
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-3xl space-y-2">
             <div className="text-xs font-bold text-teal-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -27,7 +27,7 @@ export const AnalyticsDashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* Time Filter Segmented Control */}
+
           <div className="flex items-center gap-1 p-1 bg-slate-200/70 rounded-xl shrink-0 self-start md:self-auto">
             <button
               onClick={() => setTimeRange('month')}
@@ -56,7 +56,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 Core KPIs (Tabular figures, clean unboxed cards) */}
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
             <div className="text-xs text-slate-500 font-medium">{t.kpiConsultations}</div>
@@ -100,10 +100,10 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Charts & Distribution Rows */}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Card 1: Service Distribution */}
+
+
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -121,8 +121,8 @@ export const AnalyticsDashboard: React.FC = () => {
                     <span className="font-mono tabular-nums text-slate-600 font-semibold">{item.patients} pts ({item.share})</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                    <div 
-                      className="bg-teal-700 h-2 rounded-full" 
+                    <div
+                      className="bg-teal-700 h-2 rounded-full"
                       style={{ width: item.share }}
                     />
                   </div>
@@ -131,7 +131,7 @@ export const AnalyticsDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 2: Catchment Zones Footfall */}
+
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -149,8 +149,8 @@ export const AnalyticsDashboard: React.FC = () => {
                     <span className="font-mono tabular-nums text-teal-900">{zone.count} consultations ({zone.percentage}%)</span>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                    <div 
-                      className={`h-2.5 rounded-full ${idx === 0 ? 'bg-teal-700' : (idx === 1 ? 'bg-teal-800' : 'bg-teal-600')}`} 
+                    <div
+                      className={`h-2.5 rounded-full ${idx === 0 ? 'bg-teal-700' : (idx === 1 ? 'bg-teal-800' : 'bg-teal-600')}`}
                       style={{ width: `${zone.percentage}%` }}
                     />
                   </div>
@@ -165,7 +165,7 @@ export const AnalyticsDashboard: React.FC = () => {
 
         </div>
 
-        {/* Nutritional Classification (OPT 0-59 months) */}
+
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
             <div>
@@ -196,7 +196,7 @@ export const AnalyticsDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Medicine Inventory Health */}
+
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>

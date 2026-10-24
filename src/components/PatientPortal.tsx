@@ -1,38 +1,38 @@
 import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { 
-  UserCheck, 
-  Plus, 
-  Activity, 
-  Pill, 
-  MessageSquare, 
-  Send, 
-  ShieldCheck, 
-  User, 
-  Search, 
+import {
+  UserCheck,
+  Plus,
+  Activity,
+  Pill,
+  MessageSquare,
+  Send,
+  ShieldCheck,
+  User,
+  Search,
   LogOut,
   Calendar,
   CheckCircle2
 } from 'lucide-react';
 
 export const PatientPortal: React.FC = () => {
-  const { 
-    t, 
-    language, 
-    patientRecords, 
-    activePatient, 
-    registerPatientRecord, 
-    setActivePatient, 
-    addPatientVitals, 
-    addPatientPrescription, 
-    patientMessages, 
-    sendPatientMessage 
+  const {
+    t,
+    language,
+    patientRecords,
+    activePatient,
+    registerPatientRecord,
+    setActivePatient,
+    addPatientVitals,
+    addPatientPrescription,
+    patientMessages,
+    sendPatientMessage
   } = useHealthCenter();
 
   const [activeTab, setActiveTab] = useState<'records' | 'prescriptions' | 'messaging'>('records');
   const [chatInput, setChatInput] = useState('');
 
-  // Register Form State
+
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [regName, setRegName] = useState('');
   const [regDob, setRegDob] = useState('1990-01-01');
@@ -42,7 +42,7 @@ export const PatientPortal: React.FC = () => {
   const [regPhilHealth, setRegPhilHealth] = useState('');
   const [regCategory, setRegCategory] = useState<'maternal' | 'senior_maintenance' | 'pediatric_opt'>('maternal');
 
-  // Add Vitals Form State
+
   const [showAddVitals, setShowAddVitals] = useState(false);
   const [bp, setBp] = useState('120/80');
   const [hr, setHr] = useState(75);
@@ -50,7 +50,7 @@ export const PatientPortal: React.FC = () => {
   const [ht, setHt] = useState(160);
   const [vitalsNotes, setVitalsNotes] = useState('');
 
-  // Add Prescription Form State
+
   const [showAddRx, setShowAddRx] = useState(false);
   const [medName, setMedName] = useState('Amlodipine (High blood)');
   const [medDosage, setMedDosage] = useState('5mg Tablet');
@@ -113,8 +113,8 @@ export const PatientPortal: React.FC = () => {
   return (
     <section id="portal" className="py-16 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
-        {/* Header */}
+
+
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-4">
           <div className="space-y-1">
             <div className="text-xs font-bold text-teal-800 uppercase tracking-wider">
@@ -124,8 +124,8 @@ export const PatientPortal: React.FC = () => {
               {t.portalTitle}
             </h2>
             <p className="text-xs text-slate-600">
-              {language === 'fil' 
-                ? 'Pamahalaan ang rekord ng kalusugan, vitals, at makipag-ugnayan sa health center.' 
+              {language === 'fil'
+                ? 'Pamahalaan ang rekord ng kalusugan, vitals, at makipag-ugnayan sa health center.'
                 : 'Manage health records, vitals, and secure messaging with health center staff.'}
             </p>
           </div>
@@ -141,7 +141,7 @@ export const PatientPortal: React.FC = () => {
           )}
         </div>
 
-        {/* When NO active patient is selected */}
+
         {!activePatient ? (
           <div className="bg-slate-50 rounded-2xl p-6 sm:p-8 border border-slate-200 space-y-6">
             {!showRegisterForm ? (
@@ -154,8 +154,8 @@ export const PatientPortal: React.FC = () => {
                     {language === 'fil' ? 'Pumili o Magrehistro ng Rekord ng Pasyente' : 'Patient Access'}
                   </h3>
                   <p className="text-xs text-slate-600 mt-1">
-                    {language === 'fil' 
-                      ? 'Magrehistro ng bagong rekord o pumili mula sa mga nai-save na pasyente sa San Pedro, Magtanggol, o Tabacalera.' 
+                    {language === 'fil'
+                      ? 'Magrehistro ng bagong rekord o pumili mula sa mga nai-save na pasyente sa San Pedro, Magtanggol, o Tabacalera.'
                       : 'Register a patient record or select from saved patient records in San Pedro, Magtanggol, or Tabacalera.'}
                   </p>
                 </div>
@@ -195,7 +195,6 @@ export const PatientPortal: React.FC = () => {
                 </div>
               </div>
             ) : (
-              /* Registration Form */
               <form onSubmit={handleRegister} className="max-w-xl mx-auto space-y-4 text-xs">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <h3 className="text-base font-bold text-slate-900">
@@ -331,9 +330,8 @@ export const PatientPortal: React.FC = () => {
             )}
           </div>
         ) : (
-          /* When a patient IS active */
           <div className="space-y-6">
-            {/* Active Patient Details Banner */}
+
             <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-teal-700 text-white flex items-center justify-center font-bold text-sm">
@@ -358,7 +356,7 @@ export const PatientPortal: React.FC = () => {
               </div>
             </div>
 
-            {/* Portal Tab Navigation */}
+
             <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl overflow-x-auto text-xs">
               <button
                 onClick={() => setActiveTab('records')}
@@ -391,7 +389,7 @@ export const PatientPortal: React.FC = () => {
               </button>
             </div>
 
-            {/* Tab 1: Vitals */}
+
             {activeTab === 'records' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -509,7 +507,7 @@ export const PatientPortal: React.FC = () => {
               </div>
             )}
 
-            {/* Tab 2: Prescriptions */}
+
             {activeTab === 'prescriptions' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -606,7 +604,7 @@ export const PatientPortal: React.FC = () => {
               </div>
             )}
 
-            {/* Tab 3: Messaging */}
+
             {activeTab === 'messaging' && (
               <div className="rounded-xl border border-slate-200 bg-white overflow-hidden flex flex-col h-[400px]">
                 <div className="p-3 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-700 flex justify-between items-center">

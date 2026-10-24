@@ -4,20 +4,20 @@ import { OUTREACH_PROGRAMS } from '../data/healthCenterData';
 import { Calendar, Clock, MapPin, Users, CheckCircle, Ticket, XCircle } from 'lucide-react';
 
 export const OutreachSection: React.FC = () => {
-  const { 
-    t, 
-    language, 
-    openBookingForProgram, 
-    setBookingModalOpen, 
-    appointments, 
-    cancelAppointment 
+  const {
+    t,
+    language,
+    openBookingForProgram,
+    setBookingModalOpen,
+    appointments,
+    cancelAppointment
   } = useHealthCenter();
 
   return (
     <section id="outreach" className="py-16 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        
-        {/* Header */}
+
+
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-3xl space-y-2">
             <div className="text-xs font-bold text-teal-800 uppercase tracking-wider">
@@ -40,7 +40,7 @@ export const OutreachSection: React.FC = () => {
           </button>
         </div>
 
-        {/* Outreach Programs Grid */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {OUTREACH_PROGRAMS.map((program) => (
             <div
@@ -106,7 +106,7 @@ export const OutreachSection: React.FC = () => {
           ))}
         </div>
 
-        {/* My Active Booked Appointments (Persisted) */}
+
         {appointments.length > 0 && (
           <div className="pt-10 border-t border-slate-200 space-y-4">
             <div className="flex items-center justify-between">
@@ -116,8 +116,8 @@ export const OutreachSection: React.FC = () => {
                   <span>{language === 'fil' ? 'Aking mga Nakatakdang Iskedyul' : 'Your Scheduled Appointments'}</span>
                 </h3>
                 <p className="text-xs text-slate-500">
-                  {language === 'fil' 
-                    ? 'Ipakita ang reference code sa triage desk pagdating sa Mr. Flores Health Center.' 
+                  {language === 'fil'
+                    ? 'Ipakita ang reference code sa triage desk pagdating sa Mr. Flores Health Center.'
                     : 'Present this reference ticket at the health center registration desk on arrival.'}
                 </p>
               </div>
@@ -128,8 +128,8 @@ export const OutreachSection: React.FC = () => {
                 <div
                   key={apt.id}
                   className={`p-4 rounded-xl border transition-all ${
-                    apt.status === 'Cancelled' 
-                      ? 'bg-slate-50 border-slate-200 opacity-60' 
+                    apt.status === 'Cancelled'
+                      ? 'bg-slate-50 border-slate-200 opacity-60'
                       : 'bg-teal-50/40 border-teal-200'
                   }`}
                 >

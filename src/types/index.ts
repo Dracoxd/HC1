@@ -1,6 +1,6 @@
 export type Language = 'en' | 'fil';
 
-export type Department = 
+export type Department =
   | 'doctors'
   | 'nutrition_bns'
   | 'dental'

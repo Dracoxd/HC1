@@ -6,9 +6,8 @@ import 'leaflet/dist/leaflet.css';
 import { Bike, CarFront, ChevronDown, ChevronUp, ExternalLink, LocateFixed, MapPin, PersonStanding, RefreshCw } from 'lucide-react';
 
 type TravelMode = 'walking' | 'bicycling' | 'driving' | 'motorcycle';
-type RoutePreference = 'fastest' | 'shortest';
 type Renderer = 'maplibre' | 'leaflet';
-type Position = { latitude: number; longitude: number; accuracy: number; source?: 'gps' | 'manual' };
+type Position = { latitude: number; longitude: number; accuracy: number; heading?: number | null; source?: 'gps' | 'manual' };
 type ValhallaManeuver = { instruction: string; length: number; time: number };
 type ValhallaResponse = {
   trip?: {
@@ -31,12 +30,6 @@ type RouteInfo = {
 type RouteFeatureCollection = GeoJSON.FeatureCollection<GeoJSON.LineString>;
 
 const destination: L.LatLngTuple = [14.5472886, 121.0659399];
-const defaultPaterosOrigin: Position = {
-  latitude: 14.5418,
-  longitude: 121.0662,
-  accuracy: 250,
-  source: 'manual',
-};
 const destinationName = 'Mayor Moises R. Flores Health Center';
 const wazeUrl = `https://www.waze.com/ul?ll=${destination[0]}%2C${destination[1]}&navigate=yes`;
 const costingProfiles: Record<TravelMode, string> = {
@@ -55,7 +48,7 @@ const modes: Array<{ id: TravelMode; label: string; icon: React.ReactNode }> = [
   { id: 'walking', label: 'Walk', icon: <PersonStanding className="w-4 h-4" /> },
   { id: 'bicycling', label: 'Bike', icon: <Bike className="w-4 h-4" /> },
   { id: 'driving', label: 'Car', icon: <CarFront className="w-4 h-4" /> },
-  { id: 'motorcycle', label: 'Motorcycle', icon: <Bike className="w-4 h-4" /> },
+  { id: 'motorcycle', label: 'Motorcycle', icon: <CarFront className="w-4 h-4" /> },
 ];
 const emptyFeatures: RouteFeatureCollection = { type: 'FeatureCollection', features: [] };
 
@@ -82,12 +75,6 @@ function formatDistance(meters: number) {
 function formatDuration(seconds: number) {
   const minutes = Math.max(1, Math.ceil(seconds / 60));
   return minutes >= 60 ? `${Math.floor(minutes / 60)} hr ${minutes % 60} min` : `${minutes} min`;
-}
-
-function isLikelyPaterosPoint(position: Position) {
-  const withinLatitude = position.latitude >= 14.5 && position.latitude <= 14.58;
-  const withinLongitude = position.longitude >= 121.04 && position.longitude <= 121.09;
-  return withinLatitude && withinLongitude;
 }
 
 function decodePolyline6(encoded: string): L.LatLngTuple[] {
@@ -130,14 +117,16 @@ function accuracyFeature(position: Position): GeoJSON.Feature<GeoJSON.Polygon> {
   return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [coordinates] } };
 }
 
-function markerElement(color: string, label: string) {
+function markerElement(color: string, label: string, heading?: number | null, userLocation = false) {
   const element = document.createElement('div');
   element.setAttribute('aria-label', label);
   element.title = label;
+  element.className = userLocation ? 'route-user-marker' : '';
   Object.assign(element.style, {
-    width: '18px', height: '18px', borderRadius: '50%', background: color,
-    border: '3px solid white', boxShadow: '0 1px 6px rgba(0,0,0,.45)',
+    width: userLocation ? '22px' : '18px', height: userLocation ? '22px' : '18px', borderRadius: '50%', background: color,
+    border: '3px solid white', boxShadow: '0 2px 8px rgba(15,23,42,.45)', transform: heading != null ? `rotate(${heading}deg)` : '',
   });
+  if (userLocation && heading != null) element.innerHTML = '<span class="route-heading-arrow"></span>';
   return element;
 }
 
@@ -148,7 +137,6 @@ function mapLibreBounds(points: [number, number][]) {
 
 export const RouteFinder: React.FC = () => {
   const [travelMode, setTravelMode] = useState<TravelMode>('walking');
-  const [routePreference, setRoutePreference] = useState<RoutePreference>('fastest');
   const [origin, setOrigin] = useState<Position | null>(null);
   const [locationError, setLocationError] = useState('');
   const [routeError, setRouteError] = useState('');
@@ -172,7 +160,7 @@ export const RouteFinder: React.FC = () => {
   const libreUserMarkerRef = useRef<MapLibreMarker | null>(null);
   const libreDestinationMarkerRef = useRef<MapLibreMarker | null>(null);
   const routePointsRef = useRef<[number, number][]>([]);
-  const lastRouteRef = useRef<{ position: Position; mode: TravelMode; preference: RoutePreference; timestamp: number } | null>(null);
+  const lastRouteRef = useRef<{ position: Position; mode: TravelMode; timestamp: number } | null>(null);
   const shouldFitRouteRef = useRef(true);
   const manualOriginRef = useRef(false);
   const pinStartModeRef = useRef(false);
@@ -325,54 +313,74 @@ export const RouteFinder: React.FC = () => {
     const watchId = navigator.geolocation.watchPosition(
       ({ coords }) => {
         if (!manualOriginRef.current) {
-          const nextOrigin: Position = {
-            latitude: coords.latitude,
-            longitude: coords.longitude,
-            accuracy: coords.accuracy,
-            source: 'gps',
-          };
-          const validPaterosPoint = isLikelyPaterosPoint(nextOrigin) && nextOrigin.accuracy <= 1000;
-          setOrigin(validPaterosPoint ? nextOrigin : defaultPaterosOrigin);
+          const nextAccuracy = Math.max(coords.accuracy || 0, 1);
+          if (nextAccuracy > 250) {
+            setLocationError('Location accuracy is limited. Wait outdoors for a stronger GPS signal or pin your start precisely.');
+          } else {
+            setLocationError('');
+          }
+          setOrigin((current) => {
+            if (!current || current.source === 'manual' || nextAccuracy > 250) {
+              return {
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+                accuracy: nextAccuracy,
+                heading: coords.heading,
+                source: 'gps',
+              };
+            }
+            const previousWeight = Math.min(current.accuracy, 100);
+            const nextWeight = Math.min(nextAccuracy, 100);
+            const totalWeight = previousWeight + nextWeight;
+            return {
+              latitude: (current.latitude * nextWeight + coords.latitude * previousWeight) / totalWeight,
+              longitude: (current.longitude * nextWeight + coords.longitude * previousWeight) / totalWeight,
+              accuracy: Math.min(current.accuracy * 0.75 + nextAccuracy * 0.25, nextAccuracy),
+              heading: coords.heading ?? current.heading,
+              source: 'gps',
+            };
+          });
         }
-        setLocationError('');
         setLocating(false);
       },
       (error) => {
         setLocating(false);
         setLocationError(error.code === error.PERMISSION_DENIED ? 'Location permission was denied. Enable it in browser settings or pin your start manually.' : 'Could not determine location. Check GPS or network reception.');
       },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
   }, [trackingAttempt]);
 
   useEffect(() => {
-    const userColor = origin?.source === 'manual' ? '#0f766e' : origin && origin.accuracy > 1000 ? '#c47a00' : '#1677c8';
+    const userColor = origin?.source === 'manual' ? '#0f766e' : origin && origin.accuracy > 250 ? '#c47a00' : '#1677c8';
     if (renderer === 'maplibre') {
       const map = mapLibreRef.current;
       if (!map || !mapReady || !origin) return;
       const Marker = mapLibreMarkerConstructorRef.current;
       if (!Marker) return;
       const location: [number, number] = [origin.longitude, origin.latitude];
-      if (!libreUserMarkerRef.current) libreUserMarkerRef.current = new Marker({ element: markerElement(userColor, 'Your location') }).setLngLat(location).addTo(map);
+      if (!libreUserMarkerRef.current) libreUserMarkerRef.current = new Marker({ element: markerElement(userColor, 'Your location', origin.heading, true) }).setLngLat(location).addTo(map);
       else {
         libreUserMarkerRef.current.setLngLat(location);
-        libreUserMarkerRef.current.getElement().style.background = userColor;
+        const element = libreUserMarkerRef.current.getElement();
+        element.style.background = userColor;
+        element.style.transform = origin.heading != null ? `rotate(${origin.heading}deg)` : '';
       }
       const accuracySource = map.getSource('accuracy') as MapLibreGeoJSONSource | undefined;
-      accuracySource?.setData(origin.source === 'gps' && origin.accuracy > 0 && origin.accuracy <= 1000 ? accuracyFeature(origin) : emptyFeatures as GeoJSON.FeatureCollection<GeoJSON.Geometry>);
+      accuracySource?.setData(origin.source === 'gps' && origin.accuracy > 0 && origin.accuracy <= 250 ? accuracyFeature(origin) : emptyFeatures as GeoJSON.FeatureCollection<GeoJSON.Geometry>);
       return;
     }
 
     const map = leafletMapRef.current;
     if (!map || !origin) return;
     const userLatLng: L.LatLngTuple = [origin.latitude, origin.longitude];
-    if (!userMarkerRef.current) userMarkerRef.current = L.circleMarker(userLatLng, { radius: 8, color: '#fff', weight: 3, fillColor: userColor, fillOpacity: 1, className: origin.source === 'gps' && origin.accuracy <= 1000 ? 'route-live-marker' : '' }).addTo(map).bindTooltip('Your location');
+    if (!userMarkerRef.current) userMarkerRef.current = L.circleMarker(userLatLng, { radius: 8, color: '#fff', weight: 3, fillColor: userColor, fillOpacity: 1, className: origin.source === 'gps' && origin.accuracy <= 250 ? 'route-live-marker' : '' }).addTo(map).bindTooltip('Your location');
     else {
       userMarkerRef.current.setLatLng(userLatLng);
-      userMarkerRef.current.setStyle({ fillColor: userColor, className: origin.source === 'gps' && origin.accuracy <= 1000 ? 'route-live-marker' : '' });
+      userMarkerRef.current.setStyle({ fillColor: userColor, className: origin.source === 'gps' && origin.accuracy <= 250 ? 'route-live-marker' : '' });
     }
-    if (origin.source === 'gps' && origin.accuracy > 0 && origin.accuracy <= 1000) {
+    if (origin.source === 'gps' && origin.accuracy > 0 && origin.accuracy <= 250) {
       if (accuracyCircleRef.current) accuracyCircleRef.current.setLatLng(userLatLng).setRadius(origin.accuracy);
       else accuracyCircleRef.current = L.circle(userLatLng, { radius: origin.accuracy, color: '#1677c8', weight: 1, fillColor: '#1677c8', fillOpacity: 0.12 }).addTo(map);
     } else {
@@ -384,14 +392,14 @@ export const RouteFinder: React.FC = () => {
   useEffect(() => {
     if (!origin || !mapReady) return;
     const previous = lastRouteRef.current;
-    const changedConfidence = previous && (previous.position.accuracy > 1000) !== (origin.accuracy > 1000);
-    if (previous && !changedConfidence && previous.mode === travelMode && previous.preference === routePreference && distanceBetween(previous.position, origin) < 40 && Date.now() - previous.timestamp < 20000) return;
+    const changedConfidence = previous && (previous.position.accuracy > 250) !== (origin.accuracy > 250);
+    if (previous && !changedConfidence && previous.mode === travelMode && distanceBetween(previous.position, origin) < 40 && Date.now() - previous.timestamp < 20000) return;
 
-    const approximate = (origin.source !== 'manual' && origin.accuracy > 1000);
+    const approximate = origin.source !== 'manual' && origin.accuracy > 250;
     const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
       setRouteError('');
-      lastRouteRef.current = { position: origin, mode: travelMode, preference: routePreference, timestamp: Date.now() };
+      lastRouteRef.current = { position: origin, mode: travelMode, timestamp: Date.now() };
       const costing = costingProfiles[travelMode];
       const request = {
         locations: [
@@ -399,7 +407,6 @@ export const RouteFinder: React.FC = () => {
           { lat: destination[0], lon: destination[1], type: 'break' },
         ],
         costing,
-        costing_options: { [costing]: { shortest: routePreference === 'shortest' } },
         units: 'kilometers',
         directions_options: { language: 'en-US', units: 'kilometers' },
       };
@@ -439,6 +446,8 @@ export const RouteFinder: React.FC = () => {
           routePointsRef.current = coordinates;
           routeSource.setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates } });
           accessSource.setData(accessFeatures);
+          const routeColor = travelMode === 'walking' ? '#22c55e' : travelMode === 'bicycling' ? '#f59e0b' : travelMode === 'motorcycle' ? '#ef4444' : '#38bdf8';
+          map.setPaintProperty('route-line', 'line-color', routeColor);
           map.setLayoutProperty('route-line', 'visibility', approximate ? 'none' : 'visible');
           map.setLayoutProperty('route-line-approx', 'visibility', approximate ? 'visible' : 'none');
           if (shouldFitRouteRef.current) {
@@ -450,7 +459,8 @@ export const RouteFinder: React.FC = () => {
           routeLineRef.current?.remove();
           accessLinesRef.current.forEach((line) => line.remove());
           accessLinesRef.current = [];
-          routeLineRef.current = L.polyline(points, { color: approximate ? '#f0ad4e' : '#38bdf8', weight: 6, opacity: 1, dashArray: approximate ? '10 8' : undefined }).addTo(map);
+          const routeColor = travelMode === 'walking' ? '#22c55e' : travelMode === 'bicycling' ? '#f59e0b' : travelMode === 'motorcycle' ? '#ef4444' : '#38bdf8';
+          routeLineRef.current = L.polyline(points, { color: approximate ? '#f0ad4e' : routeColor, weight: 6, opacity: 1, dashArray: approximate ? '10 8' : undefined }).addTo(map);
           accessFeatures.features.forEach((feature) => {
             const accessPoints = feature.geometry.coordinates.map(([lon, lat]) => [lat, lon] as L.LatLngTuple);
             accessLinesRef.current.push(L.polyline(accessPoints, { color: approximate ? '#f0ad4e' : '#38bdf8', weight: 4, opacity: 0.95, dashArray: '3 7' }).addTo(map));
@@ -475,7 +485,7 @@ export const RouteFinder: React.FC = () => {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [origin, travelMode, routePreference, mapReady, renderer]);
+  }, [origin, travelMode, mapReady, renderer]);
 
   const retryLocation = () => {
     manualOriginRef.current = false;
@@ -541,24 +551,19 @@ export const RouteFinder: React.FC = () => {
     setTravelMode(mode);
   };
 
-  const selectPreference = (preference: RoutePreference) => {
-    if (preference === routePreference) return;
-    setRoute(null);
-    lastRouteRef.current = null;
-    shouldFitRouteRef.current = true;
-    setRoutePreference(preference);
-  };
-
-  const locationStatus = origin?.source === 'manual' ? 'Start point pinned' : origin && origin.accuracy > 1000 ? 'Weak GPS signal' : origin ? 'Live location' : locating ? 'Finding location' : 'Location unavailable';
-  const locationStatusColor = origin?.source === 'manual' ? 'bg-teal-300' : origin && origin.accuracy > 1000 ? 'bg-amber-300' : origin ? 'bg-emerald-300' : 'bg-slate-400';
+  const locationStatus = origin?.source === 'manual' ? 'Start point pinned' : origin && origin.accuracy > 250 ? 'Weak GPS signal' : origin ? 'Live location' : locating ? 'Finding location' : 'Location unavailable';
+  const googleMapsUrl = origin
+    ? `https://www.google.com/maps/dir/?api=1&origin=${origin.latitude},${origin.longitude}&destination=${destination[0]},${destination[1]}&travelmode=${travelMode === 'walking' ? 'walking' : travelMode === 'bicycling' ? 'bicycling' : 'driving'}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${destination[0]},${destination[1]}`;
+  const locationStatusColor = origin?.source === 'manual' ? 'bg-teal-300' : origin && origin.accuracy > 250 ? 'bg-amber-300' : origin ? 'bg-emerald-300' : 'bg-slate-400';
 
   return (
-    <aside aria-label="Live directions map" className="fixed z-40 bottom-4 right-4 sm:bottom-6 sm:right-6 w-[min(390px,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white border border-slate-300 shadow-2xl rounded-lg">
+    <aside aria-label="Live directions map" className="fixed z-40 bottom-4 right-4 sm:bottom-6 sm:right-6 w-[min(390px,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white border border-slate-300 shadow-[0_12px_40px_rgba(15,23,42,0.18)] rounded-md">
       <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#123b39] text-white">
         <div className="min-w-0">
           <div className="text-sm font-bold">Navigate to health center</div>
           <div className="text-[11px] text-white/75 truncate">{destinationName}</div>
-          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-white/80"><span className={`h-1.5 w-1.5 rounded-full ${locationStatusColor} ${origin?.source === 'gps' && origin.accuracy <= 1000 ? 'animate-pulse' : ''}`} />{locationStatus}</div>
+          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-white/80"><span className={`h-1.5 w-1.5 rounded-full ${locationStatusColor} ${origin?.source === 'gps' && origin.accuracy <= 250 ? 'animate-pulse' : ''}`} />{locationStatus}</div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button type="button" onClick={recenterMap} aria-label="Recenter map" title="Recenter map" className="p-2 text-white/85 hover:text-white hover:bg-white/10 rounded-md"><LocateFixed className="w-4 h-4" /></button>
@@ -574,10 +579,6 @@ export const RouteFinder: React.FC = () => {
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-2 border-b border-slate-200" role="group" aria-label="Route preference">
-          {(['fastest', 'shortest'] as const).map((preference) => <button key={preference} type="button" onClick={() => selectPreference(preference)} aria-pressed={routePreference === preference} className={`py-2 text-xs font-semibold ${routePreference === preference ? 'text-teal-950 bg-[#e5f0eb]' : 'text-slate-500 bg-white'}`}>{preference === 'fastest' ? 'Fastest' : 'Shortest'}</button>)}
-        </div>
-
         <div className="relative">
           <div ref={mapElementRef} className="h-[260px] w-full bg-slate-100" aria-label="Dark map showing your live location, the health center, and route" />
           {pinStartMode && <div className="absolute left-2 right-2 top-2 z-[1000] flex items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-lg"><span>Tap your actual location on the map</span><button type="button" onClick={() => { setPinStartMode(false); setPinCursor(false); }} className="text-teal-900 underline">Cancel</button></div>}
@@ -586,18 +587,18 @@ export const RouteFinder: React.FC = () => {
         <div className="px-4 py-3">
           {mapError && <p role="alert" className="mb-2 text-xs text-rose-800">{mapError}</p>}
           {route && <div className="flex items-center gap-2 text-sm font-bold text-slate-900"><MapPin className="w-4 h-4 text-teal-800" /><span>{modeLabels[travelMode]} · {formatDistance(route.distance)} · about {formatDuration(route.duration)}</span></div>}
-          {(travelMode === 'driving' || travelMode === 'motorcycle') && <a href={wazeUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-teal-900 underline underline-offset-2">Open live navigation in Waze <ExternalLink className="w-3.5 h-3.5" /></a>}
-          {route?.maneuvers[0] && <p className="mt-1 text-xs font-semibold text-slate-700">{route.maneuvers[0].instruction}</p>}
+          {(travelMode === 'driving' || travelMode === 'motorcycle') && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2"><a href={googleMapsUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-900 underline underline-offset-2">Open navigation <ExternalLink className="w-3.5 h-3.5" /></a><a href={wazeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-900 underline underline-offset-2">Open in Waze <ExternalLink className="w-3.5 h-3.5" /></a></div>}
+          {route?.maneuvers[0] && <p className="mt-2 border-l-2 border-teal-700 pl-3 text-xs font-semibold text-slate-700">{route.maneuvers[0].instruction}</p>}
           {route && route.distance > route.straightLineDistance * 1.5 && <p className="mt-1 text-[11px] text-slate-600">Straight-line distance is {formatDistance(route.straightLineDistance)}; this route follows connected mapped streets.</p>}
           {route && (route.startAccessDistance > 20 || route.endAccessDistance > 20) && <p className="mt-1 text-[11px] text-slate-600">Dotted links show the straight-line gap to nearest mapped roads ({formatDistance(route.startAccessDistance)} from start, {formatDistance(route.endAccessDistance)} at clinic).</p>}
           {locating && <p className="text-xs text-slate-600">Requesting your location…</p>}
           {locationError && <div className="flex items-center justify-between gap-3"><p role="alert" className="text-xs text-rose-800">{locationError}</p><button type="button" onClick={retryLocation} className="shrink-0 inline-flex items-center gap-1 text-xs font-bold text-teal-900"><RefreshCw className="w-3.5 h-3.5" />Retry</button></div>}
           {routeError && <p role="alert" className="mt-1 text-xs text-rose-800">{routeError}</p>}
           {origin?.source === 'manual' && <p className="mt-1 text-[11px] font-semibold text-teal-900">Start point selected manually; no GPS accuracy is implied.</p>}
-          {origin?.source !== 'manual' && origin && <p className={`mt-1 text-[11px] ${origin.accuracy > 1000 ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>{origin.accuracy > 1000 ? 'Approximate start location' : 'GPS accuracy'} · about {formatDistance(origin.accuracy)}{route?.approximate ? ' · path is approximate' : ''}</p>}
+          {origin?.source !== 'manual' && origin && <p className={`mt-1 text-[11px] ${origin.accuracy > 250 ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>{origin.accuracy > 250 ? 'Approximate start location' : 'GPS accuracy'} · about {formatDistance(origin.accuracy)}{route?.approximate ? ' · path is approximate' : ''}</p>}
           {origin?.source === 'manual' && <button type="button" onClick={returnToGps} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal-900 underline underline-offset-2"><LocateFixed className="w-3.5 h-3.5" />Use live GPS instead</button>}
-          {origin?.source !== 'manual' && origin && origin.accuracy > 1000 && !pinStartMode && <button type="button" onClick={beginManualPin} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal-900 underline underline-offset-2"><MapPin className="w-3.5 h-3.5" />Pin my actual start on map</button>}
-          <p className="mt-2 flex items-start gap-1 text-[10px] leading-relaxed text-slate-500"><MapPin className="w-3 h-3 shrink-0 mt-0.5" />OpenFreeMap dark vector map (OSM.de fallback). Valhalla gives mode-specific fastest/shortest routes and ETAs. Motorcycle uses motor-scooter costing.</p>
+          {origin?.source !== 'manual' && origin && origin.accuracy > 250 && !pinStartMode && <button type="button" onClick={beginManualPin} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal-900 underline underline-offset-2"><MapPin className="w-3.5 h-3.5" />Pin my actual start on map</button>}
+          <p className="mt-2 flex items-start gap-1 text-[10px] leading-relaxed text-slate-500"><MapPin className="w-3 h-3 shrink-0 mt-0.5" />Live OpenStreetMap routing by travel mode. Routes and estimates change for walking, cycling, driving, and motorcycle travel.</p>
         </div>
       </>}
     </aside>

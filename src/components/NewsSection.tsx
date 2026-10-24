@@ -29,8 +29,8 @@ export const NewsSection: React.FC = () => {
   return (
     <section id="news" className="py-16 bg-slate-50 border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        
-        {/* Header */}
+
+
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-2xl space-y-2">
             <div className="text-xs font-bold text-teal-800 uppercase tracking-wider">
@@ -44,7 +44,7 @@ export const NewsSection: React.FC = () => {
             </p>
           </div>
 
-          {/* Search Input */}
+
           <div className="w-full md:w-72 relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -57,7 +57,7 @@ export const NewsSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Category Filters */}
+
         <div className="flex items-center gap-1.5 p-1 bg-slate-200/60 rounded-xl overflow-x-auto">
           {categories.map((cat) => (
             <button
@@ -74,7 +74,7 @@ export const NewsSection: React.FC = () => {
           ))}
         </div>
 
-        {/* News Cards Grid */}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNews.map((news) => (
             <article
@@ -82,7 +82,7 @@ export const NewsSection: React.FC = () => {
               className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-between hover:shadow-xs hover:border-slate-300 transition-all"
             >
               <div className="space-y-4">
-                {/* Clean unboxed metadata with typographic dot separator */}
+
                 <div className="flex items-center gap-2 text-xs text-slate-500">
                   <span className="font-semibold text-teal-800">
                     {language === 'fil' ? news.categoryFil : news.category}
@@ -122,7 +122,7 @@ export const NewsSection: React.FC = () => {
 
       </div>
 
-      {/* Full Article Modal */}
+
       {readingArticle && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">

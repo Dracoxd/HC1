@@ -1,10 +1,10 @@
-import { 
-  StaffMember, 
-  ServiceDetail, 
-  MedicationStock, 
-  ZoneCoverage, 
-  OutreachProgram, 
-  NewsUpdate 
+import {
+  StaffMember,
+  ServiceDetail,
+  MedicationStock,
+  ZoneCoverage,
+  OutreachProgram,
+  NewsUpdate
 } from '../types';
 
 export const HERO_IMAGE = '/src/assets/images/hero_health_center_1792606776580.jpg';
@@ -36,7 +36,7 @@ export const OPERATING_HOURS_DATA = {
 };
 
 export const STAFF_DIRECTORY: StaffMember[] = [
-  // Municipal Health Officer & Doctors
+
   {
     id: 'staff-1',
     name: 'Carmencita P. Ison, MD, MDA-HEDM',
@@ -96,7 +96,7 @@ export const STAFF_DIRECTORY: StaffMember[] = [
     avatarInitials: 'AP'
   },
 
-  // Barangay Magtanggol BNS
+
   {
     id: 'staff-5',
     name: 'Ms. Monina C. De Borja',
@@ -140,7 +140,7 @@ export const STAFF_DIRECTORY: StaffMember[] = [
     avatarInitials: 'MC'
   },
 
-  // Dental Clinic
+
   {
     id: 'staff-8',
     name: 'Ms. Madeliene S. Reyes, DMD',
@@ -171,7 +171,7 @@ export const STAFF_DIRECTORY: StaffMember[] = [
     avatarInitials: 'VT'
   },
 
-  // Nursing & Midwifery
+
   {
     id: 'staff-10',
     name: 'Ms. Sery Ann G. Ulanday, RN',
@@ -230,7 +230,7 @@ export const STAFF_DIRECTORY: StaffMember[] = [
     avatarInitials: 'AC'
   },
 
-  // Medical Technologists & Lab
+
   {
     id: 'staff-21',
     name: 'Almuhaimin M. Usman, MD, DPSP',
@@ -302,7 +302,7 @@ export const STAFF_DIRECTORY: StaffMember[] = [
     avatarInitials: 'LC'
   },
 
-  // Administrative & Support
+
   {
     id: 'staff-18',
     name: 'Ms. Irona SP. Baoy',

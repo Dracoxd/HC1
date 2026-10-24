@@ -41,9 +41,9 @@ export const ServicesSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-8">
           <div className="max-w-2xl">
-            <div className="text-xs font-bold text-teal-800 uppercase tracking-wider mb-3">Care available here</div>
+            <div className="text-xs font-bold text-teal-800 uppercase mb-3">Health services</div>
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-950">{t.servicesTitle}</h2>
-            <p className="mt-3 text-base text-slate-600">Choose a service to check its schedule, location, and what to bring.</p>
+            <p className="mt-3 text-base text-slate-600">Schedules, locations, and service requirements.</p>
           </div>
           <button onClick={() => openBookingForProgram('checkup')} className="text-sm font-bold text-teal-900 underline underline-offset-4">Request a doctor appointment</button>
         </div>

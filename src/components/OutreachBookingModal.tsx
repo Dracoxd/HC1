@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { SERVICES_DATA } from '../data/healthCenterData';
 import { AlertCircle, CalendarDays, CheckCircle2, Clock, X } from 'lucide-react';
-import { auth } from '../firebase';
+import type { User } from 'firebase/auth';
 
 interface AppointmentReceipt {
   referenceCode: string;
@@ -19,7 +19,7 @@ function localDateString() {
   }).format(new Date());
 }
 
-export const OutreachBookingModal: React.FC = () => {
+export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   const {
     t,
     language,
@@ -74,8 +74,6 @@ export const OutreachBookingModal: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('Sign in before requesting an appointment.');
       const token = await user.getIdToken();
       const response = await fetch('/api/appointments', {
         method: 'POST',
@@ -100,7 +98,12 @@ export const OutreachBookingModal: React.FC = () => {
           ? 'Pansamantalang hindi magamit ang serbisyo ng appointment. Subukan muli mamaya.'
           : `Appointment service is temporarily unavailable (HTTP ${response.status}). Please try again later.`);
       }
-      if (!response.ok) throw new Error(result.error || 'Could not submit your appointment request.');
+      if (!response.ok) {
+        const message = response.status === 401
+          ? 'Your sign-in could not be verified. Check that the Firebase service account in Vercel belongs to this app’s Firebase project, then redeploy.'
+          : result.error || 'Could not submit your appointment request.';
+        throw new Error(message);
+      }
       setReceipt(result);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Could not submit your appointment request.');

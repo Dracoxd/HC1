@@ -53,7 +53,8 @@ async function authenticate(request: ApiRequest) {
   if (!token) return null;
   try {
     return await getFirebaseAdmin().verifyIdToken(token);
-  } catch {
+  } catch (error) {
+    console.error('Appointment API Firebase ID token verification failed:', error);
     return null;
   }
 }
@@ -131,8 +132,14 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     return response.status(405).json({ error: 'Method not allowed.' });
   }
 
+  const authorization = text(request.headers.authorization, 2000);
+  if (!authorization.startsWith('Bearer ')) {
+    return response.status(401).json({ error: 'Sign in before requesting an appointment.' });
+  }
   const decoded = await authenticate(request);
-  if (!decoded) return response.status(401).json({ error: 'Sign in before requesting an appointment.' });
+  if (!decoded) {
+    return response.status(401).json({ error: 'Your sign-in could not be verified for this Firebase project.' });
+  }
 
   const body = request.body && typeof request.body === 'object'
     ? request.body as Record<string, unknown>

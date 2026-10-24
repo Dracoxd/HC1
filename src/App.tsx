@@ -15,7 +15,7 @@ import { AuthScreen } from './components/AuthScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { UserAppointmentChat } from './components/UserAppointmentChat';
 
-const AppContent: React.FC = () => {
+const AppContent: React.FC<{ user: User }> = ({ user }) => {
   const { notificationToast, setNotificationToast } = useHealthCenter();
 
   useEffect(() => {
@@ -46,7 +46,7 @@ const AppContent: React.FC = () => {
 
       <Footer />
 
-      <OutreachBookingModal />
+      <OutreachBookingModal user={user} />
 
       {notificationToast && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#173a37] text-white px-4 py-3 rounded-md shadow-lg border border-white/10 text-sm font-semibold flex items-center gap-2 max-w-sm animate-fade-in">
@@ -81,7 +81,7 @@ export default function App() {
 
   return (
     <HealthCenterProvider>
-      <AppContent />
+      <AppContent user={user} />
     </HealthCenterProvider>
   );
 }

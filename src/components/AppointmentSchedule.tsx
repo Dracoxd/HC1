@@ -15,7 +15,7 @@ function dateLabel(value: string) {
 }
 
 export const AppointmentSchedule: React.FC = () => {
-  const { language, setBookingModalOpen } = useHealthCenter();
+  const { language } = useHealthCenter();
   const isFilipino = language === 'fil';
   const [slots, setSlots] = useState<ScheduleSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,80 +48,71 @@ export const AppointmentSchedule: React.FC = () => {
     };
   }, [isFilipino]);
 
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  const dates = Array.from(new Set([
-    ...Array.from({ length: 14 }, (_, index) => {
-      const date = new Date(`${today}T12:00:00+08:00`);
-      date.setDate(date.getDate() + index);
-      return date.toISOString().slice(0, 10);
-    }),
-    ...slots.map((slot) => slot.date),
-  ])).sort().filter((date) => date >= today && new Date(`${date}T12:00:00+08:00`).getDay() !== 0);
-
   const timeLabels: Record<string, string> = {
     morning: isFilipino ? 'Umaga' : 'Morning',
     afternoon: isFilipino ? 'Hapon' : 'Afternoon',
     'no preference': isFilipino ? 'Anumang oras' : 'Any time',
   };
+  const timeOrder: Record<string, number> = { morning: 0, afternoon: 1, 'no preference': 2 };
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  const appointmentsByDate = slots.reduce<Record<string, ScheduleSlot[]>>((grouped, slot) => {
+    (grouped[slot.date] ??= []).push(slot);
+    return grouped;
+  }, {});
+  const dates = Object.keys(appointmentsByDate).filter((date) => date >= today).sort();
 
   return (
     <section id="appointment-schedule" className="border-b border-[#dfe6e1] bg-white py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-        <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-7">
           <div>
-            <div className="mb-2 text-xs font-bold text-[#17645c]">Appointment schedule</div>
+            <div className="mb-2 flex items-center gap-2 text-xs font-bold text-[#17645c]">
+              <CalendarDays className="h-4 w-4" />
+              {isFilipino ? 'Mga kumpirmadong appointment' : 'Accepted appointments'}
+            </div>
             <h2 className="text-2xl font-bold text-[#17312e] sm:text-3xl">
               {isFilipino ? 'Mga petsa at oras' : 'Dates and Time Slots'}
             </h2>
           </div>
-          <button type="button" onClick={() => setBookingModalOpen(true)} className="inline-flex h-11 items-center justify-center gap-2 bg-[#17645c] px-4 text-sm font-bold text-white hover:bg-[#104f49]">
-            <CalendarDays className="h-4 w-4" />
-            {isFilipino ? 'Mag-request ng appointment' : 'Request appointment'}
-          </button>
         </div>
 
-        {loading && <p className="border-y border-[#dfe6e1] py-5 text-sm text-[#66736f]">Loading schedule...</p>}
+        {loading && <p className="border-y border-[#dfe6e1] py-5 text-sm text-[#66736f]">{isFilipino ? 'Nilo-load ang mga kumpirmadong appointment...' : 'Loading accepted appointments...'}</p>}
         {error && <p role="alert" className="border-y border-[#dfe6e1] py-5 text-sm text-rose-800">{error}</p>}
 
         {!loading && !error && (
-          <div className="border-t border-[#cfd8d2]">
-            {dates.map((date) => {
-              const weekday = new Date(`${date}T12:00:00+08:00`).getDay();
-              if (weekday === 0) return null;
-              const dateSlots = slots.filter((slot) => slot.date === date);
-              const availableLabels = dateSlots.length > 0
-                ? ['morning', 'afternoon', 'no preference'].filter((time) => dateSlots.some((slot) => slot.time === time))
-                : ['morning', 'afternoon'];
-
-              return (
-                <article key={date} className="grid gap-4 border-b border-[#dfe6e1] py-5 md:grid-cols-[220px_1fr] md:items-start">
+          dates.length === 0 ? (
+            <p className="border-y border-[#dfe6e1] py-5 text-sm text-[#66736f]">
+              {isFilipino ? 'Wala pang kumpirmadong appointment.' : 'There are no accepted appointments yet.'}
+            </p>
+          ) : (
+            <div className="overflow-hidden border border-[#dfe6e1]">
+              <div className="hidden grid-cols-[minmax(220px,0.8fr)_minmax(0,1.5fr)] bg-[#f2f6f2] px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-[#66736f] sm:grid">
+                <span>{isFilipino ? 'Petsa' : 'Date'}</span>
+                <span>{isFilipino ? 'Mga oras' : 'Time slots'}</span>
+              </div>
+              {dates.map((date) => (
+                <article key={date} className="grid gap-3 border-t border-[#dfe6e1] px-4 py-4 sm:grid-cols-[minmax(220px,0.8fr)_minmax(0,1.5fr)] sm:items-center sm:px-5">
                   <div>
                     <div className="text-[11px] font-bold text-[#17645c]">{date}</div>
                     <h3 className="mt-1 text-sm font-bold text-[#17312e]">{dateLabel(date)}</h3>
                   </div>
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {availableLabels.map((time) => {
-                      const bookingCount = dateSlots.find((slot) => slot.time === time)?.bookedCount ?? 0;
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          onClick={() => setBookingModalOpen(true)}
-                          className="flex min-h-[72px] items-center justify-between gap-3 border border-[#cfd8d2] px-4 text-left hover:border-[#17645c] hover:bg-[#f2f6f2]"
-                        >
-                          <span>
-                            <span className="flex items-center gap-2 text-sm font-bold text-[#17312e]"><Clock3 className="h-4 w-4 text-[#17645c]" />{timeLabels[time]}</span>
-                            <span className="mt-1 block text-xs text-[#66736f]">{bookingCount > 0 ? `${bookingCount} request${bookingCount === 1 ? '' : 's'} received` : (isFilipino ? 'May slot na maaaring magamit' : 'Slots may be available')}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {appointmentsByDate[date]
+                      .sort((first, second) => (timeOrder[first.time] ?? 99) - (timeOrder[second.time] ?? 99))
+                      .map((slot) => (
+                        <div key={slot.time} className="flex min-h-10 items-center gap-2 border border-[#cfd8d2] bg-white px-3 py-2">
+                          <Clock3 className="h-4 w-4 shrink-0 text-[#17645c]" />
+                          <span className="text-sm font-bold text-[#17312e]">{timeLabels[slot.time] ?? slot.time}</span>
+                          <span className="border-l border-[#dfe6e1] pl-2 text-xs text-[#66736f]">
+                            {slot.bookedCount} {isFilipino ? 'kumpirmado' : `accepted ${slot.bookedCount === 1 ? 'appointment' : 'appointments'}`}
                           </span>
-                          <span className="text-xs font-bold text-[#17645c]">Select</span>
-                        </button>
-                      );
-                    })}
+                        </div>
+                      ))}
                   </div>
                 </article>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )
         )}
       </div>
     </section>

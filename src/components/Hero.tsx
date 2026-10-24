@@ -1,6 +1,6 @@
 import React from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { Clock, MapPin, CalendarDays, ArrowDown } from 'lucide-react';
+import { CalendarDays, ArrowDown } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const Hero: React.FC = () => {
@@ -32,26 +32,6 @@ export const Hero: React.FC = () => {
                 View services <ArrowDown className="w-4 h-4" />
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-      <div className="bg-white text-slate-900 border-b border-slate-200">
-        <div className="clinic-info-enter max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 grid sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
-          <div className="flex items-center gap-3 py-4 sm:py-5 sm:pr-6">
-            <Clock className="w-5 h-5 text-teal-800 shrink-0" />
-            <div><div className="text-xs text-slate-500">Health center</div><div className="text-sm font-bold">Mon-Fri · 7:00 AM-4:00 PM</div></div>
-          </div>
-          <div className="flex items-center gap-3 py-4 sm:py-5 sm:px-6">
-            <Clock className="w-5 h-5 text-teal-800 shrink-0" />
-            <div><div className="text-xs text-slate-500">Doctor consultations</div><div className="text-sm font-bold">Mon 8-3 · Tue-Fri 9-3</div></div>
-          </div>
-          <div className="flex items-center gap-3 py-4 sm:py-5 sm:px-6">
-            <MapPin className="w-5 h-5 text-teal-800 shrink-0" />
-            <div><div className="text-xs text-slate-500">Zones served</div><div className="text-sm font-bold">1. San Pedro · 2. Magtanggol · 3. Tabacalera</div></div>
-          </div>
-          <div className="flex items-center gap-3 py-4 sm:py-5 sm:pl-6">
-            <Clock className="w-5 h-5 text-teal-800 shrink-0" />
-            <div><div className="text-xs text-slate-500">Pateros X-ray Clinic · 3rd floor</div><div className="text-sm font-bold">Mon 8-10 AM · Tue-Fri 7-10 AM</div></div>
           </div>
         </div>
       </div>

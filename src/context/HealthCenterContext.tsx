@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth } from '../firebase';
 import {
   Language,
   AppointmentBooking,
@@ -48,69 +49,17 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [activeSection, setActiveSection] = useState<string>('overview');
 
 
-  const [appointments, setAppointments] = useState<AppointmentBooking[]>(() => {
-    const saved = localStorage.getItem('mfhc_appointments');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [appointments, setAppointments] = useState<AppointmentBooking[]>([]);
 
 
-  const [patientRecords, setPatientRecords] = useState<PatientRecord[]>(() => {
-    const saved = localStorage.getItem('mfhc_patient_records');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [patientRecords, setPatientRecords] = useState<PatientRecord[]>([]);
 
-  const [activePatient, setActivePatientState] = useState<PatientRecord | null>(() => {
-    const savedId = localStorage.getItem('mfhc_active_patient_id');
-    const savedRecords = localStorage.getItem('mfhc_patient_records');
-    if (savedId && savedRecords) {
-      try {
-        const records: PatientRecord[] = JSON.parse(savedRecords);
-        return records.find(r => r.id === savedId) || null;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
+  const [activePatient, setActivePatientState] = useState<PatientRecord | null>(null);
 
 
-  const [chatStore, setChatStore] = useState<Record<string, ChatMessage[]>>(() => {
-    const saved = localStorage.getItem('mfhc_chats');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
+  const [chatStore, setChatStore] = useState<Record<string, ChatMessage[]>>({});
 
-  const [contactSubmissions, setContactSubmissions] = useState<ContactSubmission[]>(() => {
-    const saved = localStorage.getItem('mfhc_contacts');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [contactSubmissions, setContactSubmissions] = useState<ContactSubmission[]>([]);
 
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [selectedProgramForBooking, setSelectedProgramForBooking] = useState<string | null>(null);
@@ -121,28 +70,65 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [language]);
 
   useEffect(() => {
-    localStorage.setItem('mfhc_appointments', JSON.stringify(appointments));
-  }, [appointments]);
+    const user = auth.currentUser;
+    if (!user) return;
 
-  useEffect(() => {
-    localStorage.setItem('mfhc_patient_records', JSON.stringify(patientRecords));
-  }, [patientRecords]);
-
-  useEffect(() => {
-    if (activePatient) {
-      localStorage.setItem('mfhc_active_patient_id', activePatient.id);
-    } else {
-      localStorage.removeItem('mfhc_active_patient_id');
-    }
-  }, [activePatient]);
-
-  useEffect(() => {
-    localStorage.setItem('mfhc_chats', JSON.stringify(chatStore));
-  }, [chatStore]);
-
-  useEffect(() => {
-    localStorage.setItem('mfhc_contacts', JSON.stringify(contactSubmissions));
-  }, [contactSubmissions]);
+    const loadData = async () => {
+      try {
+        const [patientsResponse, contactsResponse, appointmentsResponse] = await Promise.all([
+          fetch('/api/health-data', { headers: { 'x-user-id': user.uid, 'x-resource': 'patients' } }),
+          fetch('/api/health-data', { headers: { 'x-user-id': user.uid, 'x-resource': 'contacts' } }),
+          fetch('/api/appointments', { headers: { 'x-user-id': user.uid } }),
+        ]);
+        if (appointmentsResponse.ok) {
+          const result = await appointmentsResponse.json() as { appointments?: Array<{ id: string; reference_code: string; service_name: string; patient_name: string; zone: string; preferred_date: string; preferred_time: string; status: 'pending' | 'Confirmed' | 'Cancelled'; created_at: string }> };
+          setAppointments((result.appointments ?? []).map((item) => ({
+            id: item.id,
+            referenceCode: item.reference_code,
+            programId: item.service_name,
+            programTitle: item.service_name,
+            patientName: item.patient_name,
+            dateOfBirth: '',
+            contactNumber: '',
+            email: '',
+            zone: item.zone,
+            appointmentDate: item.preferred_date,
+            timeSlot: item.preferred_time,
+            status: item.status === 'Cancelled' ? 'Cancelled' : item.status === 'Confirmed' ? 'Confirmed' : 'Pending',
+            createdAt: item.created_at,
+          })));
+        }
+        if (patientsResponse.ok) {
+          const result = await patientsResponse.json() as { patients: PatientRecord[] };
+          setPatientRecords(result.patients);
+          const chatMap: Record<string, ChatMessage[]> = {};
+          result.patients.forEach((patient) => {
+            const record = patient as PatientRecord & { messages?: ChatMessage[] };
+            chatMap[patient.id] = record.messages ?? [];
+          });
+          setChatStore(chatMap);
+        }
+        if (contactsResponse.ok) {
+          const result = await contactsResponse.json() as { submissions: Array<{ id: string; ticket_id: string; name: string; phone: string; email: string; zone: string; topic: string; message: string; status: 'Received' | 'Under Review'; created_at: string }> };
+          setContactSubmissions(result.submissions.map((item) => ({
+            id: item.id,
+            ticketId: item.ticket_id,
+            name: item.name,
+            phone: item.phone,
+            email: item.email ?? '',
+            zone: item.zone,
+            topic: item.topic,
+            message: item.message,
+            submittedAt: item.created_at,
+            status: item.status,
+          })));
+        }
+      } catch {
+        setNotificationToast('Could not load saved health records from the database.');
+      }
+    };
+    void loadData();
+  }, []);
 
 
   useEffect(() => {
@@ -172,6 +158,21 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       createdAt: new Date().toISOString()
     };
 
+    void fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? '' },
+      body: JSON.stringify({
+        patientName: newAppointment.patientName,
+        phone: newAppointment.contactNumber,
+        email: newAppointment.email,
+        zone: newAppointment.zone,
+        serviceId: newAppointment.programId,
+        preferredDate: newAppointment.appointmentDate,
+        preferredTime: newAppointment.timeSlot,
+        privacyConsent: true,
+      }),
+    }).catch(() => setNotificationToast('Appointment could not be saved to the database.'));
+
     setAppointments(prev => [newAppointment, ...prev]);
     setNotificationToast(
       language === 'fil'
@@ -182,8 +183,17 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const cancelAppointment = (id: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' as const } : a));
-    setNotificationToast(language === 'fil' ? 'Kinansela ang iskedyul.' : 'Appointment cancelled.');
+    const appointment = appointments.find((item) => item.id === id);
+    if (!appointment) return;
+    void fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? '' },
+      body: JSON.stringify({ action: 'cancel', referenceCode: appointment.referenceCode }),
+    }).then((response) => {
+      if (!response.ok) throw new Error('Appointment could not be cancelled.');
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' as const } : a));
+      setNotificationToast(language === 'fil' ? 'Kinansela ang iskedyul.' : 'Appointment cancelled.');
+    }).catch((error) => setNotificationToast(error instanceof Error ? error.message : 'Appointment could not be cancelled.'));
   };
 
   const registerPatientRecord = (data: Omit<PatientRecord, 'id' | 'patientNumber' | 'vitalsHistory' | 'prescriptions' | 'radiologyReports'>): PatientRecord => {
@@ -197,13 +207,21 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       radiologyReports: []
     };
 
-    setPatientRecords(prev => [newPatient, ...prev]);
-    setActivePatientState(newPatient);
-    setNotificationToast(
-      language === 'fil'
-        ? `Narehistro ang pasyente: ${patNo}`
-        : `Patient record registered: ${patNo}`
-    );
+    void fetch('/api/health-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
+      body: JSON.stringify({ resource: 'patient', ...newPatient, patientNumber: patNo }),
+    }).then((response) => {
+      if (!response.ok) throw new Error('Patient record could not be saved.');
+      setPatientRecords(prev => [newPatient, ...prev]);
+      setActivePatientState(newPatient);
+      setNotificationToast(
+        language === 'fil'
+          ? `Narehistro ang pasyente: ${patNo}`
+          : `Patient record registered: ${patNo}`
+      );
+    }).catch((error) => setNotificationToast(error instanceof Error ? error.message : 'Patient record could not be saved.'));
+
     return newPatient;
   };
 
@@ -217,6 +235,12 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       date: new Date().toISOString().split('T')[0],
       recordedBy: 'Nurse / Triage Desk'
     };
+
+    void fetch('/api/health-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
+      body: JSON.stringify({ resource: 'vital', patientId, ...entry }),
+    }).catch(() => setNotificationToast('Vitals could not be saved to the database.'));
 
     setPatientRecords(prev => prev.map(p => {
       if (p.id === patientId) {
@@ -246,6 +270,12 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       status: 'Available for Pick-up' as const,
       prescribedBy: 'Tiffany Almuros (Head of Doctors)'
     };
+
+    void fetch('/api/health-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
+      body: JSON.stringify({ resource: 'prescription', patientId, ...entry }),
+    }).catch(() => setNotificationToast('Prescription could not be saved to the database.'));
 
     setPatientRecords(prev => prev.map(p => {
       if (p.id === patientId) {
@@ -283,7 +313,11 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const updated = [...(chatStore[patientId] || []), newMsg];
     setChatStore(prev => ({ ...prev, [patientId]: updated }));
-
+    void fetch('/api/health-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
+      body: JSON.stringify({ resource: 'message', patientId, sender: newMsg.sender, senderName: newMsg.senderName, senderRole: '', message: newMsg.text }),
+    }).catch(() => setNotificationToast('Message could not be saved to the database.'));
 
     setTimeout(() => {
       const botReply: ChatMessage = {
@@ -313,12 +347,20 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       status: 'Received'
     };
 
-    setContactSubmissions(prev => [newSubmission, ...prev]);
-    setNotificationToast(
-      language === 'fil'
-        ? `Naisumite ang katanungan: ${newSubmission.ticketId}`
-        : `Inquiry submitted: ${newSubmission.ticketId}`
-    );
+    void fetch('/api/health-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
+      body: JSON.stringify({ resource: 'contact', ...newSubmission, ticketId: newSubmission.ticketId }),
+    }).then((response) => {
+      if (!response.ok) throw new Error('Inquiry could not be saved.');
+      setContactSubmissions(prev => [newSubmission, ...prev]);
+      setNotificationToast(
+        language === 'fil'
+          ? `Naisumite ang katanungan: ${newSubmission.ticketId}`
+          : `Inquiry submitted: ${newSubmission.ticketId}`
+      );
+    }).catch((error) => setNotificationToast(error instanceof Error ? error.message : 'Inquiry could not be saved.'));
+
     return newSubmission;
   };
 

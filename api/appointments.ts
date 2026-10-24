@@ -38,8 +38,58 @@ function text(value: unknown, limit: number) {
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   response.setHeader('Cache-Control', 'no-store');
 
+  if (request.method === 'GET') {
+    const db = getDatabase();
+    if (!db) return response.status(503).json({ error: 'Schedule data is temporarily unavailable.' });
+
+    try {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS appointment_requests (
+          id TEXT PRIMARY KEY,
+          owner_uid TEXT,
+          reference_code TEXT NOT NULL UNIQUE,
+          patient_name TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          email TEXT,
+          zone TEXT NOT NULL,
+          service_id TEXT NOT NULL,
+          service_name TEXT NOT NULL,
+          preferred_date TEXT NOT NULL,
+          preferred_time TEXT NOT NULL,
+          privacy_consent INTEGER NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pending',
+          created_at TEXT NOT NULL
+        )
+      `);
+      const result = await db.execute(`
+        SELECT preferred_date, preferred_time, COUNT(*) AS booked_count
+        FROM appointment_requests
+        WHERE status = 'confirmed'
+        GROUP BY preferred_date, preferred_time
+        ORDER BY preferred_date ASC
+      `);
+      const slots = result.rows.map((row) => ({
+        date: String(row.preferred_date),
+        time: String(row.preferred_time),
+        bookedCount: Number(row.booked_count),
+      }));
+
+      const ownerUid = text(request.headers['x-user-id'], 128);
+      if (ownerUid) {
+        const appointments = await db.execute({
+          sql: `SELECT * FROM appointment_requests WHERE owner_uid = ? ORDER BY preferred_date ASC, preferred_time ASC`,
+          args: [ownerUid],
+        });
+        return response.status(200).json({ slots, appointments: appointments.rows });
+      }
+      return response.status(200).json({ slots });
+    } catch {
+      return response.status(500).json({ error: 'Schedule data could not be loaded.' });
+    }
+  }
+
   if (request.method !== 'POST') {
-    response.setHeader('Allow', 'POST');
+    response.setHeader('Allow', 'GET, POST');
     return response.status(405).json({ error: 'Method not allowed.' });
   }
 
@@ -53,6 +103,21 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   const serviceId = text(body.serviceId, 40);
   const preferredDate = text(body.preferredDate, 10);
   const preferredTime = text(body.preferredTime, 30);
+  const ownerUid = text(request.headers['x-user-id'], 128);
+
+  if (body.action === 'cancel') {
+    const referenceCode = text(body.referenceCode, 80);
+    if (!referenceCode || !ownerUid) return response.status(400).json({ error: 'Reference code and signed-in user are required.' });
+    const db = getDatabase();
+    if (!db) return response.status(503).json({ error: 'Appointment requests are temporarily unavailable.' });
+    try {
+      await db.execute({ sql: "UPDATE appointment_requests SET status = 'cancelled' WHERE reference_code = ? AND owner_uid = ?", args: [referenceCode, ownerUid] });
+      return response.status(200).json({ referenceCode, status: 'cancelled' });
+    } catch {
+      return response.status(500).json({ error: 'Appointment could not be cancelled.' });
+    }
+  }
+
   const phoneDigits = phone.replace(/\D/g, '');
   const dateIsValid = /^\d{4}-\d{2}-\d{2}$/.test(preferredDate)
     && !Number.isNaN(Date.parse(`${preferredDate}T00:00:00Z`))
@@ -94,15 +159,16 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         preferred_time TEXT NOT NULL,
         privacy_consent INTEGER NOT NULL,
         status TEXT NOT NULL DEFAULT 'pending',
+        chat_status TEXT NOT NULL DEFAULT 'closed',
         created_at TEXT NOT NULL
       )
     `);
     await db.execute({
       sql: `INSERT INTO appointment_requests (
-        id, reference_code, patient_name, phone, email, zone, service_id,
-        service_name, preferred_date, preferred_time, privacy_consent, status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'pending', ?)`,
-      args: [id, referenceCode, patientName, phone, email || null, zone, serviceId, services[serviceId], preferredDate, preferredTime, createdAt],
+        id, owner_uid, reference_code, patient_name, phone, email, zone, service_id,
+        service_name, preferred_date, preferred_time, privacy_consent, status, chat_status, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'pending', 'closed', ?)`,
+      args: [id, ownerUid || null, referenceCode, patientName, phone, email || null, zone, serviceId, services[serviceId], preferredDate, preferredTime, createdAt],
     });
   } catch {
     return response.status(500).json({ error: 'We could not save your request. Please try again.' });

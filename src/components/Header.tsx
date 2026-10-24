@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { Menu, X, Globe, CalendarDays } from 'lucide-react';
+import { Menu, X, Globe, CalendarDays, LogOut } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 
 export const Header: React.FC = () => {
   const {
@@ -18,6 +20,7 @@ export const Header: React.FC = () => {
   const navLinks = [
     { id: 'overview', label: 'Home' },
     { id: 'clinic-information', label: 'Information' },
+    { id: 'appointment-schedule', label: 'Schedule' },
     { id: 'services', label: t.navServices },
   ];
 
@@ -72,6 +75,9 @@ export const Header: React.FC = () => {
               <CalendarDays className="w-4 h-4" />
               <span>Request appointment</span>
             </button>
+            <button type="button" onClick={() => void signOut(auth)} className="p-2 text-slate-600 hover:text-[#173a37]" aria-label="Sign out" title="Sign out">
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
 
           <div className="flex items-center gap-2 lg:hidden">
@@ -82,6 +88,9 @@ export const Header: React.FC = () => {
               title={language === 'en' ? 'Filipino' : 'English'}
             >
               <Globe className="w-5 h-5" />
+            </button>
+            <button type="button" onClick={() => void signOut(auth)} className="sm:hidden p-2 text-slate-600 hover:text-[#173a37]" aria-label="Sign out" title="Sign out">
+              <LogOut className="w-5 h-5" />
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

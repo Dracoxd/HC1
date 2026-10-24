@@ -1,25 +1,11 @@
 import React from 'react';
-import { Bell, CalendarDays, Clock3, FileCheck2, Hospital, PackageCheck } from 'lucide-react';
+import { Bell, CalendarDays, Clock3, Hospital, PackageCheck } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { NEWS_UPDATES, OUTREACH_PROGRAMS, SERVICES_DATA } from '../data/healthCenterData';
 
 export const PublicInformation: React.FC = () => {
   const { language } = useHealthCenter();
   const isFilipino = language === 'fil';
-  const philippineTime = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Manila',
-    weekday: 'short',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date());
-  const dayName = philippineTime.find((part) => part.type === 'weekday')?.value ?? '';
-  const hour = Number(philippineTime.find((part) => part.type === 'hour')?.value ?? '0');
-  const minute = Number(philippineTime.find((part) => part.type === 'minute')?.value ?? '0');
-  const weekday = !['Sat', 'Sun'].includes(dayName);
-  const minutes = hour * 60 + minute;
-  const centerOpen = weekday && minutes >= 420 && minutes < 960;
-
   const featuredServices = SERVICES_DATA.filter((service) =>
     ['checkup', 'dental', 'xray', 'maternity', 'pharmacy'].includes(service.category),
   ).slice(0, 4);
@@ -41,12 +27,6 @@ export const PublicInformation: React.FC = () => {
 
         <div className="grid border-y border-[#dfe6e1] lg:grid-cols-[0.75fr_1.25fr]">
           <div className="border-b border-[#dfe6e1] py-6 lg:border-b-0 lg:border-r lg:pr-8">
-            <div className="flex items-center gap-3">
-              <span className={`h-2.5 w-2.5 rounded-full ${centerOpen ? 'bg-emerald-600' : 'bg-slate-400'}`} />
-              <span className="text-sm font-bold text-[#17312e]">
-                {centerOpen ? (isFilipino ? 'Bukas ngayon' : 'Open now') : (isFilipino ? 'Sarado ngayon' : 'Closed now')}
-              </span>
-            </div>
             <div className="mt-5 grid gap-4 text-sm text-[#66736f]">
               <div className="flex items-start gap-2"><Clock3 className="mt-0.5 h-4 w-4 text-[#17645c]" /><span>Monday-Friday<br /><strong className="text-[#17312e]">7:00 AM-4:00 PM</strong></span></div>
               <div className="flex items-start gap-2"><Hospital className="mt-0.5 h-4 w-4 text-[#17645c]" /><span>{isFilipino ? 'Hinihintay' : 'Current wait time'}<br /><strong className="text-[#17312e]">{isFilipino ? 'Sundin ang counter' : 'Confirm at registration'}</strong></span></div>
@@ -69,12 +49,6 @@ export const PublicInformation: React.FC = () => {
                       {service.category === 'dental' || service.category === 'xray' ? (isFilipino ? 'Nangangailangan ng appointment' : 'Appointment required') : (isFilipino ? 'Walk-in / Appointment' : 'Walk-in / Appointment')}
                     </span>
                   </div>
-                  {service.requirements?.length ? (
-                    <div className="mt-3 flex items-start gap-2 text-xs text-[#66736f]">
-                      <FileCheck2 className="mt-0.5 h-4 w-4 shrink-0 text-[#17645c]" />
-                      <span>{(isFilipino ? service.requirementsFil : service.requirements)?.join(' · ')}</span>
-                    </div>
-                  ) : null}
                 </article>
               ))}
             </div>

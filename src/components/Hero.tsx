@@ -5,6 +5,13 @@ import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const Hero: React.FC = () => {
   const { language, setActiveSection, setBookingModalOpen } = useHealthCenter();
+  const philippineTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila', weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: false,
+  }).formatToParts(new Date());
+  const dayName = philippineTime.find((part) => part.type === 'weekday')?.value ?? '';
+  const hour = Number(philippineTime.find((part) => part.type === 'hour')?.value ?? '0');
+  const minute = Number(philippineTime.find((part) => part.type === 'minute')?.value ?? '0');
+  const centerOpen = !['Sat', 'Sun'].includes(dayName) && hour * 60 + minute >= 420 && hour * 60 + minute < 960;
 
   const handleScrollTo = (id: string) => {
     setActiveSection(id);
@@ -20,6 +27,7 @@ export const Hero: React.FC = () => {
         <img src={centerPhoto} alt="Mayor Moises R. Flores Health Center" className="absolute inset-0 w-full h-full object-cover object-center" />
         <div className="absolute inset-0 bg-[#173a37]/88" />
         <div className="relative w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-14">
+          <div className="flex items-center justify-between gap-6">
           <div className="max-w-2xl">
             <h1 className="hero-enter max-w-xl text-3xl sm:text-4xl lg:text-[46px] font-bold leading-[1.08] text-white">
               Mayor Moises R. Flores Health Center
@@ -32,6 +40,11 @@ export const Hero: React.FC = () => {
                 View services <ArrowDown className="w-4 h-4" />
               </button>
             </div>
+          </div>
+          <div className={`shrink-0 items-center gap-3 border px-6 py-4 text-base font-bold sm:flex ${centerOpen ? 'border-emerald-300/50 bg-emerald-950/45 text-white' : 'border-white/30 bg-slate-950/35 text-white'} md:px-7 md:text-lg max-sm:hidden`}>
+            <span className={`h-4 w-4 rounded-full ${centerOpen ? 'bg-green-500' : 'bg-red-500'}`} />
+            {centerOpen ? (language === 'fil' ? 'Bukas ngayon' : 'Open now') : (language === 'fil' ? 'Sarado ngayon' : 'Closed now')}
+          </div>
           </div>
         </div>
       </div>

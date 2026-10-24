@@ -13,7 +13,7 @@ const AppContent: React.FC = () => {
   const { notificationToast } = useHealthCenter();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-teal-700 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#f4f6f3] text-[#1a2b29] antialiased selection:bg-[#dce8df] selection:text-[#123b39]">
       <Header />
 
       <main className="flex-1">
@@ -27,7 +27,7 @@ const AppContent: React.FC = () => {
       <OutreachBookingModal />
 
       {notificationToast && (
-        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 text-xs font-medium flex items-center gap-2 max-w-sm animate-fade-in">
+        <div className="fixed bottom-5 right-5 z-50 bg-[#173a37] text-white px-4 py-3 rounded-md shadow-lg border border-white/10 text-sm font-semibold flex items-center gap-2 max-w-sm animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
           <span>{notificationToast}</span>
         </div>

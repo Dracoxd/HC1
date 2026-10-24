@@ -12,15 +12,15 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="bg-[#123b39] text-white">
+    <footer className="bg-[#173a37] text-white border-t border-[#173a37]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-9">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-7">
           <div className="flex items-center gap-4">
-            <img src={centerPhoto} alt="" className="w-14 h-14 rounded-md object-cover" />
+            <img src={centerPhoto} alt="" className="w-14 h-14 rounded-sm object-cover border border-white/15" />
             <div>
               <div className="font-bold">Mayor Moises R. Flores Health Center</div>
               <div className="mt-1 text-sm text-white/70">{t.footerDescription}</div>
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-200"><MapPin className="w-3.5 h-3.5" />Pateros, Metro Manila</div>
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-[#c9ddd4]"><MapPin className="w-3.5 h-3.5" />Pateros, Metro Manila</div>
             </div>
           </div>
           <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-white/80">

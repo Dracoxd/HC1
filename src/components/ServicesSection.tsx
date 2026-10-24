@@ -37,7 +37,7 @@ export const ServicesSection: React.FC = () => {
     : SERVICES_DATA.filter((service) => service.category === activeCategory);
 
   return (
-    <section id="services" className="py-16 sm:py-20 bg-white border-b border-slate-200">
+    <section id="services" className="py-14 sm:py-18 bg-[#fbfcfa] border-b border-[#dfe6e1]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-8">
           <div className="max-w-2xl">
@@ -48,38 +48,39 @@ export const ServicesSection: React.FC = () => {
           <button onClick={() => openBookingForProgram('checkup')} className="text-sm font-bold text-teal-900 underline underline-offset-4">Request a doctor appointment</button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-3 mb-5" role="tablist" aria-label="Filter health services">
+        <div className="flex gap-1 overflow-x-auto border-y border-[#dfe6e1] mb-6" role="tablist" aria-label="Filter health services">
           {categories.map((category) => (
             <button
               key={category.id}
               role="tab"
               aria-selected={activeCategory === category.id}
               onClick={() => setActiveCategory(category.id)}
-              className={`px-4 py-2 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${activeCategory === category.id ? 'border-teal-800 text-teal-900' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+              className={`px-4 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${activeCategory === category.id ? 'border-[#17645c] text-[#173a37]' : 'border-transparent text-[#66736f] hover:text-[#173a37]'}`}
             >
               {category.label}
             </button>
           ))}
         </div>
 
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 border-l border-t border-slate-200">
-          {filteredServices.map((service) => (
-            <article key={service.id} className="flex flex-col min-h-[230px] p-5 sm:p-6 border-r border-b border-slate-200 hover:bg-[#f7faf8] transition-colors">
+        <div className="border-t border-[#cfd8d2]">
+          {filteredServices.map((service, index) => (
+            <article key={service.id} className="grid md:grid-cols-[minmax(220px,1.2fr)_minmax(260px,0.8fr)_auto] gap-4 md:gap-8 items-center py-5 border-b border-[#dfe6e1]">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 flex items-center justify-center text-teal-900 bg-[#e5f0eb] rounded-md shrink-0">
+                <div className="w-9 h-9 flex items-center justify-center text-[#17645c] border border-[#bfd0c5] shrink-0">
                   {iconForService(service.category)}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-base font-bold text-slate-950">{language === 'fil' ? service.titleFil : service.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-600">{language === 'fil' ? service.shortDescFil : service.shortDesc}</p>
+                  <div className="text-[10px] font-bold text-[#7b8984] tabular-nums mb-1">{String(index + 1).padStart(2, '0')}</div>
+                  <h3 className="text-[15px] font-bold text-[#17312e]">{language === 'fil' ? service.titleFil : service.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-[#66736f]">{language === 'fil' ? service.shortDescFil : service.shortDesc}</p>
                 </div>
               </div>
-              <div className="mt-5 space-y-2 text-sm text-slate-600">
-                <div className="flex items-start gap-2"><Clock className="w-4 h-4 mt-0.5 text-teal-800 shrink-0" /><span>{language === 'fil' ? service.scheduleFil : service.schedule}</span></div>
-                <div className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-teal-800 shrink-0" /><span>{service.location}</span></div>
+              <div className="space-y-2 text-sm text-[#66736f] md:border-l md:border-[#dfe6e1] md:pl-5">
+                <div className="flex items-start gap-2"><Clock className="w-4 h-4 mt-0.5 text-[#17645c] shrink-0" /><span>{language === 'fil' ? service.scheduleFil : service.schedule}</span></div>
+                <div className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 text-[#17645c] shrink-0" /><span>{service.location}</span></div>
               </div>
-              <button onClick={() => setSelectedService(service)} className="mt-auto pt-5 text-left text-sm font-bold text-teal-900 hover:underline underline-offset-4">
-                Service details <span aria-hidden="true">→</span>
+              <button onClick={() => setSelectedService(service)} className="justify-self-start md:justify-self-end px-3 py-2 text-sm font-bold text-[#173a37] border-b border-[#17645c] hover:bg-[#eaf0ec]">
+                Details
               </button>
             </article>
           ))}
@@ -147,7 +148,7 @@ export const ServicesSection: React.FC = () => {
 
       {selectedService && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4" onClick={() => setSelectedService(null)}>
-          <section role="dialog" aria-modal="true" aria-labelledby="service-dialog-title" onClick={(event) => event.stopPropagation()} className="bg-white max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-xl">
+          <section role="dialog" aria-modal="true" aria-labelledby="service-dialog-title" onClick={(event) => event.stopPropagation()} className="bg-[#fcfdfb] max-w-xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 shadow-[0_18px_50px_rgba(23,58,55,0.28)] border border-[#dfe6e1]">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
                 <div className="text-xs font-bold uppercase tracking-wider text-teal-800">{language === 'fil' ? selectedService.badgeFil : selectedService.badge}</div>
@@ -161,7 +162,7 @@ export const ServicesSection: React.FC = () => {
               <div><div className="font-bold text-slate-900">Location</div><p className="mt-1 text-slate-600">{selectedService.location}</p></div>
               <div className="sm:col-span-2"><div className="font-bold text-slate-900">Care team</div><p className="mt-1 text-slate-600">{selectedService.keyPersonnel.join(', ')}</p></div>
             </div>
-            <button onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex items-center justify-center px-4 py-3 bg-teal-900 text-white text-sm font-bold rounded-md hover:bg-teal-950">Request this appointment</button>
+            <button onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex items-center justify-center px-4 py-3 bg-[#17645c] text-white text-sm font-bold rounded-sm hover:bg-[#104f49]">Request this appointment</button>
           </section>
         </div>
       )}

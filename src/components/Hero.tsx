@@ -15,24 +15,24 @@ export const Hero: React.FC = () => {
   };
 
   return (
-    <section id="overview" className="bg-[#123b39] text-white">
-      <div className="relative min-h-[320px] sm:min-h-[360px] flex items-center overflow-hidden border-b border-white/10">
+    <section id="overview" className="bg-[#173a37] text-white">
+      <div className="relative min-h-[300px] sm:min-h-[340px] flex items-center overflow-hidden border-b border-white/10">
         <img src={centerPhoto} alt="Mayor Moises R. Flores Health Center" className="absolute inset-0 w-full h-full object-cover object-center" />
-        <div className="absolute inset-0 bg-[#102f2d]/80" />
+        <div className="absolute inset-0 bg-[#173a37]/88" />
         <div className="relative w-full max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-12 sm:py-14">
           <div className="max-w-2xl">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase text-white/75 mb-3">
               <MapPin className="w-4 h-4" />
               <span>Pateros, Metro Manila</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-bold leading-tight text-white">
+            <h1 className="max-w-xl text-3xl sm:text-4xl lg:text-[46px] font-bold leading-[1.08] text-white">
               Mayor Moises R. Flores Health Center
             </h1>
             <div className="mt-7 flex flex-wrap gap-3">
-              <button onClick={() => setBookingModalOpen(true)} className="inline-flex items-center gap-2 bg-white text-[#123b39] px-5 py-3 text-sm font-bold rounded-md hover:bg-emerald-50 transition-colors">
+              <button onClick={() => setBookingModalOpen(true)} className="inline-flex items-center gap-2 bg-white text-[#173a37] px-5 py-3 text-sm font-bold rounded-sm border border-white hover:bg-[#edf3ef] transition-colors">
                 <CalendarDays className="w-4 h-4" /> Request appointment
               </button>
-              <button onClick={() => handleScrollTo('services')} className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white border border-white/60 rounded-md hover:bg-white/10 transition-colors">
+              <button onClick={() => handleScrollTo('services')} className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white border border-white/40 rounded-sm hover:border-white hover:bg-white/10 transition-colors">
                 View services <ArrowDown className="w-4 h-4" />
               </button>
             </div>

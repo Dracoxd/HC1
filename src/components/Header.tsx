@@ -30,15 +30,15 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200">
+    <header className="sticky top-0 z-40 bg-[#fbfcfa]/95 backdrop-blur-md border-b border-[#dfe6e1]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-6 h-[76px]">
+        <div className="flex items-center justify-between gap-6 h-[68px]">
           <a
             href="#overview"
             onClick={(e) => { e.preventDefault(); handleNavClick('overview'); }}
-            className="text-base font-bold text-slate-900 hover:text-teal-800 transition-colors whitespace-nowrap shrink-0 flex items-center gap-3"
+            className="text-[15px] font-bold text-[#18312e] hover:text-[#0d625a] transition-colors whitespace-nowrap shrink-0 flex items-center gap-3"
           >
-            <img src={centerPhoto} alt="Mr. Flores Health Center" className="w-12 h-12 rounded-lg object-cover border border-slate-200" />
+            <img src={centerPhoto} alt="Mr. Flores Health Center" className="w-11 h-11 rounded-sm object-cover border border-[#dfe6e1]" />
             <span title={t.brand}>Mayor Moises R. Flores <span className="hidden sm:inline">Health Center</span></span>
           </a>
 
@@ -67,7 +67,7 @@ export const Header: React.FC = () => {
               <Globe className="w-4 h-4" />
               <span className="text-sm font-medium">{language === 'en' ? 'Filipino' : 'English'}</span>
             </button>
-            <button onClick={() => setBookingModalOpen(true)} className="px-4 py-2.5 text-sm font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded-md transition-colors whitespace-nowrap flex items-center gap-2">
+            <button onClick={() => setBookingModalOpen(true)} className="px-4 py-2.5 text-sm font-bold text-white bg-[#17645c] hover:bg-[#104f49] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
               <span>Request appointment</span>
             </button>

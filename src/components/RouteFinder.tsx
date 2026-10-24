@@ -558,8 +558,8 @@ export const RouteFinder: React.FC = () => {
   const locationStatusColor = origin?.source === 'manual' ? 'bg-teal-300' : origin && origin.accuracy > 250 ? 'bg-amber-300' : origin ? 'bg-emerald-300' : 'bg-slate-400';
 
   return (
-    <aside aria-label="Live directions map" className="fixed z-40 bottom-4 right-4 sm:bottom-6 sm:right-6 w-[min(390px,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto bg-white border border-slate-300 shadow-[0_12px_40px_rgba(15,23,42,0.18)] rounded-md">
-      <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#123b39] text-white">
+    <aside aria-label="Live directions map" className="fixed z-40 bottom-3 right-3 sm:bottom-5 sm:right-5 w-[min(360px,calc(100vw-1.5rem))] max-h-[calc(100dvh-1.5rem)] overflow-y-auto bg-[#fcfdfb] border border-[#d7dfda] shadow-[0_10px_32px_rgba(23,58,55,0.18)] rounded-sm">
+      <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#173a37] text-white">
         <div className="min-w-0">
           <div className="text-sm font-bold">Navigate to health center</div>
           <div className="text-[11px] text-white/75 truncate">{destinationName}</div>
@@ -574,13 +574,13 @@ export const RouteFinder: React.FC = () => {
       {!collapsed && <>
         <div className="grid grid-cols-4 border-b border-slate-200" role="group" aria-label="Travel mode">
           {modes.map((mode) => (
-            <button key={mode.id} type="button" onClick={() => selectTravelMode(mode.id)} aria-pressed={travelMode === mode.id} className={`flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold border-r last:border-r-0 border-slate-200 ${travelMode === mode.id ? 'bg-[#e5f0eb] text-teal-950' : 'text-slate-600 hover:bg-slate-50'}`}>
+            <button key={mode.id} type="button" onClick={() => selectTravelMode(mode.id)} aria-pressed={travelMode === mode.id} className={`flex min-w-0 flex-col sm:flex-row items-center justify-center gap-1 py-2 text-[11px] font-bold border-r last:border-r-0 border-[#dfe6e1] ${travelMode === mode.id ? 'bg-[#dce9e2] text-[#173a37]' : 'text-slate-600 hover:bg-[#f4f7f4]'}`}>
               {mode.icon}<span>{mode.label}</span>
             </button>
           ))}
         </div>
         <div className="relative">
-          <div ref={mapElementRef} className="h-[260px] w-full bg-slate-100" aria-label="Dark map showing your live location, the health center, and route" />
+          <div ref={mapElementRef} className="h-[190px] sm:h-[220px] w-full bg-slate-100" aria-label="Dark map showing your live location, the health center, and route" />
           {pinStartMode && <div className="absolute left-2 right-2 top-2 z-[1000] flex items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-lg"><span>Tap your actual location on the map</span><button type="button" onClick={() => { setPinStartMode(false); setPinCursor(false); }} className="text-teal-900 underline">Cancel</button></div>}
         </div>
 

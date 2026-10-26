@@ -38,6 +38,12 @@ const costingProfiles: Record<TravelMode, string> = {
   driving: 'auto',
   motorcycle: 'motor_scooter',
 };
+const routeColors: Record<TravelMode, string> = {
+  walking: '#22c55e',
+  bicycling: '#f59e0b',
+  driving: '#38bdf8',
+  motorcycle: '#ef4444',
+};
 const modeLabels: Record<TravelMode, string> = {
   walking: 'Walk',
   bicycling: 'Bike',
@@ -161,6 +167,13 @@ export const RouteFinder: React.FC = () => {
   const libreDestinationMarkerRef = useRef<MapLibreMarker | null>(null);
   const routePointsRef = useRef<[number, number][]>([]);
   const lastRouteRef = useRef<{ position: Position; mode: TravelMode; timestamp: number } | null>(null);
+  const activeRouteRequestRef = useRef<{ position: Position; mode: TravelMode; controller: AbortController } | null>(null);
+  const currentOriginRef = useRef(origin);
+  const currentTravelModeRef = useRef(travelMode);
+  const currentRendererRef = useRef(renderer);
+  currentOriginRef.current = origin;
+  currentTravelModeRef.current = travelMode;
+  currentRendererRef.current = renderer;
   const shouldFitRouteRef = useRef(true);
   const manualOriginRef = useRef(false);
   const pinStartModeRef = useRef(false);
@@ -171,6 +184,21 @@ export const RouteFinder: React.FC = () => {
     mapLibreRef.current?.getCanvasContainer().classList.toggle('route-start-pin-mode', enabled);
     leafletMapRef.current?.getContainer().classList.toggle('route-start-pin-mode', enabled);
   };
+
+  const clearRenderedRoute = () => {
+    routePointsRef.current = [];
+    routeLineRef.current?.remove();
+    routeLineRef.current = null;
+    accessLinesRef.current.forEach((line) => line.remove());
+    accessLinesRef.current = [];
+    (mapLibreRef.current?.getSource('route') as MapLibreGeoJSONSource | undefined)?.setData(emptyFeatures);
+    (mapLibreRef.current?.getSource('access-links') as MapLibreGeoJSONSource | undefined)?.setData(emptyFeatures);
+  };
+
+  useEffect(() => () => {
+    activeRouteRequestRef.current?.controller.abort();
+    activeRouteRequestRef.current = null;
+  }, []);
 
   useEffect(() => {
     let disposed = false;
@@ -219,6 +247,9 @@ export const RouteFinder: React.FC = () => {
           setOrigin({ latitude: event.lngLat.lat, longitude: event.lngLat.lng, accuracy: 0, source: 'manual' });
           setLocationError('');
           setPinStartMode(false);
+          setRoute(null);
+          setRouteError('');
+          clearRenderedRoute();
           shouldFitRouteRef.current = true;
           lastRouteRef.current = null;
         });
@@ -275,11 +306,11 @@ export const RouteFinder: React.FC = () => {
       setOrigin({ latitude: event.latlng.lat, longitude: event.latlng.lng, accuracy: 0, source: 'manual' });
       setLocationError('');
       setPinStartMode(false);
+      setRoute(null);
+      setRouteError('');
+      clearRenderedRoute();
       shouldFitRouteRef.current = true;
       lastRouteRef.current = null;
-      routeLineRef.current?.remove();
-      accessLinesRef.current.forEach((line) => line.remove());
-      accessLinesRef.current = [];
     });
     setMapReady(true);
     requestAnimationFrame(() => map.invalidateSize());
@@ -296,9 +327,11 @@ export const RouteFinder: React.FC = () => {
   }, [renderer]);
 
   useEffect(() => {
-    const map = leafletMapRef.current;
-    if (!map) return;
-    const frame = requestAnimationFrame(() => map.invalidateSize());
+    if (collapsed) return;
+    const frame = requestAnimationFrame(() => {
+      mapLibreRef.current?.resize();
+      leafletMapRef.current?.invalidateSize({ pan: false });
+    });
     return () => cancelAnimationFrame(frame);
   }, [collapsed]);
 
@@ -391,15 +424,30 @@ export const RouteFinder: React.FC = () => {
 
   useEffect(() => {
     if (!origin || !mapReady) return;
+    if (origin.source !== 'manual' && origin.accuracy > 250) {
+      activeRouteRequestRef.current?.controller.abort();
+      activeRouteRequestRef.current = null;
+      lastRouteRef.current = null;
+      setRoute(null);
+      setRouteError('');
+      clearRenderedRoute();
+      return;
+    }
+
     const previous = lastRouteRef.current;
     const changedConfidence = previous && (previous.position.accuracy > 250) !== (origin.accuracy > 250);
     if (previous && !changedConfidence && previous.mode === travelMode && distanceBetween(previous.position, origin) < 40 && Date.now() - previous.timestamp < 20000) return;
+    const activeRequest = activeRouteRequestRef.current;
+    if (activeRequest && activeRequest.mode === travelMode
+      && (activeRequest.position.accuracy > 250) === (origin.accuracy > 250)
+      && distanceBetween(activeRequest.position, origin) < 40) return;
 
     const approximate = origin.source !== 'manual' && origin.accuracy > 250;
     const controller = new AbortController();
+    if (activeRequest) activeRequest.controller.abort();
+    activeRouteRequestRef.current = { position: origin, mode: travelMode, controller };
     const timeout = window.setTimeout(async () => {
       setRouteError('');
-      lastRouteRef.current = { position: origin, mode: travelMode, timestamp: Date.now() };
       const costing = costingProfiles[travelMode];
       const request = {
         locations: [
@@ -446,8 +494,10 @@ export const RouteFinder: React.FC = () => {
           routePointsRef.current = coordinates;
           routeSource.setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates } });
           accessSource.setData(accessFeatures);
-          const routeColor = travelMode === 'walking' ? '#22c55e' : travelMode === 'bicycling' ? '#f59e0b' : travelMode === 'motorcycle' ? '#ef4444' : '#38bdf8';
+          const routeColor = routeColors[travelMode];
           map.setPaintProperty('route-line', 'line-color', routeColor);
+          map.setPaintProperty('route-line-approx', 'line-color', routeColor);
+          map.setPaintProperty('access-lines', 'line-color', routeColor);
           map.setLayoutProperty('route-line', 'visibility', approximate ? 'none' : 'visible');
           map.setLayoutProperty('route-line-approx', 'visibility', approximate ? 'visible' : 'none');
           if (shouldFitRouteRef.current) {
@@ -459,11 +509,11 @@ export const RouteFinder: React.FC = () => {
           routeLineRef.current?.remove();
           accessLinesRef.current.forEach((line) => line.remove());
           accessLinesRef.current = [];
-          const routeColor = travelMode === 'walking' ? '#22c55e' : travelMode === 'bicycling' ? '#f59e0b' : travelMode === 'motorcycle' ? '#ef4444' : '#38bdf8';
+          const routeColor = routeColors[travelMode];
           routeLineRef.current = L.polyline(points, { color: approximate ? '#f0ad4e' : routeColor, weight: 6, opacity: 1, dashArray: approximate ? '10 8' : undefined }).addTo(map);
           accessFeatures.features.forEach((feature) => {
             const accessPoints = feature.geometry.coordinates.map(([lon, lat]) => [lat, lon] as L.LatLngTuple);
-            accessLinesRef.current.push(L.polyline(accessPoints, { color: approximate ? '#f0ad4e' : '#38bdf8', weight: 4, opacity: 0.95, dashArray: '3 7' }).addTo(map));
+            accessLinesRef.current.push(L.polyline(accessPoints, { color: approximate ? '#f0ad4e' : routeColor, weight: 4, opacity: 0.95, dashArray: '3 7' }).addTo(map));
           });
           if (shouldFitRouteRef.current) {
             const bounds = routeLineRef.current.getBounds();
@@ -473,17 +523,34 @@ export const RouteFinder: React.FC = () => {
           }
         }
         const maneuvers = trip.legs.flatMap((leg) => leg.maneuvers).filter((maneuver) => maneuver.length > 0);
+        lastRouteRef.current = { position: origin, mode: travelMode, timestamp: Date.now() };
         setRoute({ distance: trip.summary.length * 1000, duration: trip.summary.time, approximate, startAccessDistance, endAccessDistance, straightLineDistance, maneuvers });
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setRoute(null);
+        clearRenderedRoute();
         setRouteError(error instanceof Error ? error.message : 'Could not calculate this route.');
+      } finally {
+        if (activeRouteRequestRef.current?.controller === controller) activeRouteRequestRef.current = null;
       }
     }, 350);
 
     return () => {
       window.clearTimeout(timeout);
-      controller.abort();
+      const active = activeRouteRequestRef.current;
+      const currentOrigin = currentOriginRef.current;
+      const confidenceChanged = Boolean(active && currentOrigin
+        && (active.position.accuracy > 250) !== (currentOrigin.accuracy > 250));
+      if (active?.controller === controller && (
+        currentTravelModeRef.current !== travelMode
+        || currentRendererRef.current !== renderer
+        || !currentOrigin
+        || confidenceChanged
+        || distanceBetween(active.position, currentOrigin) >= 40
+      )) {
+        controller.abort();
+        activeRouteRequestRef.current = null;
+      }
     };
   }, [origin, travelMode, mapReady, renderer]);
 
@@ -495,11 +562,7 @@ export const RouteFinder: React.FC = () => {
     setRoute(null);
     lastRouteRef.current = null;
     shouldFitRouteRef.current = true;
-    routeLineRef.current?.remove();
-    routeLineRef.current = null;
-    accessLinesRef.current.forEach((line) => line.remove());
-    accessLinesRef.current = [];
-    (mapLibreRef.current?.getSource('route') as MapLibreGeoJSONSource | undefined)?.setData(emptyFeatures);
+    clearRenderedRoute();
     setTrackingAttempt((attempt) => attempt + 1);
   };
 
@@ -516,6 +579,7 @@ export const RouteFinder: React.FC = () => {
     setOrigin(null);
     setRoute(null);
     lastRouteRef.current = null;
+    clearRenderedRoute();
     setLocating(true);
     setTrackingAttempt((attempt) => attempt + 1);
   };
@@ -544,10 +608,7 @@ export const RouteFinder: React.FC = () => {
     setRouteError('');
     lastRouteRef.current = null;
     shouldFitRouteRef.current = true;
-    routeLineRef.current?.remove();
-    routeLineRef.current = null;
-    accessLinesRef.current.forEach((line) => line.remove());
-    accessLinesRef.current = [];
+    clearRenderedRoute();
     setTravelMode(mode);
   };
 
@@ -571,7 +632,7 @@ export const RouteFinder: React.FC = () => {
         </div>
       </header>
 
-      {!collapsed && <>
+      <div className={collapsed ? 'hidden' : ''}>
         <div className="grid grid-cols-4 border-b border-slate-200" role="group" aria-label="Travel mode">
           {modes.map((mode) => (
             <button key={mode.id} type="button" onClick={() => selectTravelMode(mode.id)} aria-pressed={travelMode === mode.id} className={`flex min-w-0 flex-col sm:flex-row items-center justify-center gap-1 py-2 text-[11px] font-bold border-r last:border-r-0 border-[#dfe6e1] ${travelMode === mode.id ? 'bg-[#dce9e2] text-[#173a37]' : 'text-slate-600 hover:bg-[#f4f7f4]'}`}>
@@ -586,6 +647,7 @@ export const RouteFinder: React.FC = () => {
 
         <div className="px-4 py-3">
           {mapError && <p role="alert" className="mb-2 text-xs text-rose-800">{mapError}</p>}
+          {origin?.source !== 'manual' && origin && origin.accuracy > 250 && <p role="status" className="mb-2 border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">Route hidden because GPS is too imprecise to choose the correct streets. Wait for a stronger signal or pin your start point on the map.</p>}
           {route && <div className="flex items-center gap-2 text-sm font-bold text-slate-900"><MapPin className="w-4 h-4 text-teal-800" /><span>{modeLabels[travelMode]} · {formatDistance(route.distance)} · about {formatDuration(route.duration)}</span></div>}
           {(travelMode === 'driving' || travelMode === 'motorcycle') && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2"><a href={googleMapsUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-900 underline underline-offset-2">Open navigation <ExternalLink className="w-3.5 h-3.5" /></a><a href={wazeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-900 underline underline-offset-2">Open in Waze <ExternalLink className="w-3.5 h-3.5" /></a></div>}
           {route?.maneuvers[0] && <p className="mt-2 border-l-2 border-teal-700 pl-3 text-xs font-semibold text-slate-700">{route.maneuvers[0].instruction}</p>}
@@ -600,8 +662,7 @@ export const RouteFinder: React.FC = () => {
           {origin?.source !== 'manual' && origin && origin.accuracy > 250 && !pinStartMode && <button type="button" onClick={beginManualPin} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal-900 underline underline-offset-2"><MapPin className="w-3.5 h-3.5" />Pin my actual start on map</button>}
           <p className="mt-2 flex items-start gap-1 text-[10px] leading-relaxed text-slate-500"><MapPin className="w-3 h-3 shrink-0 mt-0.5" />Live OpenStreetMap routing by travel mode. Routes and estimates change for walking, cycling, driving, and motorcycle travel.</p>
         </div>
-      </>}
+      </div>
     </aside>
   );
 };
-

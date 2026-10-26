@@ -213,7 +213,7 @@ export const AdminPanel: React.FC = () => {
 
   return (
     <main className="min-h-screen bg-[#f4f6f3] text-[#17312e]">
-      <header className="border-b border-[#dfe6e1] bg-white px-5 py-4 sm:px-8">
+      <header className="border-b border-[#dfe6e1] bg-white px-3 py-3 sm:px-8 sm:py-4">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-2 sm:gap-4">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#17645c] text-white sm:h-10 sm:w-10"><CalendarCheck2 className="h-5 w-5" /></div>
@@ -223,13 +223,13 @@ export const AdminPanel: React.FC = () => {
         </div>
       </header>
 
-      <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-8 sm:py-8">
+      <div className="mx-auto w-full max-w-[1500px] px-3 py-4 sm:px-8 sm:py-8">
         <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <p className="text-sm text-[#66736f]">Review appointment requests, contact patients, and manage confirmations.</p>
-          <div className="flex items-center gap-2 border border-[#dfe6e1] bg-white px-3 py-3 sm:gap-3 sm:px-4">
-            <span className={`h-3 w-3 rounded-full ${clinicOpen === null ? 'bg-slate-400' : clinicOpen ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            <div className="mr-2"><div className="text-xs font-bold">{clinicOpen === null ? 'LOADING STATUS' : clinicOpen ? 'OPEN NOW' : 'CLOSED NOW'}</div><div className="text-[10px] text-[#66736f]">Public website status</div></div>
-            <button type="button" disabled={clinicStatusSaving || clinicOpen === null} onClick={() => void updateClinicStatus(!clinicOpen)} className={`h-9 px-4 text-xs font-bold text-white disabled:opacity-60 ${clinicOpen ? 'bg-rose-700 hover:bg-rose-800' : 'bg-[#17645c] hover:bg-[#104f49]'}`}>
+          <div className="flex min-w-0 flex-wrap items-center gap-2 border border-[#dfe6e1] bg-white px-3 py-3 sm:gap-3 sm:px-4">
+            <span className={`h-3 w-3 shrink-0 rounded-full ${clinicOpen === null ? 'bg-slate-400' : clinicOpen ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+            <div className="mr-auto min-w-0 sm:mr-2"><div className="text-xs font-bold">{clinicOpen === null ? 'LOADING STATUS' : clinicOpen ? 'OPEN NOW' : 'CLOSED NOW'}</div><div className="text-[10px] text-[#66736f]">Public website status</div></div>
+            <button type="button" disabled={clinicStatusSaving || clinicOpen === null} onClick={() => void updateClinicStatus(!clinicOpen)} className={`min-h-11 shrink-0 px-3 text-xs font-bold text-white disabled:opacity-60 sm:px-4 ${clinicOpen ? 'bg-rose-700 hover:bg-rose-800' : 'bg-[#17645c] hover:bg-[#104f49]'}`}>
               {clinicStatusSaving ? 'Saving...' : clinicOpen === null ? 'Loading...' : clinicOpen ? 'Close now' : 'Open now'}
             </button>
           </div>
@@ -241,9 +241,9 @@ export const AdminPanel: React.FC = () => {
             { label: 'Accepted', value: counts.confirmed, icon: Check, color: 'text-emerald-700', bg: 'bg-emerald-50' },
             { label: 'Rejected or cancelled', value: counts.rejected, icon: X, color: 'text-rose-700', bg: 'bg-rose-50' },
           ].map(({ label, value, icon: Icon, color, bg }) => (
-            <div key={label} className="flex items-center gap-4 border border-[#dfe6e1] bg-white p-4">
+            <div key={label} className="flex min-w-0 items-center gap-2 border border-[#dfe6e1] bg-white p-3 sm:gap-4 sm:p-4">
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center ${bg} ${color} sm:h-10 sm:w-10`}><Icon className="h-5 w-5" /></div>
-              <div><div className="text-2xl font-bold leading-none">{value}</div><div className="mt-1.5 text-xs font-medium text-[#66736f]">{label}</div></div>
+              <div className="min-w-0"><div className="text-2xl font-bold leading-none">{value}</div><div className="mt-1.5 text-[11px] font-medium leading-tight text-[#66736f] sm:text-xs">{label}</div></div>
             </div>
           ))}
         </section>
@@ -265,15 +265,15 @@ export const AdminPanel: React.FC = () => {
             onSelectAppointment={(id) => { setSelectedId(id); setActiveTab('requests'); }}
           />
         ) : (
-        <section className="grid overflow-hidden border border-[#dfe6e1] bg-white lg:min-h-[640px] lg:grid-cols-[350px_minmax(0,1fr)]">
-          <aside className="border-b border-[#dfe6e1] lg:border-b-0 lg:border-r">
+        <section className="grid min-w-0 overflow-hidden border border-[#dfe6e1] bg-white lg:min-h-[640px] lg:grid-cols-[350px_minmax(0,1fr)]">
+          <aside className={`${selected ? 'hidden lg:block' : ''} min-w-0 border-b border-[#dfe6e1] lg:border-b-0 lg:border-r`}>
             <div className="border-b border-[#edf1ee] p-4">
               <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">Appointment requests</h2><span className="text-xs text-[#66736f]">{filteredAppointments.length} shown</span></div>
               <label className="flex h-10 items-center gap-2 border border-[#d9e1dc] px-3 text-[#66736f] focus-within:border-[#17645c]">
                 <Search className="h-4 w-4 shrink-0" />
                 <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search patient or reference" className="min-w-0 flex-1 text-xs text-[#17312e] outline-none" />
               </label>
-              <div className="mt-3 flex gap-1 overflow-x-auto">
+              <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
                 {[
                   ['all', 'All'],
                   ['pending', 'Pending'],
@@ -281,7 +281,7 @@ export const AdminPanel: React.FC = () => {
                   ['completed', 'Completed'],
                   ['rejected', 'Rejected'],
                 ].map(([value, label]) => (
-                  <button key={value} type="button" onClick={() => setStatusFilter(value)} className={`whitespace-nowrap px-3 py-1.5 text-xs font-bold ${statusFilter === value ? 'bg-[#173a37] text-white' : 'bg-[#f1f4f1] text-[#66736f] hover:bg-[#e7ede8]'}`}>{label}</button>
+                  <button key={value} type="button" onClick={() => setStatusFilter(value)} className={`min-h-10 shrink-0 whitespace-nowrap px-3 text-xs font-bold ${statusFilter === value ? 'bg-[#173a37] text-white' : 'bg-[#f1f4f1] text-[#66736f] hover:bg-[#e7ede8]'}`}>{label}</button>
                 ))}
               </div>
             </div>
@@ -289,14 +289,14 @@ export const AdminPanel: React.FC = () => {
               {loading ? <p className="p-5 text-sm text-[#66736f]">Loading requests...</p> : filteredAppointments.map((appointment) => (
                 <button key={appointment.id} type="button" onClick={() => setSelectedId(appointment.id)} className={`w-full border-b border-[#edf1ee] border-l-2 px-4 py-4 text-left transition-colors hover:bg-[#f5f8f5] ${selectedId === appointment.id ? 'border-l-[#17645c] bg-[#f0f5f1]' : 'border-l-transparent'}`}>
                   <div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="truncate text-sm font-bold">{appointment.patient_name}</div><div className="mt-1 truncate text-xs text-[#66736f]">{appointment.service_name}</div></div><span className={`shrink-0 px-2 py-1 text-[10px] font-bold uppercase ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'completed' ? 'bg-sky-100 text-sky-800' : appointment.status === 'cancelled' || appointment.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status}</span></div>
-                  <div className="mt-3 flex items-center justify-between text-[11px] text-[#66736f]"><span>{appointment.preferred_date} · {appointment.preferred_time}</span><span className="font-mono">{appointment.reference_code}</span></div>
+                  <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] text-[#66736f]"><span>{appointment.preferred_date} · {appointment.preferred_time}</span><span className="break-all font-mono">{appointment.reference_code}</span></div>
                 </button>
               ))}
               {!loading && filteredAppointments.length === 0 && <p className="p-5 text-sm text-[#66736f]">{appointments.length ? 'No requests match these filters.' : 'No appointment requests yet.'}</p>}
             </div>
           </aside>
 
-          <section className="min-w-0 bg-[#f8faf8]">
+          <section className={`${selected ? '' : 'hidden lg:block'} min-w-0 bg-[#f8faf8]`}>
             {!selected ? (
               <div className="flex min-h-[420px] flex-col items-center justify-center px-6 text-center">
                 <CalendarDays className="h-9 w-9 text-[#9aaba0]" />
@@ -304,12 +304,12 @@ export const AdminPanel: React.FC = () => {
                 <p className="mt-1 max-w-sm text-sm text-[#66736f]">Patient details, review actions, and messages will appear here.</p>
               </div>
             ) : (
-              <div className="grid min-h-[640px] xl:grid-cols-[minmax(230px,0.7fr)_minmax(320px,1.3fr)]">
-                <div className="border-b border-[#dfe6e1] bg-white p-5 xl:border-b-0 xl:border-r">
+              <div className="grid min-h-0 xl:min-h-[640px] xl:grid-cols-[minmax(230px,0.7fr)_minmax(320px,1.3fr)]">
+                <div className="min-w-0 border-b border-[#dfe6e1] bg-white p-4 sm:p-5 xl:border-b-0 xl:border-r">
                   <button type="button" onClick={() => setSelectedId('')} className="mb-4 flex items-center gap-1 text-xs font-bold text-[#17645c] lg:hidden"><ChevronLeft className="h-4 w-4" />Back to requests</button>
                   <div className="flex items-start justify-between gap-3"><div><div className="text-[11px] font-bold uppercase tracking-wide text-[#17645c]">Request details</div><div className="mt-1 font-mono text-xs text-[#66736f]">{selected.reference_code}</div></div><span className={`px-2 py-1 text-[10px] font-bold uppercase ${selected.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : selected.status === 'completed' ? 'bg-sky-100 text-sky-800' : selected.status === 'cancelled' || selected.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{selected.status}</span></div>
-                  <h2 className="mt-5 text-xl font-bold">{selected.patient_name}</h2>
-                  <p className="mt-1 text-sm text-[#66736f]">{selected.service_name}</p>
+                  <h2 className="mt-5 break-words text-xl font-bold">{selected.patient_name}</h2>
+                  <p className="mt-1 break-words text-sm text-[#66736f]">{selected.service_name}</p>
                   <dl className="mt-6 space-y-4 border-y border-[#edf1ee] py-5 text-sm">
                     <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Preferred appointment</dt><dd className="mt-1 font-medium">{selected.preferred_date} · {selected.preferred_time}</dd></div>
                     <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Barangay</dt><dd className="mt-1 font-medium">{selected.zone}</dd></div>
@@ -317,27 +317,27 @@ export const AdminPanel: React.FC = () => {
                     {selected.email && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Email</dt><dd className="mt-1 break-all font-medium">{selected.email}</dd></div>}
                   </dl>
                   <div className="mt-5 grid gap-2">
-                    <button type="button" disabled={selected.status !== 'pending'} onClick={() => void performAction('approve', selected)} className="flex h-10 items-center justify-center gap-2 bg-[#17645c] text-sm font-bold text-white hover:bg-[#104f49] disabled:cursor-not-allowed disabled:opacity-50"><Check className="h-4 w-4" />Accept request</button>
-                    <button type="button" disabled={selected.status === 'rejected' || selected.status === 'cancelled' || selected.status === 'completed'} onClick={() => void performAction('reject', selected)} className="flex h-10 items-center justify-center gap-2 border border-rose-200 text-sm font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"><X className="h-4 w-4" />Reject request</button>
-                    {selected.status === 'confirmed' && <button type="button" onClick={() => void performAction('complete', selected)} className="flex h-10 items-center justify-center gap-2 border border-sky-200 text-sm font-bold text-sky-800 hover:bg-sky-50"><CheckCircle2 className="h-4 w-4" />Mark completed / remove from schedule</button>}
-                    {selected.chat_status !== 'deleted' && <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex h-10 items-center justify-center gap-2 border border-[#d9e1dc] text-sm font-bold hover:bg-[#f4f6f3]"><LockKeyhole className="h-4 w-4" />{selected.chat_status === 'closed' ? 'Open patient chat' : 'Close patient chat'}</button>}
+                    <button type="button" disabled={selected.status !== 'pending'} onClick={() => void performAction('approve', selected)} className="flex min-h-11 items-center justify-center gap-2 bg-[#17645c] px-2 text-sm font-bold text-white hover:bg-[#104f49] disabled:cursor-not-allowed disabled:opacity-50"><Check className="h-4 w-4 shrink-0" />Accept request</button>
+                    <button type="button" disabled={selected.status === 'rejected' || selected.status === 'cancelled' || selected.status === 'completed'} onClick={() => void performAction('reject', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-rose-200 px-2 text-sm font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"><X className="h-4 w-4 shrink-0" />Reject request</button>
+                    {selected.status === 'confirmed' && <button type="button" onClick={() => void performAction('complete', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-sky-200 px-2 text-sm font-bold text-sky-800 hover:bg-sky-50"><CheckCircle2 className="h-4 w-4 shrink-0" />Mark completed / remove from schedule</button>}
+                    {selected.chat_status !== 'deleted' && <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-[#d9e1dc] px-2 text-sm font-bold hover:bg-[#f4f6f3]"><LockKeyhole className="h-4 w-4 shrink-0" />{selected.chat_status === 'closed' ? 'Open patient chat' : 'Close patient chat'}</button>}
                   </div>
                 </div>
 
-                <div className="flex min-h-[520px] flex-col">
-                  <div className="flex items-center gap-3 border-b border-[#dfe6e1] bg-white px-5 py-4">
+                <div className="flex min-h-[380px] min-w-0 flex-col sm:min-h-[520px]">
+                  <div className="flex min-w-0 items-center gap-2 border-b border-[#dfe6e1] bg-white px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
                     <div className="flex h-9 w-9 items-center justify-center bg-[#edf3ef] text-[#17645c]"><MessageCircle className="h-4 w-4" /></div>
-                    <div><h3 className="text-sm font-bold">Patient conversation</h3><p className="mt-0.5 text-[11px] text-[#66736f]">{selected.chat_status === 'deleted' ? 'Deleted for both accounts' : selected.chat_status === 'closed' ? 'Open chat to send messages' : 'Chat is open with the patient'}</p></div>
+                    <div className="min-w-0"><h3 className="text-sm font-bold">Patient conversation</h3><p className="mt-0.5 text-[11px] text-[#66736f]">{selected.chat_status === 'deleted' ? 'Deleted for both accounts' : selected.chat_status === 'closed' ? 'Open chat to send messages' : 'Chat is open with the patient'}</p></div>
                     {selected.chat_status !== 'deleted' && <button type="button" onClick={() => void performAction('delete_chat', selected)} className="ml-auto inline-flex items-center gap-1.5 border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50" title="Delete this chat for both accounts"><Trash2 className="h-4 w-4" /><span className="hidden sm:inline">Delete chat</span></button>}
                   </div>
-                  <div className="flex-1 space-y-3 overflow-y-auto px-5 py-5">
+                  <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">
                     {selectedMessages.map((message) => (
                       <div key={message.id} className={`flex ${message.sender_role === 'admin' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${message.sender_role === 'admin' ? 'rounded-br-sm bg-[#17645c] text-white' : 'rounded-bl-sm border border-[#e5ebe6] bg-white text-[#17312e]'}`}><div className="whitespace-pre-wrap break-words">{message.message}</div><div className={`mt-1.5 text-[10px] ${message.sender_role === 'admin' ? 'text-white/70' : 'text-[#66736f]'}`}>{message.sender_name}</div></div></div>
                     ))}
                     {selectedMessages.length === 0 && <div className="flex h-full min-h-40 items-center justify-center text-center text-xs text-[#87938c]">{selected.chat_status === 'deleted' ? 'This conversation was deleted for both accounts.' : 'No messages for this request yet.'}</div>}
                   </div>
                   {selected.chat_status === 'open' ? (
-                    <form onSubmit={sendMessage} className="flex gap-2 border-t border-[#dfe6e1] bg-white p-4"><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} maxLength={2000} placeholder="Write a message to the patient..." className="min-w-0 flex-1 border border-[#d9e1dc] px-4 text-sm outline-none focus:border-[#17645c]" /><button type="submit" disabled={!chatInput.trim()} aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#17645c] text-white hover:bg-[#104f49] disabled:opacity-50"><Send className="h-4 w-4" /></button></form>
+                    <form onSubmit={sendMessage} className="flex shrink-0 gap-2 border-t border-[#dfe6e1] bg-white p-2.5 sm:p-4"><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} maxLength={2000} placeholder="Write a message to the patient..." className="h-11 min-w-0 flex-1 border border-[#d9e1dc] px-3 text-sm outline-none focus:border-[#17645c] sm:px-4" /><button type="submit" disabled={!chatInput.trim()} aria-label="Send message" className="flex h-11 w-11 shrink-0 items-center justify-center bg-[#17645c] text-white hover:bg-[#104f49] disabled:opacity-50"><Send className="h-4 w-4" /></button></form>
                   ) : <div className="border-t border-[#dfe6e1] bg-white px-5 py-4 text-center text-xs text-[#66736f]">{selected.chat_status === 'deleted' ? 'This conversation has been deleted and cannot be reopened.' : 'This conversation is closed. Open patient chat to reply.'}</div>}
                 </div>
               </div>
@@ -346,7 +346,7 @@ export const AdminPanel: React.FC = () => {
         </section>
         )}
       </div>
-      {error && <div role="alert" className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 border border-rose-200 bg-white px-4 py-3 text-sm text-rose-800 shadow-lg">{error}</div>}
+      {error && <div role="alert" className="fixed bottom-4 left-3 right-3 z-50 mx-auto w-fit max-w-lg border border-rose-200 bg-white px-4 py-3 text-sm text-rose-800 shadow-lg sm:left-1/2 sm:right-auto sm:-translate-x-1/2">{error}</div>}
     </main>
   );
 };

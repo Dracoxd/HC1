@@ -15,6 +15,12 @@ interface PublicSlotSetting {
   blocked: boolean;
 }
 
+interface PendingAppointmentRequest {
+  referenceCode: string;
+  preferredDate: string;
+  preferredTime: string;
+}
+
 function localDateString() {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Manila',
@@ -48,6 +54,8 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   const [availabilityError, setAvailabilityError] = useState('');
   const [receipt, setReceipt] = useState<AppointmentReceipt | null>(null);
   const [slotSettings, setSlotSettings] = useState<PublicSlotSetting[]>([]);
+  const [pendingRequest, setPendingRequest] = useState<PendingAppointmentRequest | null>(null);
+  const [pendingRequestLoaded, setPendingRequestLoaded] = useState(false);
 
   useEffect(() => {
     if (selectedProgramForBooking && services.some((service) => service.id === selectedProgramForBooking)) {
@@ -73,21 +81,42 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   }, [bookingModalOpen]);
 
   useEffect(() => {
-    if (!bookingModalOpen) return;
+    if (!bookingModalOpen) {
+      setPendingRequestLoaded(false);
+      return;
+    }
     let active = true;
     const loadAvailability = async () => {
       try {
-        const response = await fetch('/api/appointments', { cache: 'no-store' });
-        const result = await response.json() as { slotSettings?: PublicSlotSetting[]; error?: string };
+        const token = await user.getIdToken();
+        const response = await fetch('/api/appointments', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+        const result = await response.json() as {
+          slotSettings?: PublicSlotSetting[];
+          appointments?: Array<{ reference_code: string; preferred_date: string; preferred_time: string; status: string }>;
+          error?: string;
+        };
         if (!response.ok || !Array.isArray(result.slotSettings)) {
           throw new Error(result.error || 'Appointment availability could not be loaded.');
         }
         if (active) {
           setSlotSettings(result.slotSettings);
+          const pending = result.appointments?.find((appointment) => appointment.status.toLowerCase() === 'pending');
+          setPendingRequest(pending ? {
+            referenceCode: pending.reference_code,
+            preferredDate: pending.preferred_date,
+            preferredTime: pending.preferred_time,
+          } : null);
+          setPendingRequestLoaded(true);
           setAvailabilityError('');
         }
       } catch (caught) {
-        if (active) setAvailabilityError(caught instanceof Error ? caught.message : 'Appointment availability could not be loaded.');
+        if (active) {
+          setAvailabilityError(caught instanceof Error ? caught.message : 'Appointment availability could not be loaded.');
+          setPendingRequestLoaded(false);
+        }
       }
     };
     void loadAvailability();
@@ -96,7 +125,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
       active = false;
       window.clearInterval(timer);
     };
-  }, [bookingModalOpen]);
+  }, [bookingModalOpen, user]);
 
   if (!bookingModalOpen) return null;
 
@@ -113,6 +142,11 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+    if (!pendingRequestLoaded) {
+      setError(isFilipino ? 'Sinusuri muna kung may nakabinbing request. Subukan muli sandali.' : 'Checking for a pending request. Please try again in a moment.');
+      return;
+    }
+    if (pendingRequest) return;
     if (!selectedService) {
       setError(isFilipino ? 'Walang available na serbisyo para sa appointment request.' : 'No services are currently available for appointment requests.');
       return;
@@ -148,7 +182,10 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
         }),
       });
       const responseBody = await response.text();
-      let result: AppointmentReceipt & { error?: string };
+      let result: AppointmentReceipt & {
+        error?: string;
+        pendingRequest?: PendingAppointmentRequest;
+      };
       try {
         result = JSON.parse(responseBody) as AppointmentReceipt & { error?: string };
       } catch {
@@ -157,11 +194,20 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
           : `Appointment service is temporarily unavailable (HTTP ${response.status}). Please try again later.`);
       }
       if (!response.ok) {
+        if (response.status === 409 && result.pendingRequest) {
+          setPendingRequest(result.pendingRequest);
+          setPendingRequestLoaded(true);
+        }
         const message = response.status === 401
           ? 'Your sign-in could not be verified. Check that the Firebase service account in Vercel belongs to this app’s Firebase project, then redeploy.'
           : result.error || 'Could not submit your appointment request.';
         throw new Error(message);
       }
+      setPendingRequest({
+        referenceCode: result.referenceCode,
+        preferredDate,
+        preferredTime,
+      });
       setReceipt(result);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Could not submit your appointment request.');
@@ -196,6 +242,28 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
               </div>
             </div>
           </div>
+        ) : pendingRequest ? (
+          <div className="space-y-4 px-4 py-6 sm:px-7 sm:py-8" role="status" aria-live="polite">
+            <div className="border border-amber-200 bg-amber-50 p-4 text-amber-950">
+              <h3 className="text-base font-bold">{isFilipino ? 'May request ka pang sinusuri' : 'You already have a request under review'}</h3>
+              <p className="mt-2 text-sm leading-relaxed">
+                {isFilipino
+                  ? 'Maghintay ng aksyon ng clinic staff bago magpadala ng panibagong appointment request. Maaari kang mag-request muli kapag tinanggap o tinanggihan na ang kasalukuyang request.'
+                  : 'Please wait for clinic staff to accept or reject this request before sending another appointment request.'}
+              </p>
+            </div>
+            <dl className="grid gap-2 text-sm sm:grid-cols-2">
+              <div><dt className="text-xs font-semibold text-slate-500">{isFilipino ? 'Reference number' : 'Request reference'}</dt><dd className="break-all font-mono font-bold text-slate-900">{pendingRequest.referenceCode}</dd></div>
+              <div><dt className="text-xs font-semibold text-slate-500">{isFilipino ? 'Petsa at oras' : 'Preferred schedule'}</dt><dd className="font-semibold text-slate-900">{pendingRequest.preferredDate} · {pendingRequest.preferredTime}</dd></div>
+            </dl>
+            <p className="text-xs text-slate-500">{isFilipino ? 'Awtomatikong susuriin muli ang status habang bukas ang pahinang ito.' : 'This page will automatically check again while it is open.'}</p>
+          </div>
+        ) : !pendingRequestLoaded ? (
+          <p className="px-4 py-8 text-center text-sm text-slate-600 sm:px-7" role="status">
+            {availabilityError || (isFilipino
+              ? 'Sinusuri ang mga nakabinbing appointment request...'
+              : 'Checking for pending appointment requests...')}
+          </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5 px-4 py-5 sm:px-7 sm:py-6">
             {!canSubmitAppointment && (

@@ -248,13 +248,39 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     if (slotSettings.rows.some((setting) => Number(setting.blocked) === 1)) {
       return response.status(409).json({ error: 'The selected date or time slot is unavailable. Please choose another.' });
     }
-    await db.execute({
-      sql: `INSERT INTO appointment_requests (
-        id, owner_uid, reference_code, patient_name, phone, email, zone, service_id,
-        service_name, preferred_date, preferred_time, privacy_consent, status, chat_status, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'pending', 'closed', ?)`,
-      args: [id, ownerUid || null, referenceCode, patientName, phone, email || null, zone, serviceId, serviceName, preferredDate, preferredTime, createdAt],
-    });
+    const transaction = await db.transaction('write');
+    try {
+      const pending = await transaction.execute({
+        sql: `SELECT reference_code, preferred_date, preferred_time
+              FROM appointment_requests
+              WHERE owner_uid = ? AND status = 'pending'
+              ORDER BY created_at DESC LIMIT 1`,
+        args: [ownerUid],
+      });
+      if (pending.rows[0]) {
+        const existing = pending.rows[0];
+        await transaction.commit();
+        return response.status(409).json({
+          error: 'You already have an appointment request waiting for review.',
+          pendingRequest: {
+            referenceCode: String(existing.reference_code),
+            preferredDate: String(existing.preferred_date),
+            preferredTime: String(existing.preferred_time),
+          },
+        });
+      }
+      await transaction.execute({
+        sql: `INSERT INTO appointment_requests (
+          id, owner_uid, reference_code, patient_name, phone, email, zone, service_id,
+          service_name, preferred_date, preferred_time, privacy_consent, status, chat_status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 'pending', 'closed', ?)`,
+        args: [id, ownerUid, referenceCode, patientName, phone, email || null, zone, serviceId, serviceName, preferredDate, preferredTime, createdAt],
+      });
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   } catch {
     return response.status(500).json({ error: 'We could not save your request. Please try again.' });
   }

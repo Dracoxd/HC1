@@ -103,7 +103,10 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   useEffect(() => {
     let active = true;
+    let loading = false;
     const loadClinicStatus = async () => {
+      if (loading || document.visibilityState === 'hidden') return;
+      loading = true;
       try {
         const user = auth.currentUser;
         if (!user) return;
@@ -122,19 +125,29 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       } catch (caught) {
         if (!active) return;
         setClinicStatusError(caught instanceof Error ? caught.message : 'Clinic status could not be loaded.');
+      } finally {
+        loading = false;
       }
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void loadClinicStatus();
     };
     void loadClinicStatus();
     const timer = window.setInterval(() => void loadClinicStatus(), 3000);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       active = false;
       window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
   }, []);
 
   useEffect(() => {
     let active = true;
+    let loading = false;
     const loadSiteContent = async () => {
+      if (loading || document.visibilityState === 'hidden') return;
+      loading = true;
       try {
         const response = await fetch('/api/content', { cache: 'no-store' });
         const result = await response.json() as PublicSiteContent & { error?: string };
@@ -148,13 +161,20 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       } catch (caught) {
         if (!active) return;
         setSiteContentError(caught instanceof Error ? caught.message : 'Public website content could not be loaded.');
+      } finally {
+        loading = false;
       }
     };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void loadSiteContent();
+    };
     void loadSiteContent();
-    const timer = window.setInterval(() => void loadSiteContent(), 15000);
+    const timer = window.setInterval(() => void loadSiteContent(), 3000);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       active = false;
       window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
   }, []);
 

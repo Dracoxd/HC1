@@ -3,8 +3,15 @@ import { useHealthCenter } from '../context/HealthCenterContext';
 import { Clock, MapPin, CalendarDays, ShieldAlert } from 'lucide-react';
 
 export const ContactSection: React.FC = () => {
-  const { t, language, setBookingModalOpen, clinicOpen } = useHealthCenter();
-  const bookingEnabled = clinicOpen === true;
+  const { t, language, setBookingModalOpen, clinicOpen, appointmentRequestAvailability } = useHealthCenter();
+  const bookingEnabled = clinicOpen === true && appointmentRequestAvailability === 'available';
+  const bookingLabel = appointmentRequestAvailability === 'pending'
+    ? 'Appointment under review'
+    : appointmentRequestAvailability === 'checking'
+      ? 'Checking request status'
+      : appointmentRequestAvailability === 'error'
+        ? 'Unable to check request'
+        : clinicOpen === true ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability';
 
   return (
     <section id="contact" className="py-16 sm:py-20 bg-[#f3f7f4] border-t border-slate-200">
@@ -27,7 +34,7 @@ export const ContactSection: React.FC = () => {
             <div>
               <h3 className="text-sm font-bold text-slate-900">Online appointment</h3>
               <p className="mt-1 text-sm text-slate-600">Choose a service and preferred date. Requests are confirmed by clinic staff.</p>
-              <button disabled={!bookingEnabled} onClick={() => setBookingModalOpen(true)} className="mt-3 min-h-11 px-4 py-2.5 bg-teal-900 text-white text-sm font-bold rounded-md hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-50">{bookingEnabled ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</button>
+              <button disabled={!bookingEnabled} onClick={() => setBookingModalOpen(true)} className="mt-3 min-h-11 px-4 py-2.5 bg-teal-900 text-white text-sm font-bold rounded-md hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-50">{bookingLabel}</button>
             </div>
           </div>
 

@@ -27,8 +27,15 @@ const iconForService = (category: string) => {
 };
 
 export const ServicesSection: React.FC = () => {
-  const { t, language, openBookingForProgram, clinicOpen, siteContent } = useHealthCenter();
-  const bookingEnabled = clinicOpen === true;
+  const { t, language, openBookingForProgram, clinicOpen, appointmentRequestAvailability, siteContent } = useHealthCenter();
+  const bookingEnabled = clinicOpen === true && appointmentRequestAvailability === 'available';
+  const bookingLabel = appointmentRequestAvailability === 'pending'
+    ? 'Appointment under review'
+    : appointmentRequestAvailability === 'checking'
+      ? 'Checking request status'
+      : appointmentRequestAvailability === 'error'
+        ? 'Unable to check request'
+        : clinicOpen === true ? 'Request this appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability';
   const isFilipino = language === 'fil';
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedService, setSelectedService] = useState<ServiceDetail | null>(null);
@@ -161,7 +168,7 @@ export const ServicesSection: React.FC = () => {
               <div><div className="font-bold text-slate-900">Location</div><p className="mt-1 text-slate-600">{selectedService.location}</p></div>
               <div className="sm:col-span-2"><div className="font-bold text-slate-900">Care team</div><p className="mt-1 text-slate-600">{selectedService.keyPersonnel.join(', ')}</p></div>
             </div>
-            <button disabled={!bookingEnabled} onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex min-h-11 items-center justify-center px-4 py-3 bg-[#17645c] text-white text-sm font-bold rounded-sm hover:bg-[#104f49] disabled:cursor-not-allowed disabled:opacity-50">{bookingEnabled ? 'Request this appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</button>
+            <button disabled={!bookingEnabled} onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex min-h-11 items-center justify-center px-4 py-3 bg-[#17645c] text-white text-sm font-bold rounded-sm hover:bg-[#104f49] disabled:cursor-not-allowed disabled:opacity-50">{bookingLabel}</button>
           </section>
         </div>
       )}

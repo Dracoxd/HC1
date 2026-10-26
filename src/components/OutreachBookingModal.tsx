@@ -37,6 +37,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
     bookingModalOpen,
     setBookingModalOpen,
     clinicOpen,
+    markAppointmentRequestPending,
     selectedProgramForBooking,
     siteContent,
   } = useHealthCenter();
@@ -197,6 +198,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
         if (response.status === 409 && result.pendingRequest) {
           setPendingRequest(result.pendingRequest);
           setPendingRequestLoaded(true);
+          markAppointmentRequestPending();
         }
         const message = response.status === 401
           ? 'Your sign-in could not be verified. Check that the Firebase service account in Vercel belongs to this app’s Firebase project, then redeploy.'
@@ -208,6 +210,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
         preferredDate,
         preferredTime,
       });
+      markAppointmentRequestPending();
       setReceipt(result);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Could not submit your appointment request.');
@@ -325,7 +328,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
               <p className="flex items-center gap-2 text-xs text-slate-500"><Clock className="w-4 h-4" />{isFilipino ? 'Pending ang request hanggang makumpirma ng staff.' : 'Requests remain pending until staff confirm.'}</p>
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={handleClose} className="min-h-11 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-md">{isFilipino ? 'Kanselahin' : 'Cancel'}</button>
-                <button type="submit" disabled={submitting || !canSubmitAppointment || !selectedService} className="inline-flex min-h-11 items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-teal-900 hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-60 rounded-md"><CalendarDays className="w-4 h-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send appointment request')}</button>
+                <button type="submit" disabled={submitting || !canSubmitAppointment || !selectedService || !privacyConsent} className="inline-flex min-h-11 items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-teal-900 hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-60 rounded-md"><CalendarDays className="w-4 h-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send appointment request')}</button>
               </div>
             </div>
           </form>

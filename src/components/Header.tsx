@@ -14,11 +14,19 @@ export const Header: React.FC = () => {
     setActiveSection,
     setBookingModalOpen,
     clinicOpen,
+    appointmentRequestAvailability,
     setMessagesOpen,
     unreadAdminMessageCount,
     unreadMessagesError,
   } = useHealthCenter();
-  const bookingEnabled = clinicOpen === true;
+  const bookingEnabled = clinicOpen === true && appointmentRequestAvailability === 'available';
+  const bookingLabel = appointmentRequestAvailability === 'pending'
+    ? 'Appointment under review'
+    : appointmentRequestAvailability === 'checking'
+      ? 'Checking request status'
+      : appointmentRequestAvailability === 'error'
+        ? 'Unable to check request'
+        : clinicOpen === true ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability';
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -78,7 +86,7 @@ export const Header: React.FC = () => {
             </button>
             <button disabled={!bookingEnabled} onClick={() => setBookingModalOpen(true)} title={bookingEnabled ? 'Request an appointment' : 'Appointment requests are currently unavailable'} className="px-4 py-2.5 text-sm font-bold text-white bg-[#17645c] hover:bg-[#104f49] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
               <CalendarDays className="w-4 h-4" />
-              <span>{bookingEnabled ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</span>
+              <span>{bookingLabel}</span>
             </button>
             <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-slate-600 hover:bg-[#edf3ef] hover:text-[#17645c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
               <Mail className="h-5 w-5" />
@@ -134,7 +142,7 @@ export const Header: React.FC = () => {
           <div className="pt-3 border-t border-slate-100">
             <button disabled={!bookingEnabled} onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="min-h-11 w-full py-2.5 px-4 text-sm font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded-md flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
               <CalendarDays className="w-4 h-4" />
-              <span>{bookingEnabled ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</span>
+              <span>{bookingLabel}</span>
             </button>
             <button type="button" onClick={() => void signOut(auth)} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
               <LogOut className="h-4 w-4" />

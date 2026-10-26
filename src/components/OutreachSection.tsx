@@ -9,11 +9,19 @@ export const OutreachSection: React.FC = () => {
     openBookingForProgram,
     setBookingModalOpen,
     clinicOpen,
+    appointmentRequestAvailability,
     appointments,
     cancelAppointment,
     siteContent
   } = useHealthCenter();
-  const bookingEnabled = clinicOpen === true;
+  const bookingEnabled = clinicOpen === true && appointmentRequestAvailability === 'available';
+  const bookingLabel = appointmentRequestAvailability === 'pending'
+    ? 'Appointment under review'
+    : appointmentRequestAvailability === 'checking'
+      ? 'Checking request status'
+      : appointmentRequestAvailability === 'error'
+        ? 'Unable to check request'
+        : clinicOpen === true ? '' : clinicOpen === false ? 'Appointments closed' : 'Checking availability';
 
   return (
     <section id="outreach" className="py-16 bg-white border-b border-slate-200">
@@ -39,7 +47,7 @@ export const OutreachSection: React.FC = () => {
             className="px-5 py-2.5 text-xs font-semibold text-white bg-teal-700 hover:bg-teal-800 rounded-lg shadow-sm transition-colors flex items-center gap-2 cursor-pointer self-start md:self-auto disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Calendar className="w-4 h-4" />
-            <span>{bookingEnabled ? t.btnBookOutreach : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</span>
+            <span>{bookingEnabled ? t.btnBookOutreach : bookingLabel}</span>
           </button>
         </div>
 
@@ -103,7 +111,7 @@ export const OutreachSection: React.FC = () => {
                   onClick={() => openBookingForProgram(program.id)}
                   className="px-3.5 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {bookingEnabled ? (language === 'fil' ? 'Pumili ng Slot' : 'Reserve Slot') : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}
+                  {bookingEnabled ? (language === 'fil' ? 'Pumili ng Slot' : 'Reserve Slot') : bookingLabel}
                 </button>
               </div>
             </div>

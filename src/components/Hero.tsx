@@ -35,8 +35,8 @@ export const Hero: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className={`shrink-0 items-center gap-3 border px-6 py-4 text-base font-bold sm:flex ${clinicOpen ? 'border-emerald-300/50 bg-emerald-950/45 text-white' : 'border-white/30 bg-slate-950/35 text-white'} md:px-7 md:text-lg max-sm:hidden`}>
-            <span className={`h-4 w-4 rounded-full ${clinicStatusError ? 'bg-slate-400' : clinicOpen ? 'bg-green-500' : 'bg-red-500'}`} />
+          <div className={`shrink-0 items-center gap-4 border px-8 py-5 text-xl font-bold sm:flex md:px-9 md:py-6 md:text-2xl ${clinicOpen ? 'border-emerald-300/50 bg-emerald-950/45 text-white' : 'border-white/30 bg-slate-950/35 text-white'} max-sm:hidden`}>
+            <span className={`h-5 w-5 rounded-full ${clinicStatusError ? 'bg-slate-400' : clinicOpen ? 'bg-green-500' : 'bg-red-500'}`} />
             {clinicStatusError || clinicOpen === null
               ? (language === 'fil' ? 'Hindi available ang status' : 'Status unavailable')
               : clinicOpen

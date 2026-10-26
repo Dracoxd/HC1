@@ -232,7 +232,7 @@ export const AdminPanel: React.FC = () => {
             <span className={`h-3 w-3 shrink-0 rounded-full ${clinicOpen === null ? 'bg-slate-400' : clinicOpen ? 'bg-emerald-500' : 'bg-rose-500'}`} />
             <div className="mr-auto min-w-0 sm:mr-2"><div className="text-xs font-bold">{clinicOpen === null ? 'LOADING STATUS' : clinicOpen ? 'OPEN NOW' : 'CLOSED NOW'}</div><div className="text-[10px] text-[#66736f]">Public website status</div></div>
             <button type="button" disabled={clinicStatusSaving || clinicOpen === null} onClick={() => void updateClinicStatus(!clinicOpen)} className={`min-h-11 shrink-0 px-3 text-xs font-bold text-white disabled:opacity-60 sm:px-4 ${clinicOpen ? 'bg-rose-700 hover:bg-rose-800' : 'bg-[#17645c] hover:bg-[#104f49]'}`}>
-              {clinicStatusSaving ? 'Saving...' : clinicOpen === null ? 'Loading...' : clinicOpen ? 'Close now' : 'Open now'}
+              {clinicStatusSaving ? 'Saving...' : clinicOpen === null ? 'Loading...' : clinicOpen ? 'CLOSE NOW' : 'OPEN NOW'}
             </button>
           </div>
         </div>

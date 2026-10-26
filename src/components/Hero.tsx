@@ -40,8 +40,8 @@ export const Hero: React.FC = () => {
             {clinicStatusError || clinicOpen === null
               ? (language === 'fil' ? 'Hindi available ang status' : 'Status unavailable')
               : clinicOpen
-                ? (language === 'fil' ? 'Bukas ngayon' : 'Open now')
-                : (language === 'fil' ? 'Sarado ngayon' : 'Closed now')}
+                ? (language === 'fil' ? 'BUKAS NGAYON' : 'OPEN NOW')
+                : (language === 'fil' ? 'SARADO NGAYON' : 'CLOSED NOW')}
           </div>
           </div>
         </div>

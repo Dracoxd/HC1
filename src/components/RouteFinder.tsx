@@ -8,14 +8,24 @@ import { Bike, CarFront, ChevronDown, ChevronUp, ExternalLink, LocateFixed, MapP
 type TravelMode = 'walking' | 'bicycling' | 'driving' | 'motorcycle';
 type Renderer = 'maplibre' | 'leaflet';
 type Position = { latitude: number; longitude: number; accuracy: number; heading?: number | null; source?: 'gps' | 'manual' };
-type ValhallaManeuver = { instruction: string; length: number; time: number };
-type ValhallaResponse = {
-  trip?: {
-    summary: { length: number; time: number };
-    locations: Array<{ lat: number; lon: number }>;
-    legs: Array<{ shape: string; maneuvers: ValhallaManeuver[] }>;
-  };
-  status_message?: string;
+type RouteManeuver = { instruction: string; length: number; time: number };
+type OsrmRouteResponse = {
+  code?: string;
+  message?: string;
+  routes?: Array<{
+    distance: number;
+    duration: number;
+    geometry: { coordinates: Array<[number, number]> };
+    legs: Array<{
+      steps: Array<{
+        distance: number;
+        duration: number;
+        name: string;
+        maneuver: { type: string; modifier?: string };
+      }>;
+    }>;
+  }>;
+  waypoints?: Array<{ location: [number, number] }>;
 };
 type RouteInfo = {
   distance: number;
@@ -24,7 +34,7 @@ type RouteInfo = {
   startAccessDistance: number;
   endAccessDistance: number;
   straightLineDistance: number;
-  maneuvers: ValhallaManeuver[];
+  maneuvers: RouteManeuver[];
 };
 
 type RouteFeatureCollection = GeoJSON.FeatureCollection<GeoJSON.LineString>;
@@ -32,11 +42,11 @@ type RouteFeatureCollection = GeoJSON.FeatureCollection<GeoJSON.LineString>;
 const destination: L.LatLngTuple = [14.5472886, 121.0659399];
 const destinationName = 'Mayor Moises R. Flores Health Center';
 const wazeUrl = `https://www.waze.com/ul?ll=${destination[0]}%2C${destination[1]}&navigate=yes`;
-const costingProfiles: Record<TravelMode, string> = {
-  walking: 'pedestrian',
-  bicycling: 'bicycle',
-  driving: 'auto',
-  motorcycle: 'motor_scooter',
+const routingProfiles: Record<TravelMode, string> = {
+  walking: 'routed-foot',
+  bicycling: 'routed-bike',
+  driving: 'routed-car',
+  motorcycle: 'routed-car',
 };
 const routeColors: Record<TravelMode, string> = {
   walking: '#22c55e',
@@ -83,30 +93,12 @@ function formatDuration(seconds: number) {
   return minutes >= 60 ? `${Math.floor(minutes / 60)} hr ${minutes % 60} min` : `${minutes} min`;
 }
 
-function decodePolyline6(encoded: string): L.LatLngTuple[] {
-  const coordinates: L.LatLngTuple[] = [];
-  let index = 0;
-  let latitude = 0;
-  let longitude = 0;
-
-  const readDelta = () => {
-    let result = 0;
-    let shift = 0;
-    let byte = 0;
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20 && index < encoded.length);
-    return result & 1 ? ~(result >> 1) : result >> 1;
-  };
-
-  while (index < encoded.length) {
-    latitude += readDelta();
-    longitude += readDelta();
-    coordinates.push([latitude / 1e6, longitude / 1e6]);
-  }
-  return coordinates;
+function maneuverInstruction(type: string, modifier?: string, street?: string) {
+  const road = street ? ` onto ${street}` : '';
+  if (type === 'depart') return `Head ${modifier?.replace('-', ' ') ?? 'ahead'}${street ? ` on ${street}` : ''}.`;
+  if (type === 'arrive') return 'Arrive at the health center.';
+  if (type === 'roundabout' || type === 'rotary') return `Enter the roundabout${road}.`;
+  return `Turn ${modifier?.replace('-', ' ') ?? 'ahead'}${road}.`;
 }
 
 function accuracyFeature(position: Position): GeoJSON.Feature<GeoJSON.Polygon> {
@@ -448,41 +440,41 @@ export const RouteFinder: React.FC = () => {
     activeRouteRequestRef.current = { position: origin, mode: travelMode, controller };
     const timeout = window.setTimeout(async () => {
       setRouteError('');
-      const costing = costingProfiles[travelMode];
-      const request = {
-        locations: [
-          { lat: origin.latitude, lon: origin.longitude, type: 'break' },
-          { lat: destination[0], lon: destination[1], type: 'break' },
-        ],
-        costing,
-        units: 'kilometers',
-        directions_options: { language: 'en-US', units: 'kilometers' },
-      };
-      const url = `https://valhalla1.openstreetmap.de/route?json=${encodeURIComponent(JSON.stringify(request))}`;
+      const profile = routingProfiles[travelMode];
+      const coordinates = `${origin.longitude},${origin.latitude};${destination[1]},${destination[0]}`;
+      const url = `https://routing.openstreetmap.de/${profile}/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=true`;
 
       try {
         const response = await fetch(url, { signal: controller.signal });
         if (!response.ok) throw new Error('Routing service is unavailable.');
-        const result = await response.json() as ValhallaResponse;
-        const trip = result.trip;
-        if (!trip?.legs?.[0]) throw new Error(result.status_message || 'No route was found for this mode.');
-        const points = decodePolyline6(trip.legs[0].shape);
+        const result = await response.json() as OsrmRouteResponse;
+        const trip = result.routes?.[0];
+        if (result.code !== 'Ok' || !trip?.legs?.[0]) {
+          throw new Error(result.message || 'No route was found for this travel mode.');
+        }
+        const points = trip.geometry.coordinates.map(([longitude, latitude]) => [latitude, longitude] as L.LatLngTuple);
         if (points.length < 2) throw new Error('The routing service returned an incomplete path.');
-        const startSnap = trip.locations[0];
-        const endSnap = trip.locations[1];
-        const startAccessDistance = distanceBetweenLatLng([origin.latitude, origin.longitude], [startSnap.lat, startSnap.lon]);
-        const endAccessDistance = distanceBetweenLatLng(destination, [endSnap.lat, endSnap.lon]);
+        const [startSnap, endSnap] = result.waypoints ?? [];
+        if (!startSnap || !endSnap) throw new Error('The routing service did not return valid route endpoints.');
+        const startAccessDistance = distanceBetweenLatLng(
+          [origin.latitude, origin.longitude],
+          [startSnap.location[1], startSnap.location[0]],
+        );
+        const endAccessDistance = distanceBetweenLatLng(
+          destination,
+          [endSnap.location[1], endSnap.location[0]],
+        );
         const straightLineDistance = distanceBetweenLatLng([origin.latitude, origin.longitude], destination);
         const accessFeatures: GeoJSON.FeatureCollection<GeoJSON.LineString> = { type: 'FeatureCollection', features: [] };
         if (startAccessDistance > 5 && startAccessDistance <= 250) accessFeatures.features.push({
           type: 'Feature',
           properties: {},
-          geometry: { type: 'LineString', coordinates: [[origin.longitude, origin.latitude], [startSnap.lon, startSnap.lat]] },
+          geometry: { type: 'LineString', coordinates: [[origin.longitude, origin.latitude], startSnap.location] },
         });
         if (endAccessDistance > 5 && endAccessDistance <= 250) accessFeatures.features.push({
           type: 'Feature',
           properties: {},
-          geometry: { type: 'LineString', coordinates: [[endSnap.lon, endSnap.lat], [destination[1], destination[0]]] },
+          geometry: { type: 'LineString', coordinates: [endSnap.location, [destination[1], destination[0]]] },
         });
 
         if (renderer === 'maplibre' && mapLibreRef.current) {
@@ -522,9 +514,15 @@ export const RouteFinder: React.FC = () => {
             shouldFitRouteRef.current = false;
           }
         }
-        const maneuvers = trip.legs.flatMap((leg) => leg.maneuvers).filter((maneuver) => maneuver.length > 0);
+        const maneuvers = trip.legs.flatMap((leg) => leg.steps)
+          .filter((step) => step.distance > 0)
+          .map((step) => ({
+            instruction: maneuverInstruction(step.maneuver.type, step.maneuver.modifier, step.name),
+            length: step.distance / 1000,
+            time: step.duration,
+          }));
         lastRouteRef.current = { position: origin, mode: travelMode, timestamp: Date.now() };
-        setRoute({ distance: trip.summary.length * 1000, duration: trip.summary.time, approximate, startAccessDistance, endAccessDistance, straightLineDistance, maneuvers });
+        setRoute({ distance: trip.distance, duration: trip.duration, approximate, startAccessDistance, endAccessDistance, straightLineDistance, maneuvers });
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setRoute(null);
@@ -660,7 +658,7 @@ export const RouteFinder: React.FC = () => {
           {origin?.source !== 'manual' && origin && <p className={`mt-1 text-[11px] ${origin.accuracy > 250 ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>{origin.accuracy > 250 ? 'Approximate start location' : 'GPS accuracy'} · about {formatDistance(origin.accuracy)}{route?.approximate ? ' · path is approximate' : ''}</p>}
           {origin?.source === 'manual' && <button type="button" onClick={returnToGps} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal-900 underline underline-offset-2"><LocateFixed className="w-3.5 h-3.5" />Use live GPS instead</button>}
           {origin?.source !== 'manual' && origin && origin.accuracy > 250 && !pinStartMode && <button type="button" onClick={beginManualPin} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal-900 underline underline-offset-2"><MapPin className="w-3.5 h-3.5" />Pin my actual start on map</button>}
-          <p className="mt-2 flex items-start gap-1 text-[10px] leading-relaxed text-slate-500"><MapPin className="w-3 h-3 shrink-0 mt-0.5" />Live OpenStreetMap routing by travel mode. Routes and estimates change for walking, cycling, driving, and motorcycle travel.</p>
+          <p className="mt-2 flex items-start gap-1 text-[10px] leading-relaxed text-slate-500"><MapPin className="w-3 h-3 shrink-0 mt-0.5" />OpenStreetMap routes use walking, cycling, or road-vehicle paths; motorcycle uses the road-vehicle profile.</p>
         </div>
       </div>
     </aside>

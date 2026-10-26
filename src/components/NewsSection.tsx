@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { NewsUpdate } from '../types';
-import { Newspaper, Search, Calendar, User, ArrowRight, X } from 'lucide-react';
+import { Newspaper, Search, ArrowRight, X } from 'lucide-react';
 
 export const NewsSection: React.FC = () => {
   const { t, language, siteContent } = useHealthCenter();
@@ -82,16 +82,6 @@ export const NewsSection: React.FC = () => {
             >
               <div className="space-y-4">
 
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <span className="font-semibold text-teal-800">
-                    {language === 'fil' ? news.categoryFil : news.category}
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>{news.date}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>{news.readTime}</span>
-                </div>
-
                 <div className="space-y-2">
                   <h3 className="text-base font-bold text-slate-950 leading-snug">
                     {language === 'fil' ? news.titleFil : news.title}
@@ -127,9 +117,6 @@ export const NewsSection: React.FC = () => {
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div className="space-y-1">
-                <div className="text-xs font-semibold text-teal-800 uppercase tracking-wider">
-                  {language === 'fil' ? readingArticle.categoryFil : readingArticle.category} · {readingArticle.date}
-                </div>
                 <h3 className="text-xl font-bold text-slate-900 leading-snug">
                   {language === 'fil' ? readingArticle.titleFil : readingArticle.title}
                 </h3>

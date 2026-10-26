@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, CalendarDays, Clock3, Hospital, PackageCheck } from 'lucide-react';
+import { Bell, CalendarDays, Clock3, PackageCheck } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 
 export const PublicInformation: React.FC = () => {
@@ -35,8 +35,6 @@ export const PublicInformation: React.FC = () => {
                 <p className="mt-1">{isFilipino ? settings.xrayHoursFil : settings.xrayHours}</p>
                 <p className="mt-1">{isFilipino ? settings.dentalHoursFil : settings.dentalHours}</p>
               </div>
-              <div className="flex items-start gap-2"><Hospital className="mt-0.5 h-4 w-4 text-[#17645c]" /><span>{isFilipino ? settings.clinicAddressFil : settings.clinicAddress}<br /><strong className="text-[#17312e]">{settings.contactPhone}</strong></span></div>
-              {settings.contactEmail && <div className="flex items-start gap-2 text-xs"><Bell className="mt-0.5 h-4 w-4 shrink-0 text-[#17645c]" /><span className="break-all">{settings.contactEmail}</span></div>}
             </div>
             <div className="mt-6 border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-950">
               <strong>{isFilipino ? 'Pabatid sa holiday:' : 'Holiday advisory:'}</strong> {isFilipino ? settings.holidayAdvisoryFil : settings.holidayAdvisory}
@@ -68,7 +66,6 @@ export const PublicInformation: React.FC = () => {
             <div className="border-t border-[#dfe6e1]">
               {updates.map((update) => (
                 <article key={update.id} className="border-b border-[#dfe6e1] py-4">
-                  <div className="text-[11px] font-bold text-[#17645c]">{isFilipino ? update.categoryFil : update.category} · {update.date}</div>
                   <h4 className="mt-1 text-sm font-bold text-[#17312e]">{isFilipino ? update.titleFil : update.title}</h4>
                   <p className="mt-1 text-xs leading-relaxed text-[#66736f]">{isFilipino ? update.summaryFil : update.summary}</p>
                 </article>
@@ -82,7 +79,6 @@ export const PublicInformation: React.FC = () => {
               {outreach.map((program) => (
                 <article key={program.id} className="grid grid-cols-[1fr_auto] gap-4 border-b border-[#dfe6e1] py-4">
                   <div>
-                    <div className="text-[11px] font-bold text-[#17645c]">{program.scheduleDate}</div>
                     <h4 className="mt-1 text-sm font-bold text-[#17312e]">{isFilipino ? program.titleFil : program.title}</h4>
                     <p className="mt-1 text-xs text-[#66736f]">{program.location}</p>
                   </div>

@@ -38,6 +38,13 @@ export async function ensureSiteContent(db: ReturnType<typeof createClient>) {
         updated_at TEXT NOT NULL,
         updated_by TEXT NOT NULL
       )`,
+      `CREATE TABLE IF NOT EXISTS announcement_images (
+        image_id TEXT PRIMARY KEY,
+        image_data BLOB NOT NULL,
+        mime_type TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        created_by TEXT NOT NULL
+      )`,
     ], 'write');
     const columns = await db.execute('PRAGMA table_info(public_site_content)');
     if (!columns.rows.some((column) => String(column.name) === 'deleted')) {
@@ -102,7 +109,11 @@ export async function readSiteContent(db: ReturnType<typeof createClient>, inclu
 
 export const clinicPublicSettingKeys = Object.keys(DEFAULT_CLINIC_PUBLIC_SETTINGS) as Array<keyof ClinicPublicSettings>;
 
-export function validateSiteContent(contentType: unknown, contentId: unknown, input: unknown) {
+export function validateSiteContent(
+  contentType: unknown,
+  contentId: unknown,
+  input: unknown,
+): (Record<string, unknown> & { id: string }) | null {
   if (contentType !== 'service' && contentType !== 'news' && contentType !== 'outreach') return null;
   if (typeof contentId !== 'string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(contentId)) return null;
   if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
@@ -124,6 +135,8 @@ export function validateSiteContent(contentType: unknown, contentId: unknown, in
     }
   } else if (contentType === 'news') {
     if (!['Schedule', 'Advisory', 'Campaign', 'Meds'].includes(String(value.category))) return null;
+    if (value.imageUrl !== undefined && value.imageUrl !== ''
+      && (typeof value.imageUrl !== 'string' || !/^\/api\/content-image\?id=[0-9a-f-]{36}$/i.test(value.imageUrl))) return null;
   } else {
     if (!['opt', 'dental', 'xray_tb', 'maintenance_refill', 'maternal', 'rabies'].includes(String(value.category))
       || !Number.isInteger(value.capacity) || Number(value.capacity) < 0 || Number(value.capacity) > 10000

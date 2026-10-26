@@ -111,6 +111,7 @@ export interface AppointmentBooking {
 
 export interface NewsUpdate {
   id: string;
+  imageUrl?: string;
   title: string;
   titleFil: string;
   summary: string;

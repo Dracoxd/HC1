@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Bell, CalendarDays, Clock3, PackageCheck } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 
@@ -11,6 +11,16 @@ export const PublicInformation: React.FC = () => {
   const updates = siteContent.news.slice(0, 3);
   const outreach = siteContent.outreach.slice(0, 3);
   const settings = siteContent.settings;
+  const [viewingImage, setViewingImage] = useState<{ url: string; alt: string } | null>(null);
+
+  useEffect(() => {
+    if (!viewingImage) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setViewingImage(null);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [viewingImage]);
 
   return (
     <section id="clinic-information" className="border-b border-[#dfe6e1] bg-[#fbfcfa] py-12 sm:py-16">
@@ -66,6 +76,19 @@ export const PublicInformation: React.FC = () => {
             <div className="border-t border-[#dfe6e1]">
               {updates.map((update) => (
                 <article key={update.id} className="border-b border-[#dfe6e1] py-4">
+                  {update.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = update.imageUrl;
+                        if (url) setViewingImage({ url, alt: isFilipino ? update.titleFil : update.title });
+                      }}
+                      aria-label={isFilipino ? `Tingnan ang buong larawan: ${update.titleFil}` : `View full image: ${update.title}`}
+                      className="mb-3 block w-full cursor-zoom-in overflow-hidden bg-[#edf1ee]"
+                    >
+                      <img src={update.imageUrl} alt={isFilipino ? update.titleFil : update.title} loading="lazy" decoding="async" className="aspect-[16/9] w-full object-cover transition-transform hover:scale-[1.02]" />
+                    </button>
+                  )}
                   <h4 className="mt-1 text-sm font-bold text-[#17312e]">{isFilipino ? update.titleFil : update.title}</h4>
                   <p className="mt-1 text-xs leading-relaxed text-[#66736f]">{isFilipino ? update.summaryFil : update.summary}</p>
                 </article>
@@ -89,6 +112,20 @@ export const PublicInformation: React.FC = () => {
           </div>
         </div>
       </div>
+      {viewingImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={viewingImage.alt}
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/90 p-3 sm:p-8"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setViewingImage(null); }}
+        >
+          <button type="button" onClick={() => setViewingImage(null)} aria-label="Close image" className="absolute right-3 top-3 rounded-full bg-white/10 p-3 text-white hover:bg-white/20">
+            <span className="text-xl leading-none">×</span>
+          </button>
+          <img src={viewingImage.url} alt={viewingImage.alt} className="max-h-[92vh] max-w-full object-contain" />
+        </div>
+      )}
     </section>
   );
 };

@@ -1,6 +1,7 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { auth } from '../firebase';
 import { AdminSiteContentItem, ClinicPublicSettings, PublicSiteContent } from '../types';
+import { ImagePlus } from 'lucide-react';
 
 type ContentType = AdminSiteContentItem['content_type'];
 type ContentRecord = Record<string, unknown>;
@@ -88,13 +89,51 @@ function emptyContent(type: ContentType): ContentRecord {
   if (type === 'news') return {
     title: '', titleFil: '', summary: '', summaryFil: '', content: '', contentFil: '',
     date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-    category: 'Advisory', categoryFil: 'Pabatid', author: 'Health Center', readTime: '1 min read',
+    category: 'Advisory', categoryFil: 'Pabatid', author: 'Health Center', readTime: '1 min read', imageUrl: '',
   };
   return {
     title: '', titleFil: '', description: '', descriptionFil: '', targetBarangay: '',
     scheduleDate: '', timeWindow: '', location: '', capacity: 0, slotsRemaining: 0,
     eligibility: '', eligibilityFil: '', category: 'opt',
   };
+}
+
+async function optimizeAnnouncementImage(file: File) {
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    throw new Error('Choose a JPEG, PNG, or WEBP image.');
+  }
+  if (file.size > 15 * 1024 * 1024) throw new Error('Choose an image smaller than 15 MB.');
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const context = canvas.getContext('2d');
+  if (!context) {
+    bitmap.close();
+    throw new Error('This image could not be prepared for upload.');
+  }
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  let image: Blob | null = null;
+  for (const quality of [0.88, 0.8, 0.72, 0.64]) {
+    image = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+    if (image && image.size <= 2 * 1024 * 1024) break;
+  }
+  if (!image || image.size > 2 * 1024 * 1024) {
+    throw new Error('This image is too large after optimization. Choose a smaller image.');
+  }
+
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => typeof reader.result === 'string'
+      ? resolve(reader.result)
+      : reject(new Error('The optimized image could not be read.'));
+    reader.onerror = () => reject(new Error('The optimized image could not be read.'));
+    reader.readAsDataURL(image);
+  });
 }
 
 async function postAdminAction(action: string, payload: Record<string, unknown>) {
@@ -106,8 +145,9 @@ async function postAdminAction(action: string, payload: Record<string, unknown>)
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ action, ...payload }),
   });
-  const result = await response.json() as { error?: string };
+  const result = await response.json() as { error?: string; [key: string]: unknown };
   if (!response.ok) throw new Error(result.error || 'Website content could not be saved.');
+  return result;
 }
 
 export const AdminContentManager: React.FC = () => {
@@ -119,6 +159,7 @@ export const AdminContentManager: React.FC = () => {
   const [published, setPublished] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
@@ -239,6 +280,23 @@ export const AdminContentManager: React.FC = () => {
     }
   };
 
+  const uploadAnnouncementImage = async (file: File) => {
+    setImageUploading(true);
+    setError('');
+    setNotice('');
+    try {
+      const imageData = await optimizeAnnouncementImage(file);
+      const result = await postAdminAction('upload_announcement_image', { contentId: selectedId, imageData });
+      if (typeof result.imageUrl !== 'string') throw new Error('The image upload did not return a valid image URL.');
+      setContent((current) => ({ ...current, imageUrl: result.imageUrl }));
+      setNotice('Image uploaded. Save content to publish the announcement image.');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Announcement image could not be uploaded.');
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
   return (
     <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
       <div className="min-w-0 space-y-4">
@@ -315,6 +373,36 @@ export const AdminContentManager: React.FC = () => {
               </label>
             );
           })}
+          {type === 'news' && (
+            <div className="space-y-3 border border-[#dfe6e1] bg-[#f7f9f7] p-3">
+              <div>
+                <h3 className="text-xs font-bold text-[#17312e]">Announcement image</h3>
+                <p className="mt-1 text-[11px] text-[#66736f]">Images are optimized to WEBP, up to 1600 px, then stored in Turso. Maximum original file size: 15 MB.</p>
+              </div>
+              {typeof content.imageUrl === 'string'
+                && /^\/api\/content-image\?id=[0-9a-f-]{36}$/i.test(content.imageUrl)
+                && <img src={content.imageUrl} alt="Announcement preview" className="max-h-56 w-full bg-white object-contain" />}
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 bg-[#17645c] px-3 text-xs font-bold text-white">
+                  <ImagePlus className="h-4 w-4" />
+                  {imageUploading ? 'Uploading image...' : content.imageUrl ? 'Replace image' : 'Upload image'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={imageUploading || saving}
+                    onChange={(event) => {
+                      const file = event.currentTarget.files?.[0];
+                      event.currentTarget.value = '';
+                      if (file) void uploadAnnouncementImage(file);
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+                {typeof content.imageUrl === 'string' && content.imageUrl
+                  && <button type="button" disabled={imageUploading || saving} onClick={() => setContent((current) => ({ ...current, imageUrl: '' }))} className="min-h-10 border border-[#d9e1dc] px-3 text-xs font-bold text-rose-700 disabled:opacity-60">Remove image</button>}
+              </div>
+            </div>
+          )}
           <label className="flex min-h-11 items-center gap-2 border border-[#dfe6e1] px-3 text-xs font-semibold text-[#17312e]">
             <input type="checkbox" checked={published} onChange={(event) => setPublished(event.target.checked)} className="h-4 w-4 accent-[#17645c]" />
             Publish this item on the public website

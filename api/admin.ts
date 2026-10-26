@@ -46,6 +46,11 @@ function text(value: unknown, limit: number) {
   return typeof value === 'string' ? value.trim().slice(0, limit) : '';
 }
 
+function announcementImageId(value: unknown) {
+  if (typeof value !== 'string') return null;
+  return /^\/api\/content-image\?id=([0-9a-f-]{36})$/i.exec(value)?.[1] ?? null;
+}
+
 function getFirebaseAdmin() {
   if (getApps().length > 0) return getAuth();
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
@@ -294,6 +299,32 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       return response.status(200).json({ clinicOpen: body.isOpen, updatedAt });
     }
 
+    if (action === 'upload_announcement_image') {
+      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
+      const contentId = text(body.contentId, 80);
+      const imageData = text(body.imageData, 3_000_000);
+      if (!/^[a-zA-Z0-9_-]{1,80}$/.test(contentId)) {
+        return response.status(400).json({ error: 'Select a valid announcement before uploading an image.' });
+      }
+      const dataUrl = /^data:(image\/(?:webp|jpeg|png));base64,([A-Za-z0-9+/]+={0,2})$/.exec(imageData);
+      if (!dataUrl) return response.status(400).json({ error: 'Upload a valid WEBP, JPEG, or PNG image.' });
+      const imageBytes = Buffer.from(dataUrl[2], 'base64');
+      if (imageBytes.length === 0 || imageBytes.length > 2 * 1024 * 1024
+        || imageBytes.toString('base64') !== dataUrl[2]) {
+        return response.status(400).json({ error: 'The optimized image must be smaller than 2 MB.' });
+      }
+      const contentDb = getContentDatabase();
+      if (!contentDb) return response.status(503).json({ error: 'Announcement image storage is not configured.' });
+      await ensureSiteContent(contentDb);
+      const imageId = randomUUID();
+      await contentDb.execute({
+        sql: `INSERT INTO announcement_images (image_id, image_data, mime_type, created_at, created_by)
+              VALUES (?, ?, ?, ?, ?)`,
+        args: [imageId, imageBytes, dataUrl[1], new Date().toISOString(), decoded.uid],
+      });
+      return response.status(201).json({ imageUrl: `/api/content-image?id=${imageId}` });
+    }
+
     if (action === 'save_site_content') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (typeof body.published !== 'boolean') return response.status(400).json({ error: 'Choose whether to publish this item.' });
@@ -304,6 +335,24 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       const contentDb = getContentDatabase();
       if (!contentDb) return response.status(503).json({ error: 'Website content storage is not configured.' });
       await ensureSiteContent(contentDb);
+      const previous = contentType === 'news'
+        ? await contentDb.execute({
+          sql: "SELECT content_json FROM public_site_content WHERE content_type = 'news' AND content_id = ?",
+          args: [contentId],
+        })
+        : null;
+      const previousContent = previous?.rows[0]
+        ? JSON.parse(String(previous.rows[0].content_json)) as Record<string, unknown>
+        : null;
+      const previousImageId = announcementImageId(previousContent?.imageUrl);
+      const nextImageId = contentType === 'news' ? announcementImageId(content.imageUrl) : null;
+      if (nextImageId) {
+        const image = await contentDb.execute({
+          sql: 'SELECT image_id FROM announcement_images WHERE image_id = ?',
+          args: [nextImageId],
+        });
+        if (image.rows.length === 0) return response.status(400).json({ error: 'Upload the announcement image again before saving.' });
+      }
       const now = new Date().toISOString();
       await contentDb.execute({
         sql: `INSERT INTO public_site_content
@@ -314,6 +363,9 @@ export default async function handler(request: ApiRequest, response: ApiResponse
                 deleted = 0, updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
         args: [contentType, contentId, JSON.stringify(content), body.published ? 1 : 0, now, decoded.uid],
       });
+      if (previousImageId && previousImageId !== nextImageId) {
+        await contentDb.execute({ sql: 'DELETE FROM announcement_images WHERE image_id = ?', args: [previousImageId] });
+      }
       return response.status(200).json({ contentType, contentId, published: body.published, updatedAt: now });
     }
 
@@ -327,11 +379,22 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       const contentDb = getContentDatabase();
       if (!contentDb) return response.status(503).json({ error: 'Website content storage is not configured.' });
       await ensureSiteContent(contentDb);
+      const existing = contentType === 'news'
+        ? await contentDb.execute({
+          sql: "SELECT content_json FROM public_site_content WHERE content_type = 'news' AND content_id = ? AND deleted = 0",
+          args: [contentId],
+        })
+        : null;
+      const existingContent = existing?.rows[0]
+        ? JSON.parse(String(existing.rows[0].content_json)) as Record<string, unknown>
+        : null;
       const result = await contentDb.execute({
         sql: 'UPDATE public_site_content SET deleted = 1, published = 0, updated_at = ?, updated_by = ? WHERE content_type = ? AND content_id = ? AND deleted = 0',
         args: [new Date().toISOString(), decoded.uid, contentType, contentId],
       });
       if (result.rowsAffected === 0) return response.status(404).json({ error: 'Website content item was not found.' });
+      const imageId = announcementImageId(existingContent?.imageUrl);
+      if (imageId) await contentDb.execute({ sql: 'DELETE FROM announcement_images WHERE image_id = ?', args: [imageId] });
       return response.status(200).json({ contentType, contentId, deleted: true });
     }
 

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { SERVICES_DATA } from '../data/healthCenterData';
 import { AlertCircle, CalendarDays, CheckCircle2, Clock, X } from 'lucide-react';
 import type { User } from 'firebase/auth';
 
@@ -33,7 +32,9 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
     setBookingModalOpen,
     clinicOpen,
     selectedProgramForBooking,
+    siteContent,
   } = useHealthCenter();
+  const services = siteContent.services;
   const [serviceId, setServiceId] = useState('checkup');
   const [patientName, setPatientName] = useState('');
   const [phone, setPhone] = useState('');
@@ -49,10 +50,16 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   const [slotSettings, setSlotSettings] = useState<PublicSlotSetting[]>([]);
 
   useEffect(() => {
-    if (selectedProgramForBooking && SERVICES_DATA.some((service) => service.id === selectedProgramForBooking)) {
+    if (selectedProgramForBooking && services.some((service) => service.id === selectedProgramForBooking)) {
       setServiceId(selectedProgramForBooking);
     }
-  }, [selectedProgramForBooking]);
+  }, [selectedProgramForBooking, services]);
+
+  useEffect(() => {
+    if (services.length > 0 && !services.some((service) => service.id === serviceId)) {
+      setServiceId(services[0].id);
+    }
+  }, [services, serviceId]);
 
   useEffect(() => {
     if (!bookingModalOpen) {
@@ -95,7 +102,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
 
   const isFilipino = language === 'fil';
   const canSubmitAppointment = clinicOpen === true;
-  const selectedService = SERVICES_DATA.find((service) => service.id === serviceId) ?? SERVICES_DATA[0];
+  const selectedService = services.find((service) => service.id === serviceId);
   const today = localDateString();
   const dateBlocked = slotSettings.some((setting) => setting.date === preferredDate && setting.time === 'all_day' && setting.blocked);
   const timeBlocked = slotSettings.some((setting) => setting.date === preferredDate && setting.time === preferredTime && setting.blocked);
@@ -106,6 +113,10 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
+    if (!selectedService) {
+      setError(isFilipino ? 'Walang available na serbisyo para sa appointment request.' : 'No services are currently available for appointment requests.');
+      return;
+    }
     if (!canSubmitAppointment) {
       setError(isFilipino ? 'Sarado muna ang pagtanggap ng appointment request.' : 'The clinic is not currently accepting appointment requests.');
       return;
@@ -178,7 +189,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
               <div>
                 <h3 className="text-lg font-bold text-slate-950">{isFilipino ? 'Nakatala ang iyong appointment request.' : 'Your appointment request is recorded.'}</h3>
                 <p className="mt-2 text-sm text-slate-600">{isFilipino ? 'Hindi pa ito kumpirmadong appointment. Makikipag-ugnayan ang clinic staff para kumpirmahin ang schedule.' : 'This is not a confirmed appointment yet. Clinic staff will contact you to confirm the schedule.'}</p>
-                <p className="mt-4 text-sm text-slate-700">{selectedService.title}</p>
+                <p className="mt-4 text-sm text-slate-700">{selectedService?.title}</p>
                 <p className="mt-1 text-sm text-slate-600">{preferredDate} · {preferredTime === 'morning' ? 'Morning' : preferredTime === 'afternoon' ? 'Afternoon' : 'No preference'} · {zone}</p>
                 <p className="mt-4 text-xs text-slate-500">{isFilipino ? 'Reference number' : 'Request reference'}: <strong className="font-mono text-slate-900">{receipt.referenceCode}</strong></p>
                 <button onClick={handleClose} className="mt-6 px-4 py-2.5 bg-teal-900 text-white text-sm font-bold rounded-md hover:bg-teal-950">{isFilipino ? 'Isara' : 'Done'}</button>
@@ -198,8 +209,9 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
               <div className="sm:col-span-2">
                 <label htmlFor="appointment-service" className="block text-sm font-semibold text-slate-800 mb-1.5">{isFilipino ? 'Serbisyo' : 'Service'}</label>
                 <select id="appointment-service" value={serviceId} onChange={(event) => setServiceId(event.target.value)} className="w-full px-3.5 py-3 bg-white border border-slate-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-700">
-                  {SERVICES_DATA.map((service) => <option key={service.id} value={service.id}>{isFilipino ? service.titleFil : service.title}</option>)}
+                  {services.map((service) => <option key={service.id} value={service.id}>{isFilipino ? service.titleFil : service.title}</option>)}
                 </select>
+                {services.length === 0 && <p role="status" className="mt-2 text-xs text-amber-800">{isFilipino ? 'Walang kasalukuyang nailathalang serbisyo para sa appointment request.' : 'There are no published services available for appointment requests.'}</p>}
               </div>
               <div>
                 <label htmlFor="appointment-name" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formFullName} *</label>
@@ -245,7 +257,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
               <p className="flex items-center gap-2 text-xs text-slate-500"><Clock className="w-4 h-4" />{isFilipino ? 'Pending ang request hanggang makumpirma ng staff.' : 'Requests remain pending until staff confirm.'}</p>
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={handleClose} className="px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-md">{isFilipino ? 'Kanselahin' : 'Cancel'}</button>
-                <button type="submit" disabled={submitting || !canSubmitAppointment} className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-teal-900 hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-60 rounded-md"><CalendarDays className="w-4 h-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send appointment request')}</button>
+                <button type="submit" disabled={submitting || !canSubmitAppointment || !selectedService} className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-teal-900 hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-60 rounded-md"><CalendarDays className="w-4 h-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send appointment request')}</button>
               </div>
             </div>
           </form>

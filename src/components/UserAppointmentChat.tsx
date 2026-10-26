@@ -103,6 +103,27 @@ export const UserAppointmentChat: React.FC = () => {
     }
   };
 
+  const cancelSelectedAppointment = async () => {
+    if (!selected || !['pending', 'confirmed'].includes(selected.status)) return;
+    if (!window.confirm('Cancel this appointment request?')) return;
+    setError('');
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('Sign in to cancel this appointment.');
+      const token = await user.getIdToken();
+      const response = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: 'patient_cancel', appointmentId: selected.id }),
+      });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error || 'Appointment could not be cancelled.');
+      await loadChat();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Appointment could not be cancelled.');
+    }
+  };
+
   return (
     <section role="dialog" aria-modal="true" aria-labelledby="messages-title" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setMessagesOpen(false); }}>
       <div className="flex max-h-[92dvh] w-full max-w-5xl flex-col overflow-hidden border border-[#dfe6e1] bg-[#f8faf7] shadow-2xl">
@@ -126,6 +147,7 @@ export const UserAppointmentChat: React.FC = () => {
             {!selected ? <div className="flex min-h-[360px] items-center justify-center text-sm text-[#66736f]">Select an appointment</div> : (
               <div className="flex min-h-[min(420px,55dvh)] flex-col">
                 <div className="flex min-w-0 items-center gap-2 border-b border-[#dfe6e1] px-3 py-3 sm:px-4"><button type="button" onClick={() => setSelectedId('')} className="shrink-0 lg:hidden" aria-label="Back to conversations"><ChevronLeft className="h-5 w-5 text-[#17645c]" /></button><MessageCircle className="h-4 w-4 shrink-0 text-[#17645c]" /><div className="min-w-0"><div className="truncate text-sm font-bold">{selected.service_name}</div><div className="text-[11px] text-[#66736f]">{selected.chat_status === 'closed' ? 'Chat closed by clinic staff' : 'Chat open'}</div></div></div>
+                {['pending', 'confirmed'].includes(selected.status) && <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#dfe6e1] bg-white px-3 py-2 sm:px-4"><p className="text-[11px] text-[#66736f]">Need to change your appointment? Message clinic staff here.</p><button type="button" onClick={() => void cancelSelectedAppointment()} className="min-h-10 border border-rose-200 px-3 text-xs font-bold text-rose-700">Cancel appointment</button></div>}
                 <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-4 sm:px-4">
                   {selectedMessages.map((message) => (
                     <div key={message.id} className={`flex ${message.sender_role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm ${message.sender_role === 'user' ? 'rounded-br-sm bg-[#17645c] text-white' : 'rounded-bl-sm bg-[#edf1ee] text-[#17312e]'}`}><div>{message.message}</div><div className={`mt-1 text-[10px] ${message.sender_role === 'user' ? 'text-white/70' : 'text-[#66736f]'}`}>{message.sender_name}</div></div></div>

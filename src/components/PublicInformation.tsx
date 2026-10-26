@@ -1,20 +1,21 @@
 import React from 'react';
 import { Bell, CalendarDays, Clock3, Hospital, PackageCheck } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { NEWS_UPDATES, OUTREACH_PROGRAMS, SERVICES_DATA } from '../data/healthCenterData';
 
 export const PublicInformation: React.FC = () => {
-  const { language } = useHealthCenter();
+  const { language, siteContent, siteContentError } = useHealthCenter();
   const isFilipino = language === 'fil';
-  const featuredServices = SERVICES_DATA.filter((service) =>
+  const featuredServices = siteContent.services.filter((service) =>
     ['checkup', 'dental', 'xray', 'maternity', 'pharmacy'].includes(service.category),
   ).slice(0, 4);
-  const updates = NEWS_UPDATES.slice(0, 3);
-  const outreach = OUTREACH_PROGRAMS.slice(0, 3);
+  const updates = siteContent.news.slice(0, 3);
+  const outreach = siteContent.outreach.slice(0, 3);
+  const settings = siteContent.settings;
 
   return (
     <section id="clinic-information" className="border-b border-[#dfe6e1] bg-[#fbfcfa] py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
+        {siteContentError && <p role="status" className="mb-4 border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">{isFilipino ? 'Hindi ma-refresh ang pinakabagong impormasyon ng klinika; ipinapakita ang huling na-save na nilalaman.' : 'Clinic information could not be refreshed; showing the last saved content.'}</p>}
         <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="mb-2 text-xs font-bold text-[#17645c]">Clinic information</div>
@@ -28,11 +29,17 @@ export const PublicInformation: React.FC = () => {
         <div className="grid border-y border-[#dfe6e1] lg:grid-cols-[0.75fr_1.25fr]">
           <div className="border-b border-[#dfe6e1] py-6 lg:border-b-0 lg:border-r lg:pr-8">
             <div className="mt-5 grid gap-4 text-sm text-[#66736f]">
-              <div className="flex items-start gap-2"><Clock3 className="mt-0.5 h-4 w-4 text-[#17645c]" /><span>Monday-Friday<br /><strong className="text-[#17312e]">7:00 AM-4:00 PM</strong></span></div>
-              <div className="flex items-start gap-2"><Hospital className="mt-0.5 h-4 w-4 text-[#17645c]" /><span>{isFilipino ? 'Hinihintay' : 'Current wait time'}<br /><strong className="text-[#17312e]">{isFilipino ? 'Sundin ang counter' : 'Confirm at registration'}</strong></span></div>
+              <div className="flex items-start gap-2"><Clock3 className="mt-0.5 h-4 w-4 text-[#17645c]" /><span>{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}<br /><strong className="text-[#17312e]">{isFilipino ? settings.clinicHoursFil : settings.clinicHours}</strong></span></div>
+              <div className="ml-6 text-xs leading-relaxed text-[#66736f]">
+                <p>{isFilipino ? settings.doctorHoursFil : settings.doctorHours}</p>
+                <p className="mt-1">{isFilipino ? settings.xrayHoursFil : settings.xrayHours}</p>
+                <p className="mt-1">{isFilipino ? settings.dentalHoursFil : settings.dentalHours}</p>
+              </div>
+              <div className="flex items-start gap-2"><Hospital className="mt-0.5 h-4 w-4 text-[#17645c]" /><span>{isFilipino ? settings.clinicAddressFil : settings.clinicAddress}<br /><strong className="text-[#17312e]">{settings.contactPhone}</strong></span></div>
+              {settings.contactEmail && <div className="flex items-start gap-2 text-xs"><Bell className="mt-0.5 h-4 w-4 shrink-0 text-[#17645c]" /><span className="break-all">{settings.contactEmail}</span></div>}
             </div>
             <div className="mt-6 border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-950">
-              <strong>Holiday advisory:</strong> Verify clinic operations before visiting on holidays.
+              <strong>{isFilipino ? 'Pabatid sa holiday:' : 'Holiday advisory:'}</strong> {isFilipino ? settings.holidayAdvisoryFil : settings.holidayAdvisory}
             </div>
           </div>
 

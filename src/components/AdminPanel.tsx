@@ -2,6 +2,8 @@ import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { auth } from '../firebase';
 import { CalendarCheck2, CalendarDays, Check, CheckCircle2, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, Trash2, X } from 'lucide-react';
 import { AdminCalendar, SlotSetting, SlotSettingsForm } from './AdminCalendar';
+import { AdminContentManager } from './AdminContentManager';
+import { AdminReports } from './AdminReports';
 
 interface AppointmentRow {
   id: string;
@@ -33,7 +35,7 @@ export const AdminPanel: React.FC = () => {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [slotSettings, setSlotSettings] = useState<SlotSetting[]>([]);
-  const [activeTab, setActiveTab] = useState<'requests' | 'calendar'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'calendar' | 'content' | 'reports'>('requests');
   const [selectedId, setSelectedId] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -252,8 +254,10 @@ export const AdminPanel: React.FC = () => {
           {[
             { id: 'requests', label: 'Appointment requests' },
             { id: 'calendar', label: 'Calendar & availability' },
+            { id: 'content', label: 'Website content' },
+            { id: 'reports', label: 'Reports & export' },
           ].map(({ id, label }) => (
-            <button key={id} type="button" onClick={() => setActiveTab(id as 'requests' | 'calendar')} className={`shrink-0 border-b-2 px-3 py-3 text-xs font-bold sm:px-4 sm:text-sm ${activeTab === id ? 'border-[#17645c] text-[#17645c]' : 'border-transparent text-[#66736f] hover:text-[#17312e]'}`}>{label}</button>
+            <button key={id} type="button" onClick={() => setActiveTab(id as 'requests' | 'calendar' | 'content' | 'reports')} className={`shrink-0 border-b-2 px-3 py-3 text-xs font-bold sm:px-4 sm:text-sm ${activeTab === id ? 'border-[#17645c] text-[#17645c]' : 'border-transparent text-[#66736f] hover:text-[#17312e]'}`}>{label}</button>
           ))}
         </nav>
 
@@ -264,6 +268,10 @@ export const AdminPanel: React.FC = () => {
             onSaveSettings={saveSlotSettings}
             onSelectAppointment={(id) => { setSelectedId(id); setActiveTab('requests'); }}
           />
+        ) : activeTab === 'content' ? (
+          <AdminContentManager />
+        ) : activeTab === 'reports' ? (
+          <AdminReports appointments={appointments} />
         ) : (
         <section className="grid min-w-0 overflow-hidden border border-[#dfe6e1] bg-white lg:min-h-[640px] lg:grid-cols-[350px_minmax(0,1fr)]">
           <aside className={`${selected ? 'hidden lg:block' : ''} min-w-0 border-b border-[#dfe6e1] lg:border-b-0 lg:border-r`}>

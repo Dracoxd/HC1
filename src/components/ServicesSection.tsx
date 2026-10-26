@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { SERVICES_DATA } from '../data/healthCenterData';
 import { ServiceDetail } from '../types';
 import { Activity, Baby, Clock, Heart, MapPin, Pill, ShieldAlert, Smile, Stethoscope, X } from 'lucide-react';
 
@@ -28,14 +27,14 @@ const iconForService = (category: string) => {
 };
 
 export const ServicesSection: React.FC = () => {
-  const { t, language, openBookingForProgram, clinicOpen } = useHealthCenter();
+  const { t, language, openBookingForProgram, clinicOpen, siteContent } = useHealthCenter();
   const bookingEnabled = clinicOpen === true;
   const isFilipino = language === 'fil';
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedService, setSelectedService] = useState<ServiceDetail | null>(null);
   const filteredServices = activeCategory === 'all'
-    ? SERVICES_DATA
-    : SERVICES_DATA.filter((service) => service.category === activeCategory);
+    ? siteContent.services
+    : siteContent.services.filter((service) => service.category === activeCategory);
 
   return (
     <section id="services" className="services-enter py-14 sm:py-18 bg-[#fbfcfa] border-b border-[#dfe6e1]">

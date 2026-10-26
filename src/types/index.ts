@@ -124,6 +124,41 @@ export interface NewsUpdate {
   readTime: string;
 }
 
+export interface ClinicPublicSettings {
+  clinicHours: string;
+  clinicHoursFil: string;
+  doctorHours: string;
+  doctorHoursFil: string;
+  xrayHours: string;
+  xrayHoursFil: string;
+  dentalHours: string;
+  dentalHoursFil: string;
+  clinicAddress: string;
+  clinicAddressFil: string;
+  contactPhone: string;
+  contactEmail: string;
+  emergencyPhone: string;
+  emergencyPhoneFil: string;
+  holidayAdvisory: string;
+  holidayAdvisoryFil: string;
+}
+
+export interface PublicSiteContent {
+  services: ServiceDetail[];
+  news: NewsUpdate[];
+  outreach: OutreachProgram[];
+  settings: ClinicPublicSettings;
+}
+
+export interface AdminSiteContentItem {
+  content_type: 'service' | 'news' | 'outreach';
+  content_id: string;
+  content_json: string;
+  published: number;
+  deleted: number;
+  updated_at: string;
+}
+
 export interface PatientRecord {
   id: string;
   patientNumber: string;

@@ -1,4 +1,5 @@
 import {
+  ClinicPublicSettings,
   StaffMember,
   ServiceDetail,
   MedicationStock,
@@ -6,6 +7,25 @@ import {
   OutreachProgram,
   NewsUpdate
 } from '../types';
+
+export const DEFAULT_CLINIC_PUBLIC_SETTINGS: ClinicPublicSettings = {
+  clinicHours: 'Monday-Friday · 7:00 AM-4:00 PM',
+  clinicHoursFil: 'Lunes-Biyernes · 7:00 AM-4:00 PM',
+  doctorHours: 'Doctors: Mon 8 AM-3 PM · Tue-Fri 9 AM-3 PM',
+  doctorHoursFil: 'Doktor: Lunes 8 AM-3 PM · Martes-Biyernes 9 AM-3 PM',
+  xrayHours: 'X-ray: Mon-Fri 7 AM-10 AM · 3rd floor',
+  xrayHoursFil: 'X-ray: Lunes-Biyernes 7 AM-10 AM · 3rd floor',
+  dentalHours: 'Dental: Monday, Wednesday, Friday',
+  dentalHoursFil: 'Dental: Lunes, Miyerkules, Biyernes',
+  clinicAddress: 'Mayor Moises R. Flores Health Center, Municipality of Pateros, Metro Manila',
+  clinicAddressFil: 'Mayor Moises R. Flores Health Center, Pateros, Metro Manila',
+  contactPhone: '(02) 8642-5159',
+  contactEmail: 'mrfloreshealthcenter@gmail.com',
+  emergencyPhone: '(02) 8642-5159',
+  emergencyPhoneFil: '(02) 8642-5159',
+  holidayAdvisory: 'Verify clinic operations before visiting on holidays.',
+  holidayAdvisoryFil: 'Kumpirmahin muna ang operasyon ng klinika bago bumisita kapag holiday.',
+};
 
 export const HERO_IMAGE = '/src/assets/images/hero_health_center_1792606776580.jpg';
 export const RADIOLOGY_IMAGE = '/src/assets/images/clinic_radiology_xray_1792606793637.jpg';

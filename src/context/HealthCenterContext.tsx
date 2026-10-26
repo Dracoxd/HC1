@@ -5,9 +5,11 @@ import {
   AppointmentBooking,
   PatientRecord,
   ChatMessage,
-  ContactSubmission
+  ContactSubmission,
+  PublicSiteContent,
 } from '../types';
 import { translations } from '../i18n/translations';
+import { DEFAULT_CLINIC_PUBLIC_SETTINGS, NEWS_UPDATES, OUTREACH_PROGRAMS, SERVICES_DATA } from '../data/healthCenterData';
 
 interface HealthCenterContextType {
   language: Language;
@@ -36,6 +38,8 @@ interface HealthCenterContextType {
   setMessagesOpen: (open: boolean) => void;
   clinicOpen: boolean | null;
   clinicStatusError: string;
+  siteContent: PublicSiteContent;
+  siteContentError: string;
   unreadAdminMessageCount: number;
   unreadMessagesError: string;
   markAppointmentMessagesRead: (appointmentId: string) => Promise<void>;
@@ -72,6 +76,13 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [messagesOpen, setMessagesOpen] = useState(false);
   const [clinicOpen, setClinicOpen] = useState<boolean | null>(null);
   const [clinicStatusError, setClinicStatusError] = useState('');
+  const [siteContent, setSiteContent] = useState<PublicSiteContent>(() => ({
+    services: SERVICES_DATA,
+    news: NEWS_UPDATES,
+    outreach: OUTREACH_PROGRAMS,
+    settings: DEFAULT_CLINIC_PUBLIC_SETTINGS,
+  }));
+  const [siteContentError, setSiteContentError] = useState('');
   const [unreadAdminMessageCount, setUnreadAdminMessageCount] = useState(0);
   const [unreadMessagesError, setUnreadMessagesError] = useState('');
   const [selectedProgramForBooking, setSelectedProgramForBooking] = useState<string | null>(null);
@@ -115,6 +126,32 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
     void loadClinicStatus();
     const timer = window.setInterval(() => void loadClinicStatus(), 3000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadSiteContent = async () => {
+      try {
+        const response = await fetch('/api/content', { cache: 'no-store' });
+        const result = await response.json() as PublicSiteContent & { error?: string };
+        if (!response.ok || !Array.isArray(result.services) || !Array.isArray(result.news)
+          || !Array.isArray(result.outreach) || !result.settings) {
+          throw new Error(result.error || 'Public website content could not be loaded.');
+        }
+        if (!active) return;
+        setSiteContent(result);
+        setSiteContentError('');
+      } catch (caught) {
+        if (!active) return;
+        setSiteContentError(caught instanceof Error ? caught.message : 'Public website content could not be loaded.');
+      }
+    };
+    void loadSiteContent();
+    const timer = window.setInterval(() => void loadSiteContent(), 15000);
     return () => {
       active = false;
       window.clearInterval(timer);
@@ -507,6 +544,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setMessagesOpen,
         clinicOpen,
         clinicStatusError,
+        siteContent,
+        siteContentError,
         unreadAdminMessageCount,
         unreadMessagesError,
         markAppointmentMessagesRead,

@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { clinicPublicSettingKeys, ensureSiteContent, getContentDatabase, readSiteContent, validateSiteContent } from './site-content-store';
 
 type ApiRequest = IncomingMessage & { body?: unknown; headers: IncomingMessage['headers'] & { authorization?: string } };
 type ApiResponse = ServerResponse & {
@@ -169,6 +170,16 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   await initializeAdminDatabase(db);
   const admin = isAdmin(decoded);
 
+  if (request.method === 'GET' && mode === 'site_content') {
+    if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
+    try {
+      const { content, items } = await readSiteContent(db, true);
+      return response.status(200).json({ content, items });
+    } catch {
+      return response.status(500).json({ error: 'Website content could not be loaded.' });
+    }
+  }
+
   if (request.method === 'GET' && mode === 'unread_messages') {
     if (admin) return response.status(200).json({ unreadCount: 0 });
     try {
@@ -251,6 +262,25 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       return response.status(200).json({ appointmentId, markedRead: true });
     }
 
+    if (action === 'patient_cancel') {
+      if (admin) return response.status(403).json({ error: 'Use the admin appointment controls to update this request.' });
+      if (!appointmentId) return response.status(400).json({ error: 'Appointment is required.' });
+      const result = await db.execute({
+        sql: `UPDATE appointment_requests SET status = 'cancelled'
+              WHERE id = ? AND owner_uid = ? AND status IN ('pending', 'confirmed')`,
+        args: [appointmentId, decoded.uid],
+      });
+      if (result.rowsAffected === 0) {
+        const appointment = await db.execute({
+          sql: 'SELECT status FROM appointment_requests WHERE id = ? AND owner_uid = ?',
+          args: [appointmentId, decoded.uid],
+        });
+        if (appointment.rows.length === 0) return response.status(404).json({ error: 'Appointment was not found.' });
+        return response.status(409).json({ error: 'Only pending or accepted appointments can be cancelled.' });
+      }
+      return response.status(200).json({ appointmentId, status: 'cancelled' });
+    }
+
     if (action === 'set_clinic_status') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (typeof body.isOpen !== 'boolean') return response.status(400).json({ error: 'A valid clinic status is required.' });
@@ -262,6 +292,93 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         args: [body.isOpen ? '1' : '0', updatedAt],
       });
       return response.status(200).json({ clinicOpen: body.isOpen, updatedAt });
+    }
+
+    if (action === 'save_site_content') {
+      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
+      if (typeof body.published !== 'boolean') return response.status(400).json({ error: 'Choose whether to publish this item.' });
+      const contentType = text(body.contentType, 20);
+      const contentId = text(body.contentId, 80);
+      const content = validateSiteContent(contentType, contentId, body.content);
+      if (!content) return response.status(400).json({ error: 'Enter valid website content for all required fields.' });
+      const contentDb = getContentDatabase();
+      if (!contentDb) return response.status(503).json({ error: 'Website content storage is not configured.' });
+      await ensureSiteContent(contentDb);
+      const now = new Date().toISOString();
+      await contentDb.execute({
+        sql: `INSERT INTO public_site_content
+              (content_type, content_id, content_json, published, updated_at, updated_by)
+              VALUES (?, ?, ?, ?, ?, ?)
+              ON CONFLICT(content_type, content_id) DO UPDATE SET
+                content_json = excluded.content_json, published = excluded.published,
+                deleted = 0, updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+        args: [contentType, contentId, JSON.stringify(content), body.published ? 1 : 0, now, decoded.uid],
+      });
+      return response.status(200).json({ contentType, contentId, published: body.published, updatedAt: now });
+    }
+
+    if (action === 'delete_site_content') {
+      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
+      const contentType = text(body.contentType, 20);
+      const contentId = text(body.contentId, 80);
+      if (!['service', 'news', 'outreach'].includes(contentType) || !/^[a-zA-Z0-9_-]{1,80}$/.test(contentId)) {
+        return response.status(400).json({ error: 'Select a valid website content item.' });
+      }
+      const contentDb = getContentDatabase();
+      if (!contentDb) return response.status(503).json({ error: 'Website content storage is not configured.' });
+      await ensureSiteContent(contentDb);
+      const result = await contentDb.execute({
+        sql: 'UPDATE public_site_content SET deleted = 1, published = 0, updated_at = ?, updated_by = ? WHERE content_type = ? AND content_id = ? AND deleted = 0',
+        args: [new Date().toISOString(), decoded.uid, contentType, contentId],
+      });
+      if (result.rowsAffected === 0) return response.status(404).json({ error: 'Website content item was not found.' });
+      return response.status(200).json({ contentType, contentId, deleted: true });
+    }
+
+    if (action === 'save_public_setting') {
+      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
+      const key = text(body.key, 80);
+      const value = text(body.value, 2000);
+      if (!clinicPublicSettingKeys.includes(key as typeof clinicPublicSettingKeys[number])) {
+        return response.status(400).json({ error: 'Select a valid clinic information field.' });
+      }
+      const contentDb = getContentDatabase();
+      if (!contentDb) return response.status(503).json({ error: 'Clinic information storage is not configured.' });
+      await ensureSiteContent(contentDb);
+      const now = new Date().toISOString();
+      await contentDb.execute({
+        sql: `INSERT INTO clinic_public_settings (setting_key, setting_value, updated_at, updated_by)
+              VALUES (?, ?, ?, ?)
+              ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value,
+                updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+        args: [key, value, now, decoded.uid],
+      });
+      return response.status(200).json({ key, value, updatedAt: now });
+    }
+
+    if (action === 'save_public_settings') {
+      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
+      const settings = body.settings && typeof body.settings === 'object' && !Array.isArray(body.settings)
+        ? body.settings as Record<string, unknown>
+        : null;
+      if (!settings) return response.status(400).json({ error: 'Enter valid clinic information.' });
+      const entries = Object.entries(settings);
+      if (entries.length === 0 || entries.some(([key, value]) => (
+        !clinicPublicSettingKeys.includes(key as typeof clinicPublicSettingKeys[number])
+        || typeof value !== 'string' || value.trim().length > 2000
+      ))) return response.status(400).json({ error: 'Enter valid values for clinic information.' });
+      const contentDb = getContentDatabase();
+      if (!contentDb) return response.status(503).json({ error: 'Clinic information storage is not configured.' });
+      await ensureSiteContent(contentDb);
+      const now = new Date().toISOString();
+      await contentDb.batch(entries.map(([key, value]) => ({
+        sql: `INSERT INTO clinic_public_settings (setting_key, setting_value, updated_at, updated_by)
+              VALUES (?, ?, ?, ?)
+              ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value,
+                updated_at = excluded.updated_at, updated_by = excluded.updated_by`,
+        args: [key, (value as string).trim(), now, decoded.uid],
+      })), 'write');
+      return response.status(200).json({ updatedAt: now });
     }
 
     if (action === 'save_slot_settings') {
@@ -400,6 +517,27 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         return response.status(409).json({ error: 'Only accepted appointments can be marked completed.' });
       }
       if (result.rowsAffected === 0) return response.status(404).json({ error: 'Appointment not found.' });
+      if (action === 'approve') {
+        const approved = await db.execute({
+          sql: 'SELECT service_name, preferred_date, preferred_time FROM appointment_requests WHERE id = ? OR reference_code = ? LIMIT 1',
+          args: [appointmentId, referenceCode],
+        });
+        const appointment = approved.rows[0];
+        if (appointment) {
+          const now = new Date().toISOString();
+          const message = `Your appointment request for ${String(appointment.service_name)} on ${String(appointment.preferred_date)} (${String(appointment.preferred_time)}) has been accepted.\n\nYou may cancel it from Messages. To request a schedule change, reply in this conversation and clinic staff will assist you.\n\nKumpirmado na ang iyong appointment. Maaari mo itong kanselahin sa Messages. Para humiling ng pagbabago sa iskedyul, mag-reply sa pag-uusap na ito.`;
+          await db.batch([
+            { sql: "UPDATE appointment_requests SET chat_status = 'open' WHERE id = ? OR reference_code = ?", args: [appointmentId, referenceCode] },
+            {
+              sql: `INSERT INTO appointment_messages
+                    (id, appointment_id, sender_uid, sender_role, sender_name, message, created_at)
+                    SELECT ?, id, 'clinic-system', 'admin', 'Health Center', ?, ?
+                    FROM appointment_requests WHERE id = ? OR reference_code = ? LIMIT 1`,
+              args: [randomUUID(), message, now, appointmentId, referenceCode],
+            },
+          ], 'write');
+        }
+      }
       return response.status(200).json({ appointmentId, status });
     }
 

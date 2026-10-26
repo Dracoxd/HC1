@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { NEWS_UPDATES } from '../data/healthCenterData';
 import { NewsUpdate } from '../types';
 import { Newspaper, Search, Calendar, User, ArrowRight, X } from 'lucide-react';
 
 export const NewsSection: React.FC = () => {
-  const { t, language } = useHealthCenter();
+  const { t, language, siteContent } = useHealthCenter();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -13,7 +12,7 @@ export const NewsSection: React.FC = () => {
 
   const categories = ['all', 'Campaign', 'Schedule', 'Advisory', 'Meds'];
 
-  const filteredNews = NEWS_UPDATES.filter((item) => {
+  const filteredNews = siteContent.news.filter((item) => {
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
     const query = searchQuery.toLowerCase().trim();
     const matchesSearch =

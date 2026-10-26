@@ -1,6 +1,5 @@
 import React from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { OUTREACH_PROGRAMS } from '../data/healthCenterData';
 import { Calendar, Clock, MapPin, Users, CheckCircle, Ticket, XCircle } from 'lucide-react';
 
 export const OutreachSection: React.FC = () => {
@@ -11,7 +10,8 @@ export const OutreachSection: React.FC = () => {
     setBookingModalOpen,
     clinicOpen,
     appointments,
-    cancelAppointment
+    cancelAppointment,
+    siteContent
   } = useHealthCenter();
   const bookingEnabled = clinicOpen === true;
 
@@ -45,7 +45,7 @@ export const OutreachSection: React.FC = () => {
 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {OUTREACH_PROGRAMS.map((program) => (
+          {siteContent.outreach.map((program) => (
             <div
               key={program.id}
               className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col justify-between hover:border-slate-300 transition-all shadow-xs"

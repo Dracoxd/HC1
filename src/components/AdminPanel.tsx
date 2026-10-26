@@ -105,7 +105,7 @@ export const AdminPanel: React.FC = () => {
   }, [appointments, search, statusFilter]);
 
   const performAction = async (action: string, appointment: AppointmentRow) => {
-    if (action === 'delete_chat' && !window.confirm('Delete this conversation for both accounts? Its messages will be permanently removed and it will disappear from the patient inbox. The appointment request itself will remain in your records.')) return;
+    if (action === 'delete_chat' && !window.confirm('Archive this conversation for the patient? Messages will remain available in admin records, and the appointment request will be kept.')) return;
     if (action === 'complete' && !window.confirm('Mark this appointment as completed? It will be removed from the public Dates and Time Slots schedule but remain in admin records.')) return;
     if (action === 'approve') {
       const dateSettings = slotSettings.filter((setting) => setting.appointment_date === appointment.preferred_date);

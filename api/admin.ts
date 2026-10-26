@@ -500,11 +500,11 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         args: [appointmentId],
       });
       if (appointment.rows.length === 0) return response.status(404).json({ error: 'Appointment not found.' });
-      await db.batch([
-        { sql: 'DELETE FROM appointment_messages WHERE appointment_id = ?', args: [appointmentId] },
-        { sql: "UPDATE appointment_requests SET chat_status = 'deleted' WHERE id = ?", args: [appointmentId] },
-      ], 'write');
-      return response.status(200).json({ appointmentId, deleted: true });
+      await db.execute({
+        sql: "UPDATE appointment_requests SET chat_status = 'deleted' WHERE id = ?",
+        args: [appointmentId],
+      });
+      return response.status(200).json({ appointmentId, archived: true });
     }
 
     if (action === 'approve' || action === 'reject' || action === 'cancel' || action === 'complete') {

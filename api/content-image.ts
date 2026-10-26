@@ -7,6 +7,15 @@ type ApiResponse = ServerResponse & {
   json: (body: unknown) => void;
 };
 
+function toImageBuffer(value: unknown): Buffer | null {
+  if (typeof value !== 'object' || value === null) return null;
+  if (value instanceof ArrayBuffer) return Buffer.from(value);
+  if (ArrayBuffer.isView(value)) {
+    return Buffer.from(value.buffer, value.byteOffset, value.byteLength);
+  }
+  return null;
+}
+
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   if (request.method !== 'GET') {
     response.setHeader('Allow', 'GET');
@@ -28,17 +37,18 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       args: [imageId],
     });
     const image = result.rows[0];
-    if (!image || !(image.image_data instanceof Uint8Array)
+    const imageBytes = toImageBuffer(image?.image_data);
+    if (!image || !imageBytes || imageBytes.length === 0
       || !['image/webp', 'image/jpeg', 'image/png'].includes(String(image.mime_type))) {
       return response.status(404).json({ error: 'Announcement image was not found.' });
     }
 
     response.statusCode = 200;
     response.setHeader('Content-Type', String(image.mime_type));
-    response.setHeader('Content-Length', image.image_data.byteLength);
+    response.setHeader('Content-Length', imageBytes.byteLength);
     response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     response.setHeader('X-Content-Type-Options', 'nosniff');
-    response.end(Buffer.from(image.image_data));
+    response.end(imageBytes);
   } catch (error) {
     console.error('Announcement image could not be loaded:', error);
     return response.status(500).json({ error: 'Announcement image could not be loaded.' });

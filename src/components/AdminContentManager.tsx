@@ -179,14 +179,17 @@ export const AdminContentManager: React.FC = () => {
       setItems(result.items);
       setSettings(result.content.settings);
       setError('');
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Website content could not be loaded.');
+      return { items: result.items, settings: result.content.settings };
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load().catch((caught: unknown) => {
+      setError(caught instanceof Error ? caught.message : 'Website content could not be loaded.');
+    });
+  }, []);
 
   const visibleItems = useMemo(() => items.filter((item) => item.content_type === type), [items, type]);
   const beginNew = () => {
@@ -237,7 +240,12 @@ export const AdminContentManager: React.FC = () => {
       await postAdminAction('save_site_content', {
         contentType: type, contentId: selectedId, content: normalized, published,
       });
-      await load();
+      const saved = await load();
+      const savedItem = saved.items.find((item) => item.content_type === type && item.content_id === selectedId);
+      if (!savedItem || savedItem.published !== (published ? 1 : 0)
+        || JSON.stringify(JSON.parse(savedItem.content_json)) !== JSON.stringify({ ...normalized, id: selectedId })) {
+        throw new Error('The save was not confirmed by the database. Check the Vercel Turso database settings and try again.');
+      }
       setNotice('Website content saved.');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Website content could not be saved.');
@@ -255,7 +263,10 @@ export const AdminContentManager: React.FC = () => {
       await postAdminAction('delete_site_content', { contentType: type, contentId: selectedId });
       setSelectedId('');
       setContent(emptyContent(type));
-      await load();
+      const saved = await load();
+      if (saved.items.some((item) => item.content_type === type && item.content_id === selectedId)) {
+        throw new Error('The deletion was not confirmed by the database. Check the Vercel Turso database settings and try again.');
+      }
       setNotice('Content item deleted.');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Content item could not be deleted.');
@@ -272,6 +283,13 @@ export const AdminContentManager: React.FC = () => {
     setNotice('');
     try {
       await postAdminAction('save_public_settings', { settings });
+      const saved = await load();
+      const settingsMatch = Object.entries(settings).every(([key, value]) => (
+        saved.settings[key as keyof ClinicPublicSettings] === value.trim()
+      ));
+      if (!settingsMatch) {
+        throw new Error('The save was not confirmed by the database. Check the Vercel Turso database settings and try again.');
+      }
       setNotice('Clinic hours and contact information saved.');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Clinic information could not be saved.');

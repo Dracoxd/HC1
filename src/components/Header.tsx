@@ -51,7 +51,7 @@ export const Header: React.FC = () => {
             <span title={t.brand} className="min-w-0 truncate sm:overflow-visible sm:whitespace-nowrap">Mayor Moises R. Flores <span className="hidden sm:inline">Health Center</span></span>
           </a>
 
-          <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-slate-600">
+          <nav className="hidden xl:flex items-center gap-7 text-sm font-medium text-slate-600">
             {navLinks.map((item) => (
               <button
                 key={item.id}
@@ -67,7 +67,7 @@ export const Header: React.FC = () => {
             ))}
           </nav>
 
-          <div className="hidden sm:flex items-center gap-4 shrink-0">
+          <div className="hidden xl:flex items-center gap-4 shrink-0">
             <button
               onClick={toggleLanguage}
               className="flex items-center gap-1.5 text-slate-600 hover:text-teal-800 transition-colors cursor-pointer"
@@ -89,25 +89,22 @@ export const Header: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 lg:hidden">
+          <div className="flex items-center gap-1 xl:hidden sm:gap-2">
             <button
               onClick={toggleLanguage}
-              className="sm:hidden p-2 text-slate-600 hover:text-teal-800"
+              className="flex h-11 w-11 items-center justify-center text-slate-600 hover:text-teal-800 xl:hidden"
               aria-label={language === 'en' ? 'Switch to Filipino' : 'Switch to English'}
               title={language === 'en' ? 'Filipino' : 'English'}
             >
               <Globe className="w-5 h-5" />
             </button>
-            <button type="button" onClick={() => setMessagesOpen(true)} className="sm:hidden relative p-2 text-slate-600 hover:text-[#17645c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
+            <button type="button" onClick={() => setMessagesOpen(true)} className="relative flex h-11 w-11 items-center justify-center text-slate-600 hover:text-[#17645c] xl:hidden" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
               <Mail className="h-5 w-5" />
               {unreadAdminMessageCount > 0 && <span aria-hidden="true" className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">{unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}</span>}
             </button>
-            <button type="button" onClick={() => void signOut(auth)} className="sm:hidden p-2 text-slate-600 hover:text-[#173a37]" aria-label="Sign out" title="Sign out">
-              <LogOut className="w-5 h-5" />
-            </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -117,13 +114,13 @@ export const Header: React.FC = () => {
       </div>
 
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 shadow-lg space-y-3">
+        <div className="xl:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 shadow-lg space-y-3">
           <div className="grid grid-cols-2 gap-2 text-sm">
             {navLinks.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`text-left px-3 py-2 rounded-md transition-colors ${
+                className={`min-h-11 text-left px-3 py-2 rounded-md transition-colors ${
                   activeSection === item.id
                     ? 'bg-teal-50 text-teal-800 font-semibold'
                     : 'text-slate-700 hover:bg-slate-50'
@@ -135,9 +132,13 @@ export const Header: React.FC = () => {
           </div>
 
           <div className="pt-3 border-t border-slate-100">
-            <button disabled={!bookingEnabled} onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded-md flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
+            <button disabled={!bookingEnabled} onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="min-h-11 w-full py-2.5 px-4 text-sm font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded-md flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
               <CalendarDays className="w-4 h-4" />
               <span>{bookingEnabled ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability'}</span>
+            </button>
+            <button type="button" onClick={() => void signOut(auth)} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <LogOut className="h-4 w-4" />
+              Sign out
             </button>
           </div>
         </div>

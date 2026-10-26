@@ -257,7 +257,7 @@ export const AdminPanel: React.FC = () => {
             { id: 'content', label: 'Website content' },
             { id: 'reports', label: 'Reports & export' },
           ].map(({ id, label }) => (
-            <button key={id} type="button" onClick={() => setActiveTab(id as 'requests' | 'calendar' | 'content' | 'reports')} className={`shrink-0 border-b-2 px-3 py-3 text-xs font-bold sm:px-4 sm:text-sm ${activeTab === id ? 'border-[#17645c] text-[#17645c]' : 'border-transparent text-[#66736f] hover:text-[#17312e]'}`}>{label}</button>
+            <button key={id} type="button" onClick={() => setActiveTab(id as 'requests' | 'calendar' | 'content' | 'reports')} className={`min-h-11 shrink-0 border-b-2 px-3 py-3 text-xs font-bold sm:px-4 sm:text-sm ${activeTab === id ? 'border-[#17645c] text-[#17645c]' : 'border-transparent text-[#66736f] hover:text-[#17312e]'}`}>{label}</button>
           ))}
         </nav>
 
@@ -289,7 +289,7 @@ export const AdminPanel: React.FC = () => {
                   ['completed', 'Completed'],
                   ['rejected', 'Rejected'],
                 ].map(([value, label]) => (
-                  <button key={value} type="button" onClick={() => setStatusFilter(value)} className={`min-h-10 shrink-0 whitespace-nowrap px-3 text-xs font-bold ${statusFilter === value ? 'bg-[#173a37] text-white' : 'bg-[#f1f4f1] text-[#66736f] hover:bg-[#e7ede8]'}`}>{label}</button>
+                  <button key={value} type="button" onClick={() => setStatusFilter(value)} className={`min-h-11 shrink-0 whitespace-nowrap px-3 text-xs font-bold ${statusFilter === value ? 'bg-[#173a37] text-white' : 'bg-[#f1f4f1] text-[#66736f] hover:bg-[#e7ede8]'}`}>{label}</button>
                 ))}
               </div>
             </div>

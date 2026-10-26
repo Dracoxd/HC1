@@ -187,7 +187,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
           </div>
           <div className="flex shrink-0 border border-[#d9e1dc] p-0.5">
             {(['month', 'week', 'day'] as const).map((option) => (
-              <button key={option} type="button" onClick={() => setView(option)} className={`px-2.5 py-1.5 text-[11px] font-bold capitalize sm:px-3 sm:text-xs ${view === option ? 'bg-[#173a37] text-white' : 'text-[#66736f] hover:bg-[#f4f6f3]'}`}>{option}</button>
+              <button key={option} type="button" onClick={() => setView(option)} className={`min-h-11 px-2.5 py-1.5 text-[11px] font-bold capitalize sm:px-3 sm:text-xs ${view === option ? 'bg-[#173a37] text-white' : 'text-[#66736f] hover:bg-[#f4f6f3]'}`}>{option}</button>
             ))}
           </div>
         </div>
@@ -267,14 +267,14 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 </div>
                 <label className="flex items-center justify-between gap-3 text-xs text-[#66736f]">
                   <span>Maximum accepted <span className="block text-[10px]">Currently {acceptedCount} accepted</span></span>
-                  <input type="number" min={0} max={1000} value={capacity} onChange={(event) => setForm((current) => ({ ...current, [`${field}Capacity`]: Math.min(1000, Math.max(0, Number(event.target.value))) }))} className="w-24 border border-[#d9e1dc] px-2 py-1.5 text-right text-sm text-[#17312e]" />
+                  <input type="number" min={0} max={1000} value={capacity} onChange={(event) => setForm((current) => ({ ...current, [`${field}Capacity`]: Math.min(1000, Math.max(0, Number(event.target.value))) }))} className="min-h-11 w-24 border border-[#d9e1dc] px-2 py-1.5 text-right text-sm text-[#17312e]" />
                 </label>
                 {capacity > 0 && capacity < acceptedCount && <p role="status" className="text-[11px] text-amber-800">Current accepted bookings exceed this limit. No more requests can be accepted in this slot until capacity is increased or an appointment is cancelled.</p>}
               </div>
             );
           })}
           {error && <p role="alert" className="text-xs text-rose-800">{error}</p>}
-          <button type="submit" disabled={saving} className="w-full bg-[#17645c] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#104f49] disabled:opacity-60">{saving ? 'Saving availability...' : 'Save availability'}</button>
+          <button type="submit" disabled={saving} className="min-h-11 w-full bg-[#17645c] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#104f49] disabled:opacity-60">{saving ? 'Saving availability...' : 'Save availability'}</button>
         </form>
       </aside>
     </section>

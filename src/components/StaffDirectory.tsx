@@ -70,7 +70,7 @@ export const StaffDirectory: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setSelectedDept(tab.id)}
-              className={`px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+              className={`min-h-11 px-3 py-2 text-xs font-medium rounded-lg whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                 selectedDept === tab.id
                   ? 'bg-white text-slate-900 shadow-sm font-semibold'
                   : 'text-slate-600 hover:text-slate-900'

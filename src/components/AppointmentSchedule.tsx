@@ -100,7 +100,7 @@ export const AppointmentSchedule: React.FC = () => {
                     {appointmentsByDate[date]
                       .sort((first, second) => (timeOrder[first.time] ?? 99) - (timeOrder[second.time] ?? 99))
                       .map((slot) => (
-                        <div key={slot.time} className="flex min-h-10 min-w-0 max-w-full items-center gap-2 border border-[#cfd8d2] bg-white px-2.5 py-2 sm:px-3">
+                        <div key={slot.time} className="flex min-h-11 min-w-0 max-w-full items-center gap-2 border border-[#cfd8d2] bg-white px-2.5 py-2 sm:px-3">
                           <Clock3 className="h-4 w-4 shrink-0 text-[#17645c]" />
                           <span className="text-sm font-bold text-[#17312e]">{timeLabels[slot.time] ?? slot.time}</span>
                           <span className="border-l border-[#dfe6e1] pl-2 text-xs text-[#66736f]">

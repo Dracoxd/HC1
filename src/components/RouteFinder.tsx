@@ -143,7 +143,7 @@ export const RouteFinder: React.FC = () => {
   const [mapReady, setMapReady] = useState(false);
   const [renderer, setRenderer] = useState<Renderer>('maplibre');
   const [route, setRoute] = useState<RouteInfo | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => window.matchMedia('(max-width: 639px)').matches);
   const [trackingAttempt, setTrackingAttempt] = useState(0);
   const [pinStartMode, setPinStartMode] = useState(false);
   const mapElementRef = useRef<HTMLDivElement>(null);
@@ -617,7 +617,7 @@ export const RouteFinder: React.FC = () => {
   const locationStatusColor = origin?.source === 'manual' ? 'bg-teal-300' : origin && origin.accuracy > 250 ? 'bg-amber-300' : origin ? 'bg-emerald-300' : 'bg-slate-400';
 
   return (
-    <aside aria-label="Live directions map" className="route-enter fixed z-40 bottom-3 right-3 sm:bottom-5 sm:right-5 w-[min(360px,calc(100vw-1.5rem))] max-h-[calc(100dvh-1.5rem)] overflow-y-auto bg-[#fcfdfb] border border-[#d7dfda] shadow-[0_10px_32px_rgba(23,58,55,0.18)] rounded-sm">
+    <aside aria-label="Live directions map" className="route-enter fixed z-40 bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] w-[min(360px,calc(100vw-1.5rem))] max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto bg-[#fcfdfb] border border-[#d7dfda] shadow-[0_10px_32px_rgba(23,58,55,0.18)] rounded-sm sm:bottom-5 sm:right-5">
       <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#173a37] text-white">
         <div className="min-w-0">
           <div className="text-sm font-bold">Navigate to health center</div>
@@ -633,7 +633,7 @@ export const RouteFinder: React.FC = () => {
       <div className={collapsed ? 'hidden' : ''}>
         <div className="grid grid-cols-4 border-b border-slate-200" role="group" aria-label="Travel mode">
           {modes.map((mode) => (
-            <button key={mode.id} type="button" onClick={() => selectTravelMode(mode.id)} aria-pressed={travelMode === mode.id} className={`flex min-w-0 flex-col sm:flex-row items-center justify-center gap-1 py-2 text-[11px] font-bold border-r last:border-r-0 border-[#dfe6e1] ${travelMode === mode.id ? 'bg-[#dce9e2] text-[#173a37]' : 'text-slate-600 hover:bg-[#f4f7f4]'}`}>
+            <button key={mode.id} type="button" onClick={() => selectTravelMode(mode.id)} aria-pressed={travelMode === mode.id} className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 border-r border-[#dfe6e1] py-2 text-[11px] font-bold last:border-r-0 sm:flex-row ${travelMode === mode.id ? 'bg-[#dce9e2] text-[#173a37]' : 'text-slate-600 hover:bg-[#f4f7f4]'}`}>
               {mode.icon}<span>{mode.label}</span>
             </button>
           ))}

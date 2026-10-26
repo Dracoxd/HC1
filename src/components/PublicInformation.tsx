@@ -117,13 +117,13 @@ export const PublicInformation: React.FC = () => {
           role="dialog"
           aria-modal="true"
           aria-label={viewingImage.alt}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/90 p-3 sm:p-8"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/90 p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-8"
           onMouseDown={(event) => { if (event.target === event.currentTarget) setViewingImage(null); }}
         >
-          <button type="button" onClick={() => setViewingImage(null)} aria-label="Close image" className="absolute right-3 top-3 rounded-full bg-white/10 p-3 text-white hover:bg-white/20">
+          <button type="button" onClick={() => setViewingImage(null)} aria-label="Close image" className="absolute right-[max(0.75rem,env(safe-area-inset-right))] top-[max(0.75rem,env(safe-area-inset-top))] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
             <span className="text-xl leading-none">×</span>
           </button>
-          <img src={viewingImage.url} alt={viewingImage.alt} className="max-h-[92vh] max-w-full object-contain" />
+          <img src={viewingImage.url} alt={viewingImage.alt} className="max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] max-w-full object-contain sm:max-h-[92vh]" />
         </div>
       )}
     </section>

@@ -5,6 +5,7 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { RouteFinder } from './components/RouteFinder';
 import { ServicesSection } from './components/ServicesSection';
+import { PatientFlow } from './components/PatientFlow';
 import { PublicInformation } from './components/PublicInformation';
 import { AppointmentSchedule } from './components/AppointmentSchedule';
 import { Footer } from './components/Footer';
@@ -48,6 +49,7 @@ const AppContent: React.FC<{ user: User }> = ({ user }) => {
           <>
             <Hero />
             <RouteFinder />
+            <PatientFlow />
           </>
         )}
       </main>

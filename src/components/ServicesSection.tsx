@@ -4,25 +4,25 @@ import { ServiceDetail } from '../types';
 import { Activity, Baby, Clock, Heart, MapPin, Pill, ShieldAlert, Smile, Stethoscope, X } from 'lucide-react';
 
 const categories = [
-  { id: 'all', label: 'All services' },
-  { id: 'checkup', label: 'Doctor visit' },
-  { id: 'maternity', label: 'Maternity' },
-  { id: 'dental', label: 'Dental' },
-  { id: 'animal_bite', label: 'Animal bite' },
-  { id: 'xray', label: 'X-ray' },
-  { id: 'nutrition', label: 'Child nutrition' },
-  { id: 'pharmacy', label: 'Medicines' },
+  { id: 'all', label: 'ALL SERVICES' },
+  { id: 'checkup', label: 'DOCTOR VISIT' },
+  { id: 'maternity', label: 'MATERNITY' },
+  { id: 'dental', label: 'DENTAL' },
+  { id: 'animal_bite', label: 'ANIMAL BITE' },
+  { id: 'xray', label: 'X-RAY' },
+  { id: 'nutrition', label: 'CHILD NUTRITION' },
+  { id: 'pharmacy', label: 'MEDICINES' },
 ];
 
-const iconForService = (category: string) => {
+const illustrationForService = (category: string) => {
   switch (category) {
-    case 'maternity': return <Heart className="w-5 h-5" />;
-    case 'nutrition': return <Baby className="w-5 h-5" />;
-    case 'dental': return <Smile className="w-5 h-5" />;
-    case 'animal_bite': return <ShieldAlert className="w-5 h-5" />;
-    case 'pharmacy': return <Pill className="w-5 h-5" />;
-    case 'xray': return <Activity className="w-5 h-5" />;
-    default: return <Stethoscope className="w-5 h-5" />;
+    case 'maternity': return { Icon: Heart, color: 'bg-rose-50 text-rose-700', accent: 'bg-rose-200/70' };
+    case 'nutrition': return { Icon: Baby, color: 'bg-amber-50 text-amber-700', accent: 'bg-amber-200/70' };
+    case 'dental': return { Icon: Smile, color: 'bg-sky-50 text-sky-700', accent: 'bg-sky-200/70' };
+    case 'animal_bite': return { Icon: ShieldAlert, color: 'bg-orange-50 text-orange-700', accent: 'bg-orange-200/70' };
+    case 'pharmacy': return { Icon: Pill, color: 'bg-violet-50 text-violet-700', accent: 'bg-violet-200/70' };
+    case 'xray': return { Icon: Activity, color: 'bg-cyan-50 text-cyan-800', accent: 'bg-cyan-200/70' };
+    default: return { Icon: Stethoscope, color: 'bg-emerald-50 text-emerald-800', accent: 'bg-emerald-200/70' };
   }
 };
 
@@ -69,14 +69,22 @@ export const ServicesSection: React.FC = () => {
 
         <div className="border-t border-[#cfd8d2]">
           {filteredServices.map((service, index) => (
-            <article key={service.id} className="service-row grid md:grid-cols-[minmax(220px,1.2fr)_minmax(260px,0.8fr)_auto] gap-4 md:gap-8 items-center py-5 border-b border-[#dfe6e1] transition-colors duration-200 hover:bg-[#f2f6f2]">
-              <div className="flex items-start gap-4">
-                <div className="w-9 h-9 flex items-center justify-center text-[#17645c] border border-[#bfd0c5] shrink-0">
-                  {iconForService(service.category)}
-                </div>
+            <article key={service.id} className="service-row grid min-w-0 gap-4 border-b border-[#dfe6e1] py-5 transition-colors duration-200 hover:bg-[#f2f6f2] md:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)_auto] md:items-center md:gap-8">
+              <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                {(() => {
+                  const illustration = illustrationForService(service.category);
+                  const IllustrationIcon = illustration.Icon;
+                  return (
+                    <div role="img" aria-label={`${language === 'fil' ? service.titleFil : service.title} illustration`} className={`relative flex h-[76px] w-[100px] shrink-0 items-center justify-center overflow-hidden border border-white sm:h-[88px] sm:w-[120px] ${illustration.color}`}>
+                      <span className={`absolute -right-3 -top-5 h-16 w-16 rounded-full ${illustration.accent}`} />
+                      <span className={`absolute -bottom-8 -left-3 h-16 w-16 rounded-full ${illustration.accent}`} />
+                      <IllustrationIcon className="relative h-9 w-9 stroke-[1.6] sm:h-10 sm:w-10" aria-hidden="true" />
+                    </div>
+                  );
+                })()}
                 <div className="min-w-0">
                   <div className="text-[10px] font-bold text-[#7b8984] tabular-nums mb-1">{String(index + 1).padStart(2, '0')}</div>
-                  <h3 className="text-[15px] font-bold text-[#17312e]">{language === 'fil' ? service.titleFil : service.title}</h3>
+                  <h3 className="text-[15px] font-bold tracking-wide text-[#17312e] uppercase">{language === 'fil' ? service.titleFil : service.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-[#66736f]">{language === 'fil' ? service.shortDescFil : service.shortDesc}</p>
                 </div>
               </div>
@@ -99,7 +107,7 @@ export const ServicesSection: React.FC = () => {
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
               <div>
                 <div className="text-xs font-bold uppercase tracking-wider text-teal-800">{language === 'fil' ? selectedService.badgeFil : selectedService.badge}</div>
-                <h3 id="service-dialog-title" className="mt-1 text-2xl font-bold text-slate-950">{language === 'fil' ? selectedService.titleFil : selectedService.title}</h3>
+                <h3 id="service-dialog-title" className="mt-1 text-2xl font-bold tracking-wide text-slate-950 uppercase">{language === 'fil' ? selectedService.titleFil : selectedService.title}</h3>
               </div>
               <button onClick={() => setSelectedService(null)} aria-label="Close details" className="p-2 text-slate-500 hover:text-slate-900"><X className="w-5 h-5" /></button>
             </div>

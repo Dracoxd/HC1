@@ -12,8 +12,8 @@ type ApiResponse = ServerResponse & {
   json: (body: unknown) => void;
 };
 
-const zones = new Set(['1. San Pedro', '2. Magtanggol', '3. Tabacalera']);
-const preferredTimes = new Set(['morning', 'afternoon', 'no preference']);
+const zones = new Set(['San Pedro', 'Magtanggol', 'Tabacalera']);
+const preferredTimes = new Set(['morning', 'afternoon']);
 
 let database: ReturnType<typeof createClient> | undefined;
 

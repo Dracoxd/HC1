@@ -31,19 +31,16 @@ export const Header: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { id: 'overview', label: 'Home' },
-    { id: 'clinic-information', label: 'Information' },
-    { id: 'appointment-schedule', label: 'Schedule' },
-    { id: 'services', label: t.navServices },
+    { id: 'overview', label: 'HOME' },
+    { id: 'clinic-information', label: 'INFORMATION' },
+    { id: 'appointment-schedule', label: 'SCHEDULE' },
+    { id: 'services', label: 'SERVICES' },
   ];
 
   const handleNavClick = (id: string) => {
     setActiveSection(id);
     setMobileMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (

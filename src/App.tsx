@@ -16,7 +16,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { UserAppointmentChat } from './components/UserAppointmentChat';
 
 const AppContent: React.FC<{ user: User }> = ({ user }) => {
-  const { notificationToast, setNotificationToast } = useHealthCenter();
+  const { activeSection, notificationToast, setNotificationToast } = useHealthCenter();
 
   useEffect(() => {
     const handleStatusChange = (event: Event) => {
@@ -38,11 +38,18 @@ const AppContent: React.FC<{ user: User }> = ({ user }) => {
       <Header />
 
       <main className="flex-1">
-        <Hero />
-        <RouteFinder />
-        <PublicInformation />
-        <AppointmentSchedule />
-        <ServicesSection />
+        {activeSection === 'clinic-information' ? (
+          <PublicInformation />
+        ) : activeSection === 'appointment-schedule' ? (
+          <AppointmentSchedule />
+        ) : activeSection === 'services' ? (
+          <ServicesSection />
+        ) : (
+          <>
+            <Hero />
+            <RouteFinder />
+          </>
+        )}
       </main>
 
       <Footer />

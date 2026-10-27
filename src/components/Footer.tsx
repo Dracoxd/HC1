@@ -4,11 +4,11 @@ import { useHealthCenter } from '../context/HealthCenterContext';
 import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const Footer: React.FC = () => {
-  const { t, setActiveSection } = useHealthCenter();
+  const { setActiveSection } = useHealthCenter();
 
   const handleNavClick = (id: string) => {
     setActiveSection(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -22,8 +22,10 @@ export const Footer: React.FC = () => {
             </div>
           </div>
           <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-white/80">
-            <button onClick={() => handleNavClick('overview')} className="hover:text-white">Home</button>
-            <button onClick={() => handleNavClick('services')} className="hover:text-white">{t.navServices}</button>
+            <button onClick={() => handleNavClick('overview')} className="hover:text-white">HOME</button>
+            <button onClick={() => handleNavClick('clinic-information')} className="hover:text-white">INFORMATION</button>
+            <button onClick={() => handleNavClick('appointment-schedule')} className="hover:text-white">SCHEDULE</button>
+            <button onClick={() => handleNavClick('services')} className="hover:text-white">SERVICES</button>
           </nav>
         </div>
         <div className="mt-7 pt-5 border-t border-white/15 text-xs text-white/60">

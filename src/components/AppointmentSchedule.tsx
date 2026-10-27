@@ -62,7 +62,7 @@ export const AppointmentSchedule: React.FC = () => {
   const dates = Object.keys(appointmentsByDate).filter((date) => date >= today).sort();
 
   return (
-    <section id="appointment-schedule" className="border-b border-[#dfe6e1] bg-white py-12 sm:py-16">
+    <section id="appointment-schedule" className="border-b border-[#dfe6e1] bg-[#f2f6f2] py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
         <div className="mb-7">
           <div>
@@ -70,7 +70,7 @@ export const AppointmentSchedule: React.FC = () => {
               <CalendarDays className="h-4 w-4" />
               {isFilipino ? 'Mga kumpirmadong appointment' : 'Accepted appointments'}
             </div>
-            <h2 className="text-2xl font-bold text-[#17312e] sm:text-3xl">
+            <h2 className="text-2xl font-bold uppercase text-[#17312e] sm:text-3xl">
               {isFilipino ? 'Mga petsa at oras' : 'Dates and Time Slots'}
             </h2>
           </div>

@@ -52,7 +52,8 @@ export const ServicesSection: React.FC = () => {
       ? 'Checking request status'
       : appointmentRequestAvailability === 'error'
         ? 'Unable to check request'
-        : clinicOpen === true ? 'Request this appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability';
+        : clinicOpen === true ? 'REQUEST AN APPOINTMENT' : clinicOpen === false ? 'CLOSED' : 'Checking availability';
+
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedService, setSelectedService] = useState<ServiceDetail | null>(null);
   const filteredServices = activeCategory === 'all'
@@ -60,12 +61,12 @@ export const ServicesSection: React.FC = () => {
     : siteContent.services.filter((service) => service.category === activeCategory);
 
   return (
-    <section id="services" className="services-enter py-14 sm:py-18 bg-[#fbfcfa] border-b border-[#dfe6e1]">
+    <section id="services" className="services-enter py-14 sm:py-18 bg-[#f2f6f2] border-b border-[#dfe6e1]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-8">
           <div className="max-w-2xl">
             <div className="text-xs font-bold text-teal-800 uppercase mb-3">Health services</div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-950">{t.servicesTitle}</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold uppercase text-slate-950">{t.servicesTitle}</h2>
             <p className="mt-3 text-base text-slate-600">Schedules, locations, and service requirements.</p>
           </div>
         </div>

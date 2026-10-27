@@ -23,13 +23,13 @@ export const PublicInformation: React.FC = () => {
   }, [viewingImage]);
 
   return (
-    <section id="clinic-information" className="border-b border-[#dfe6e1] bg-[#fbfcfa] py-12 sm:py-16">
+    <section id="clinic-information" className="border-b border-[#dfe6e1] bg-[#f2f6f2] py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
         {siteContentError && <p role="status" className="mb-4 border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">{isFilipino ? 'Hindi ma-refresh ang pinakabagong impormasyon ng klinika; ipinapakita ang huling na-save na nilalaman.' : 'Clinic information could not be refreshed; showing the last saved content.'}</p>}
         <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="mb-2 text-xs font-bold text-[#17645c]">Clinic information</div>
-            <h2 className="text-2xl font-bold text-[#17312e] sm:text-3xl">
+            <h2 className="text-2xl font-bold uppercase text-[#17312e] sm:text-3xl">
               {isFilipino ? 'Kasalukuyang impormasyon' : 'Current information'}
             </h2>
           </div>
@@ -72,7 +72,7 @@ export const PublicInformation: React.FC = () => {
 
         <div className="mt-10 grid gap-10 lg:grid-cols-2">
           <div>
-            <div className="mb-4 flex items-center gap-2"><Bell className="h-4 w-4 text-[#17645c]" /><h3 className="text-lg font-bold text-[#17312e]">Health announcements</h3></div>
+            <div className="mb-4 flex items-center gap-2"><Bell className="h-4 w-4 text-[#17645c]" /><h3 className="text-lg font-bold uppercase text-[#17312e]">Health announcements</h3></div>
             <div className="border-t border-[#dfe6e1]">
               {updates.map((update) => (
                 <article key={update.id} className="border-b border-[#dfe6e1] py-4">
@@ -97,7 +97,7 @@ export const PublicInformation: React.FC = () => {
           </div>
 
           <div>
-            <div className="mb-4 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#17645c]" /><h3 className="text-lg font-bold text-[#17312e]">Upcoming outreach</h3></div>
+            <div className="mb-4 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#17645c]" /><h3 className="text-lg font-bold uppercase text-[#17312e]">Upcoming outreach</h3></div>
             <div className="border-t border-[#dfe6e1]">
               {outreach.map((program) => (
                 <article key={program.id} className="grid grid-cols-[1fr_auto] gap-4 border-b border-[#dfe6e1] py-4">

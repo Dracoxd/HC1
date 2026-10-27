@@ -26,7 +26,7 @@ export const Header: React.FC = () => {
       ? 'Checking request status'
       : appointmentRequestAvailability === 'error'
         ? 'Unable to check request'
-        : clinicOpen === true ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability';
+        : clinicOpen === true ? 'REQUEST AN APPOINTMENT' : clinicOpen === false ? 'CLOSED' : 'Checking availability';
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

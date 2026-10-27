@@ -11,7 +11,7 @@ export const ContactSection: React.FC = () => {
       ? 'Checking request status'
       : appointmentRequestAvailability === 'error'
         ? 'Unable to check request'
-        : clinicOpen === true ? 'Request appointment' : clinicOpen === false ? 'Appointments closed' : 'Checking availability';
+        : clinicOpen === true ? 'REQUEST AN APPOINTMENT' : clinicOpen === false ? 'CLOSED' : 'Checking availability';
 
   return (
     <section id="contact" className="py-16 sm:py-20 bg-[#f3f7f4] border-t border-slate-200">

@@ -84,6 +84,19 @@ function distanceBetweenLatLng(a: L.LatLngTuple, b: L.LatLngTuple) {
   );
 }
 
+function shouldAcceptPosition(current: Position, next: Position) {
+  const movement = distanceBetween(current, next);
+  if (next.accuracy < current.accuracy * 0.8) return true;
+  if (next.accuracy <= 250 && movement > Math.max(40, current.accuracy, next.accuracy)) return true;
+  return next.accuracy < current.accuracy;
+}
+
+function isValidCoordinate(longitude: number, latitude: number) {
+  return Number.isFinite(longitude) && Number.isFinite(latitude)
+    && longitude >= -180 && longitude <= 180
+    && latitude >= -90 && latitude <= 90;
+}
+
 function formatDistance(meters: number) {
   return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
 }
@@ -339,31 +352,22 @@ export const RouteFinder: React.FC = () => {
       ({ coords }) => {
         if (!manualOriginRef.current) {
           const nextAccuracy = Math.max(coords.accuracy || 0, 1);
-          if (nextAccuracy > 250) {
-            setLocationError('Location accuracy is limited. Wait outdoors for a stronger GPS signal or pin your start precisely.');
-          } else {
-            setLocationError('');
+          const nextPosition: Position = {
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            accuracy: nextAccuracy,
+            heading: coords.heading,
+            source: 'gps',
+          };
+          if (!isValidCoordinate(nextPosition.longitude, nextPosition.latitude) || !Number.isFinite(nextPosition.accuracy)) {
+            setLocationError('Your device returned an invalid location. Retry GPS or pin your start manually.');
+            setLocating(false);
+            return;
           }
+          setLocationError('');
           setOrigin((current) => {
-            if (!current || current.source === 'manual' || nextAccuracy > 250) {
-              return {
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-                accuracy: nextAccuracy,
-                heading: coords.heading,
-                source: 'gps',
-              };
-            }
-            const previousWeight = Math.min(current.accuracy, 100);
-            const nextWeight = Math.min(nextAccuracy, 100);
-            const totalWeight = previousWeight + nextWeight;
-            return {
-              latitude: (current.latitude * nextWeight + coords.latitude * previousWeight) / totalWeight,
-              longitude: (current.longitude * nextWeight + coords.longitude * previousWeight) / totalWeight,
-              accuracy: Math.min(current.accuracy * 0.75 + nextAccuracy * 0.25, nextAccuracy),
-              heading: coords.heading ?? current.heading,
-              source: 'gps',
-            };
+            if (!current || current.source === 'manual' || shouldAcceptPosition(current, nextPosition)) return nextPosition;
+            return current;
           });
         }
         setLocating(false);
@@ -372,7 +376,7 @@ export const RouteFinder: React.FC = () => {
         setLocating(false);
         setLocationError(error.code === error.PERMISSION_DENIED ? 'Location permission was denied. Enable it in browser settings or pin your start manually.' : 'Could not determine location. Check GPS or network reception.');
       },
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
   }, [trackingAttempt]);
@@ -439,10 +443,11 @@ export const RouteFinder: React.FC = () => {
     if (activeRequest) activeRequest.controller.abort();
     activeRouteRequestRef.current = { position: origin, mode: travelMode, controller };
     const timeout = window.setTimeout(async () => {
+      const requestDeadline = window.setTimeout(() => controller.abort('route-timeout'), 15000);
       setRouteError('');
       const profile = routingProfiles[travelMode];
       const coordinates = `${origin.longitude},${origin.latitude};${destination[1]},${destination[0]}`;
-      const url = `https://routing.openstreetmap.de/${profile}/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=true`;
+      const url = `https://routing.openstreetmap.de/${profile}/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=true&alternatives=false&continue_straight=false`;
 
       try {
         const response = await fetch(url, { signal: controller.signal });
@@ -453,9 +458,15 @@ export const RouteFinder: React.FC = () => {
           throw new Error(result.message || 'No route was found for this travel mode.');
         }
         const points = trip.geometry.coordinates.map(([longitude, latitude]) => [latitude, longitude] as L.LatLngTuple);
-        if (points.length < 2) throw new Error('The routing service returned an incomplete path.');
+        if (points.length < 2 || points.some(([latitude, longitude]) => !isValidCoordinate(longitude, latitude))) {
+          throw new Error('The routing service returned an invalid path.');
+        }
         const [startSnap, endSnap] = result.waypoints ?? [];
-        if (!startSnap || !endSnap) throw new Error('The routing service did not return valid route endpoints.');
+        if (!startSnap || !endSnap
+          || !isValidCoordinate(startSnap.location[0], startSnap.location[1])
+          || !isValidCoordinate(endSnap.location[0], endSnap.location[1])) {
+          throw new Error('The routing service did not return valid route endpoints.');
+        }
         const startAccessDistance = distanceBetweenLatLng(
           [origin.latitude, origin.longitude],
           [startSnap.location[1], startSnap.location[0]],
@@ -465,13 +476,22 @@ export const RouteFinder: React.FC = () => {
           [endSnap.location[1], endSnap.location[0]],
         );
         const straightLineDistance = distanceBetweenLatLng([origin.latitude, origin.longitude], destination);
+        const maximumStartSnapDistance = origin.source === 'manual'
+          ? 250
+          : Math.min(300, Math.max(100, origin.accuracy * 1.5));
+        if (startAccessDistance > maximumStartSnapDistance) {
+          throw new Error('The nearest mapped road is too far from your start point. Pin your location closer to a street and try again.');
+        }
+        if (endAccessDistance > 150) {
+          throw new Error('The health center is too far from the nearest mapped road. Please report this map issue.');
+        }
         const accessFeatures: GeoJSON.FeatureCollection<GeoJSON.LineString> = { type: 'FeatureCollection', features: [] };
-        if (startAccessDistance > 5 && startAccessDistance <= 250) accessFeatures.features.push({
+        if (startAccessDistance > 5 && startAccessDistance <= maximumStartSnapDistance) accessFeatures.features.push({
           type: 'Feature',
           properties: {},
           geometry: { type: 'LineString', coordinates: [[origin.longitude, origin.latitude], startSnap.location] },
         });
-        if (endAccessDistance > 5 && endAccessDistance <= 250) accessFeatures.features.push({
+        if (endAccessDistance > 5 && endAccessDistance <= 150) accessFeatures.features.push({
           type: 'Feature',
           properties: {},
           geometry: { type: 'LineString', coordinates: [endSnap.location, [destination[1], destination[0]]] },
@@ -493,7 +513,11 @@ export const RouteFinder: React.FC = () => {
           map.setLayoutProperty('route-line', 'visibility', approximate ? 'none' : 'visible');
           map.setLayoutProperty('route-line-approx', 'visibility', approximate ? 'visible' : 'none');
           if (shouldFitRouteRef.current) {
-            map.fitBounds(mapLibreBounds(coordinates), { padding: 40, maxZoom: 17, duration: 0 });
+            map.fitBounds(mapLibreBounds([
+              ...coordinates,
+              [origin.longitude, origin.latitude],
+              [destination[1], destination[0]],
+            ]), { padding: 40, maxZoom: 17, duration: 0 });
             shouldFitRouteRef.current = false;
           }
         } else if (renderer === 'leaflet' && leafletMapRef.current) {
@@ -510,6 +534,8 @@ export const RouteFinder: React.FC = () => {
           if (shouldFitRouteRef.current) {
             const bounds = routeLineRef.current.getBounds();
             accessLinesRef.current.forEach((line) => bounds.extend(line.getBounds()));
+            bounds.extend([origin.latitude, origin.longitude]);
+            bounds.extend(destination);
             map.fitBounds(bounds, { padding: [36, 36], maxZoom: 17 });
             shouldFitRouteRef.current = false;
           }
@@ -524,11 +550,18 @@ export const RouteFinder: React.FC = () => {
         lastRouteRef.current = { position: origin, mode: travelMode, timestamp: Date.now() };
         setRoute({ distance: trip.distance, duration: trip.duration, approximate, startAccessDistance, endAccessDistance, straightLineDistance, maneuvers });
       } catch (error) {
+        if (controller.signal.reason === 'route-timeout') {
+          setRoute(null);
+          clearRenderedRoute();
+          setRouteError('The routing service took too long to respond. Retry or open the route in a navigation app.');
+          return;
+        }
         if (error instanceof DOMException && error.name === 'AbortError') return;
         setRoute(null);
         clearRenderedRoute();
         setRouteError(error instanceof Error ? error.message : 'Could not calculate this route.');
       } finally {
+        window.clearTimeout(requestDeadline);
         if (activeRouteRequestRef.current?.controller === controller) activeRouteRequestRef.current = null;
       }
     }, 350);
@@ -558,6 +591,8 @@ export const RouteFinder: React.FC = () => {
     setPinCursor(false);
     setOrigin(null);
     setRoute(null);
+    setLocationError('');
+    setRouteError('');
     lastRouteRef.current = null;
     shouldFitRouteRef.current = true;
     clearRenderedRoute();
@@ -645,7 +680,7 @@ export const RouteFinder: React.FC = () => {
 
         <div className="px-4 py-3">
           {mapError && <p role="alert" className="mb-2 text-xs text-rose-800">{mapError}</p>}
-          {origin?.source !== 'manual' && origin && origin.accuracy > 250 && <p role="status" className="mb-2 border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">Route hidden because GPS is too imprecise to choose the correct streets. Wait for a stronger signal or pin your start point on the map.</p>}
+          {origin?.source !== 'manual' && origin && origin.accuracy > 250 && <p role="status" className="mb-2 border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">Your device reports about {formatDistance(origin.accuracy)} of location uncertainty. Directions are paused to avoid showing a misleading route; pin your start point or wait for a more accurate GPS fix.</p>}
           {route && <div className="flex items-center gap-2 text-sm font-bold text-slate-900"><MapPin className="w-4 h-4 text-teal-800" /><span>{modeLabels[travelMode]} · {formatDistance(route.distance)} · about {formatDuration(route.duration)}</span></div>}
           {(travelMode === 'driving' || travelMode === 'motorcycle') && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2"><a href={googleMapsUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-900 underline underline-offset-2">Open navigation <ExternalLink className="w-3.5 h-3.5" /></a><a href={wazeUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-900 underline underline-offset-2">Open in Waze <ExternalLink className="w-3.5 h-3.5" /></a></div>}
           {route?.maneuvers[0] && <p className="mt-2 border-l-2 border-teal-700 pl-3 text-xs font-semibold text-slate-700">{route.maneuvers[0].instruction}</p>}
@@ -657,7 +692,7 @@ export const RouteFinder: React.FC = () => {
           {origin?.source === 'manual' && <p className="mt-1 text-[11px] font-semibold text-teal-900">Start point selected manually; no GPS accuracy is implied.</p>}
           {origin?.source !== 'manual' && origin && <p className={`mt-1 text-[11px] ${origin.accuracy > 250 ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>{origin.accuracy > 250 ? 'Approximate start location' : 'GPS accuracy'} · about {formatDistance(origin.accuracy)}{route?.approximate ? ' · path is approximate' : ''}</p>}
           {origin?.source === 'manual' && <button type="button" onClick={returnToGps} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal-900 underline underline-offset-2"><LocateFixed className="w-3.5 h-3.5" />Use live GPS instead</button>}
-          {origin?.source !== 'manual' && origin && origin.accuracy > 250 && !pinStartMode && <button type="button" onClick={beginManualPin} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal-900 underline underline-offset-2"><MapPin className="w-3.5 h-3.5" />Pin my actual start on map</button>}
+          {origin?.source !== 'manual' && (!origin || origin.accuracy > 250) && !pinStartMode && <button type="button" onClick={beginManualPin} className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-teal-900 underline underline-offset-2"><MapPin className="w-3.5 h-3.5" />Pin my actual start on map</button>}
           <p className="mt-2 flex items-start gap-1 text-[10px] leading-relaxed text-slate-500"><MapPin className="w-3 h-3 shrink-0 mt-0.5" />OpenStreetMap routes use walking, cycling, or road-vehicle paths; motorcycle uses the road-vehicle profile.</p>
         </div>
       </div>

@@ -35,10 +35,10 @@ const AppContent: React.FC<{ user: User }> = ({ user }) => {
   }, [setNotificationToast]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f4f6f3] text-[#1a2b29] antialiased selection:bg-[#dce8df] selection:text-[#123b39]">
+    <div className="public-page-shell min-h-screen flex flex-col text-[#1a2b29] antialiased selection:bg-[#dce8df] selection:text-[#123b39]">
       <Header />
 
-      <main className="flex-1">
+      <main key={activeSection} className="public-view-enter flex-1">
         {activeSection === 'clinic-information' ? (
           <PublicInformation />
         ) : activeSection === 'appointment-schedule' ? (

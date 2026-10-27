@@ -20,7 +20,7 @@ export const Hero: React.FC = () => {
   };
 
   return (
-    <section id="overview" className="bg-[#173a37] text-white">
+    <section id="overview" className="hero-section-enter bg-[#173a37] text-white">
       <div className="relative min-h-[300px] sm:min-h-[340px] flex items-center overflow-hidden border-b border-white/10">
         <img src={centerPhoto} alt="Mayor Moises R. Flores Health Center" className="absolute inset-0 w-full h-full object-cover object-center" />
         <div className="absolute inset-0 bg-[#173a37]/88" />

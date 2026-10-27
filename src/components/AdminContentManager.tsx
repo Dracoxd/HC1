@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useMemo, useState } from 'react';
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { auth } from '../firebase';
 import { AdminSiteContentItem, ClinicPublicSettings, PublicSiteContent } from '../types';
 import { ImagePlus } from 'lucide-react';
@@ -162,6 +162,21 @@ export const AdminContentManager: React.FC = () => {
   const [imageUploading, setImageUploading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const selectedIdRef = useRef(selectedId);
+  const typeRef = useRef(type);
+  const contentRef = useRef(content);
+  const publishedRef = useRef(published);
+  const settingsRef = useRef(settings);
+  const savingRef = useRef(saving);
+  const contentBaselineRef = useRef('');
+  const publishedBaselineRef = useRef(true);
+  const settingsBaselineRef = useRef('');
+  selectedIdRef.current = selectedId;
+  typeRef.current = type;
+  contentRef.current = content;
+  publishedRef.current = published;
+  settingsRef.current = settings;
+  savingRef.current = saving;
 
   const load = async () => {
     try {
@@ -178,6 +193,7 @@ export const AdminContentManager: React.FC = () => {
       }
       setItems(result.items);
       setSettings(result.content.settings);
+      settingsBaselineRef.current = JSON.stringify(result.content.settings);
       setError('');
       return { items: result.items, settings: result.content.settings };
     } finally {
@@ -191,11 +207,83 @@ export const AdminContentManager: React.FC = () => {
     });
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    let loadingContent = false;
+    const refresh = async () => {
+      if (loadingContent || savingRef.current || document.visibilityState === 'hidden') return;
+      loadingContent = true;
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        const token = await user.getIdToken();
+        const response = await fetch('/api/admin?mode=site_content', {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: 'no-store',
+        });
+        const result = await response.json() as { items?: AdminSiteContentItem[]; content?: PublicSiteContent; error?: string };
+        if (!response.ok || !Array.isArray(result.items) || !result.content) {
+          throw new Error(result.error || 'Website content could not be refreshed.');
+        }
+        const latestItems = result.items;
+        const latestSettings = result.content.settings;
+        if (!active) return;
+
+        setItems((current) => JSON.stringify(current) === JSON.stringify(latestItems) ? current : latestItems);
+
+        const currentSettings = settingsRef.current;
+        if (!currentSettings || JSON.stringify(currentSettings) === settingsBaselineRef.current) {
+          if (JSON.stringify(currentSettings) !== JSON.stringify(latestSettings)) {
+            setSettings(latestSettings);
+          }
+          settingsBaselineRef.current = JSON.stringify(latestSettings);
+        }
+
+        const selectedItem = latestItems.find((item) =>
+          item.content_type === typeRef.current && item.content_id === selectedIdRef.current);
+        const contentIsClean = JSON.stringify(contentRef.current) === contentBaselineRef.current
+          && publishedRef.current === publishedBaselineRef.current;
+        if (selectedItem && contentIsClean) {
+          const latestContent = JSON.parse(selectedItem.content_json) as ContentRecord;
+          if (JSON.stringify(contentRef.current) !== JSON.stringify(latestContent)) setContent(latestContent);
+          if (publishedRef.current !== (selectedItem.published === 1)) setPublished(selectedItem.published === 1);
+          contentBaselineRef.current = JSON.stringify(latestContent);
+          publishedBaselineRef.current = selectedItem.published === 1;
+        } else if (selectedIdRef.current && !selectedItem && contentIsClean) {
+          const empty = emptyContent(typeRef.current);
+          setSelectedId('');
+          setContent(empty);
+          setPublished(true);
+          contentBaselineRef.current = JSON.stringify(empty);
+          publishedBaselineRef.current = true;
+        }
+        setError('');
+      } catch (caught) {
+        if (active) setError(caught instanceof Error ? caught.message : 'Website content could not be refreshed.');
+      } finally {
+        loadingContent = false;
+      }
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    const timer = window.setInterval(() => void refresh(), 3000);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+    };
+  }, []);
+
   const visibleItems = useMemo(() => items.filter((item) => item.content_type === type), [items, type]);
   const beginNew = () => {
+    const nextContent = emptyContent(type);
     setSelectedId(`custom-${type}-${Date.now()}`);
-    setContent(emptyContent(type));
+    setContent(nextContent);
     setPublished(true);
+    contentBaselineRef.current = JSON.stringify(nextContent);
+    publishedBaselineRef.current = true;
     setError('');
     setNotice('');
   };
@@ -203,7 +291,10 @@ export const AdminContentManager: React.FC = () => {
   const chooseType = (nextType: ContentType) => {
     setType(nextType);
     setSelectedId('');
-    setContent(emptyContent(nextType));
+    const nextContent = emptyContent(nextType);
+    setContent(nextContent);
+    contentBaselineRef.current = JSON.stringify(nextContent);
+    publishedBaselineRef.current = true;
   };
 
   const selectItem = (item: AdminSiteContentItem) => {
@@ -213,6 +304,8 @@ export const AdminContentManager: React.FC = () => {
       setSelectedId(item.content_id);
       setContent(parsed);
       setPublished(item.published === 1);
+      contentBaselineRef.current = JSON.stringify(parsed);
+      publishedBaselineRef.current = item.published === 1;
       setError('');
       setNotice('');
     } catch {
@@ -246,6 +339,10 @@ export const AdminContentManager: React.FC = () => {
         || JSON.stringify(JSON.parse(savedItem.content_json)) !== JSON.stringify({ ...normalized, id: selectedId })) {
         throw new Error('The save was not confirmed by the database. Check the Vercel Turso database settings and try again.');
       }
+      const savedContent = { ...normalized, id: selectedId };
+      setContent(savedContent);
+      contentBaselineRef.current = JSON.stringify(savedContent);
+      publishedBaselineRef.current = published;
       setNotice('Website content saved.');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Website content could not be saved.');
@@ -290,6 +387,8 @@ export const AdminContentManager: React.FC = () => {
       if (!settingsMatch) {
         throw new Error('The save was not confirmed by the database. Check the Vercel Turso database settings and try again.');
       }
+      setSettings(saved.settings);
+      settingsBaselineRef.current = JSON.stringify(saved.settings);
       setNotice('Clinic hours and contact information saved.');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Clinic information could not be saved.');

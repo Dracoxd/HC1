@@ -23,7 +23,7 @@ export const PublicInformation: React.FC = () => {
   }, [viewingImage]);
 
   return (
-    <section id="clinic-information" className="border-b border-[#dfe6e1] bg-[#f2f6f2] py-12 sm:py-16">
+    <section id="clinic-information" className="site-section-bg section-enter border-b border-[#dfe6e1] py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
         {siteContentError && <p role="status" className="mb-4 border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">{isFilipino ? 'Hindi ma-refresh ang pinakabagong impormasyon ng klinika; ipinapakita ang huling na-save na nilalaman.' : 'Clinic information could not be refreshed; showing the last saved content.'}</p>}
         <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -36,7 +36,7 @@ export const PublicInformation: React.FC = () => {
           <p className="text-xs text-[#66736f]">Published schedule · Confirm availability at the clinic</p>
         </div>
 
-        <div className="grid border-y border-[#dfe6e1] lg:grid-cols-[0.75fr_1.25fr]">
+        <div className="reveal-stagger grid border-y border-[#dfe6e1] lg:grid-cols-[0.75fr_1.25fr]">
           <div className="border-b border-[#dfe6e1] py-6 lg:border-b-0 lg:border-r lg:pr-8">
             <div className="mt-5 grid gap-4 text-sm text-[#66736f]">
               <div className="flex items-start gap-2"><Clock3 className="mt-0.5 h-4 w-4 text-[#17645c]" /><span>{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}<br /><strong className="text-[#17312e]">{isFilipino ? settings.clinicHoursFil : settings.clinicHours}</strong></span></div>
@@ -54,7 +54,7 @@ export const PublicInformation: React.FC = () => {
           <div className="py-6 lg:pl-8">
             <div className="grid md:grid-cols-2">
               {featuredServices.map((service) => (
-                <article key={service.id} className="border-b border-[#dfe6e1] py-4 md:px-5 md:[&:nth-child(odd)]:pl-0 md:[&:nth-child(even)]:border-l md:[&:nth-child(even)]:pr-0">
+                <article key={service.id} className="reveal-card border-b border-[#dfe6e1] py-4 md:px-5 md:[&:nth-child(odd)]:pl-0 md:[&:nth-child(even)]:border-l md:[&:nth-child(even)]:pr-0">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="text-sm font-bold text-[#17312e]">{isFilipino ? service.titleFil : service.title}</h3>
@@ -73,9 +73,9 @@ export const PublicInformation: React.FC = () => {
         <div className="mt-10 grid gap-10 lg:grid-cols-2">
           <div>
             <div className="mb-4 flex items-center gap-2"><Bell className="h-4 w-4 text-[#17645c]" /><h3 className="text-lg font-bold uppercase text-[#17312e]">Health announcements</h3></div>
-            <div className="border-t border-[#dfe6e1]">
+            <div className="reveal-stagger border-t border-[#dfe6e1]">
               {updates.map((update) => (
-                <article key={update.id} className="border-b border-[#dfe6e1] py-4">
+                <article key={update.id} className="reveal-card border-b border-[#dfe6e1] py-4">
                   {update.imageUrl && (
                     <button
                       type="button"
@@ -98,9 +98,9 @@ export const PublicInformation: React.FC = () => {
 
           <div>
             <div className="mb-4 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-[#17645c]" /><h3 className="text-lg font-bold uppercase text-[#17312e]">Upcoming outreach</h3></div>
-            <div className="border-t border-[#dfe6e1]">
+            <div className="reveal-stagger border-t border-[#dfe6e1]">
               {outreach.map((program) => (
-                <article key={program.id} className="grid grid-cols-[1fr_auto] gap-4 border-b border-[#dfe6e1] py-4">
+                <article key={program.id} className="reveal-card grid grid-cols-[1fr_auto] gap-4 border-b border-[#dfe6e1] py-4">
                   <div>
                     <h4 className="mt-1 text-sm font-bold text-[#17312e]">{isFilipino ? program.titleFil : program.title}</h4>
                     <p className="mt-1 text-xs text-[#66736f]">{program.location}</p>

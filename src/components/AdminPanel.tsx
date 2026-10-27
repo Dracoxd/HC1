@@ -214,7 +214,7 @@ export const AdminPanel: React.FC = () => {
   };
 
   return (
-    <main className="min-h-screen bg-[#f4f6f3] text-[#17312e]">
+    <main className="admin-panel-enter min-h-screen bg-[#f4f6f3] text-[#17312e]">
       <header className="border-b border-[#dfe6e1] bg-white px-3 py-3 sm:px-8 sm:py-4">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-2 sm:gap-4">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
@@ -261,6 +261,7 @@ export const AdminPanel: React.FC = () => {
           ))}
         </nav>
 
+        <div key={activeTab} className="admin-tab-enter">
         {activeTab === 'calendar' ? (
           <AdminCalendar
             appointments={appointments}
@@ -353,6 +354,7 @@ export const AdminPanel: React.FC = () => {
           </section>
         </section>
         )}
+        </div>
       </div>
       {error && <div role="alert" className="fixed bottom-4 left-3 right-3 z-50 mx-auto w-fit max-w-lg border border-rose-200 bg-white px-4 py-3 text-sm text-rose-800 shadow-lg sm:left-1/2 sm:right-auto sm:-translate-x-1/2">{error}</div>}
     </main>

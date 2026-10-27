@@ -62,7 +62,7 @@ export const AppointmentSchedule: React.FC = () => {
   const dates = Object.keys(appointmentsByDate).filter((date) => date >= today).sort();
 
   return (
-    <section id="appointment-schedule" className="border-b border-[#dfe6e1] bg-[#f2f6f2] py-12 sm:py-16">
+    <section id="appointment-schedule" className="site-section-bg section-enter border-b border-[#dfe6e1] py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
         <div className="mb-7">
           <div>

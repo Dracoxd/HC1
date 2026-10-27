@@ -6,7 +6,7 @@ export const PatientFlow: React.FC = () => {
   const isFilipino = language === 'fil';
 
   return (
-    <section aria-labelledby="patient-flow-title" className="border-t border-slate-200 bg-[#f2f6f2] py-12 sm:py-16">
+    <section aria-labelledby="patient-flow-title" className="site-section-bg section-enter border-t border-slate-200 py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
         <div className="mb-8 max-w-2xl">
           <div className="mb-3 text-xs font-bold uppercase tracking-wider text-teal-800">{isFilipino ? 'Gabay sa pagbisita' : 'Plan your visit'}</div>
@@ -14,7 +14,7 @@ export const PatientFlow: React.FC = () => {
           <p className="mt-3 text-base text-slate-600">{isFilipino ? 'Magsimula sa registration at susundan kayo ng kawani sa tamang serbisyo.' : 'Start at registration and staff will guide you to the right service.'}</p>
         </div>
 
-        <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="reveal-stagger grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
             <div className="divide-y divide-slate-200 border-y border-slate-200">
               <div className="flex gap-4 py-4">

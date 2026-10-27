@@ -61,7 +61,7 @@ export const ServicesSection: React.FC = () => {
     : siteContent.services.filter((service) => service.category === activeCategory);
 
   return (
-    <section id="services" className="services-enter py-14 sm:py-18 bg-[#f2f6f2] border-b border-[#dfe6e1]">
+    <section id="services" className="site-section-bg section-enter services-enter py-14 sm:py-18 border-b border-[#dfe6e1]">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-8">
           <div className="max-w-2xl">

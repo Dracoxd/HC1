@@ -11,6 +11,7 @@
   body {
     margin: 0;
     font-family: inherit;
+    background: #eaf1ec;
   }
 
   button, a, input, select, textarea {
@@ -31,6 +32,22 @@
     outline: 3px solid rgba(15, 118, 110, 0.4);
     outline-offset: 2px;
   }
+}
+
+.public-page-shell {
+  background-color: #edf3ee;
+  background-image:
+    radial-gradient(ellipse at 8% 12%, rgba(181, 211, 192, 0.42), transparent 32rem),
+    radial-gradient(ellipse at 92% 38%, rgba(213, 225, 203, 0.38), transparent 36rem),
+    linear-gradient(145deg, #f8faf7 0%, #edf3ee 52%, #f5f5ee 100%);
+  background-attachment: fixed;
+}
+
+.site-section-bg {
+  background-color: #f1f5f0;
+  background-image:
+    radial-gradient(ellipse at 10% 0%, rgba(199, 222, 205, 0.30), transparent 28rem),
+    linear-gradient(120deg, rgba(250, 252, 249, 0.97), rgba(237, 244, 238, 0.94) 58%, rgba(247, 247, 240, 0.97));
 }
 
 .map-dark-tiles {
@@ -79,17 +96,51 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes soft-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .header-enter { animation: page-enter 450ms ease-out both; }
 .hero-enter { animation: page-enter 650ms 100ms ease-out both; }
 .hero-actions { animation: page-enter 650ms 220ms ease-out both; }
 .clinic-info-enter { animation: page-enter 550ms 280ms ease-out both; }
 .services-enter { animation: page-enter 600ms 120ms ease-out both; }
 .route-enter { animation: route-enter 500ms 350ms ease-out both; }
+.hero-section-enter { animation: soft-enter 500ms ease-out both; }
+.public-view-enter { animation: soft-enter 380ms ease-out both; }
+.section-enter { animation: soft-enter 520ms ease-out both; }
+.footer-enter { animation: soft-enter 500ms 100ms ease-out both; }
+.admin-panel-enter { animation: soft-enter 420ms ease-out both; }
+.admin-tab-enter { animation: soft-enter 280ms ease-out both; }
+.reveal-card { animation: card-enter 420ms ease-out both; }
 .service-row { animation: page-enter 500ms ease-out both; }
 .service-row:nth-child(2) { animation-delay: 50ms; }
 .service-row:nth-child(3) { animation-delay: 100ms; }
 .service-row:nth-child(4) { animation-delay: 150ms; }
 .service-row:nth-child(5) { animation-delay: 200ms; }
+.reveal-stagger > :nth-child(2) { animation-delay: 50ms; }
+.reveal-stagger > :nth-child(3) { animation-delay: 100ms; }
+.reveal-stagger > :nth-child(4) { animation-delay: 150ms; }
+.reveal-stagger > :nth-child(5) { animation-delay: 200ms; }
+
+button, a {
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.lift-on-hover {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.lift-on-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(23, 58, 55, 0.08);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

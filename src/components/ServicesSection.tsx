@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { ServiceDetail } from '../types';
 import { Activity, Baby, Clock, Heart, MapPin, Pill, ShieldAlert, Smile, Stethoscope, X } from 'lucide-react';
+import animalBiteImage from '../assets/images/ANIMAL BITE.jpg';
+import bnsImage from '../assets/images/BNS.png';
+import checkupImage from '../assets/images/CHECK UP.jpg';
+import dentalImage from '../assets/images/DENTAL CLINIC.jpg';
+import maternityImage from '../assets/images/MATERNITY.png';
+import medicinesImage from '../assets/images/MEDS.jpg';
+import xrayImage from '../assets/images/XRAY.jpg';
 
 const categories = [
   { id: 'all', label: 'ALL SERVICES' },
@@ -13,6 +20,16 @@ const categories = [
   { id: 'nutrition', label: 'CHILD NUTRITION' },
   { id: 'pharmacy', label: 'MEDICINES' },
 ];
+
+const serviceImages: Partial<Record<ServiceDetail['category'], string>> = {
+  animal_bite: animalBiteImage,
+  nutrition: bnsImage,
+  checkup: checkupImage,
+  dental: dentalImage,
+  maternity: maternityImage,
+  pharmacy: medicinesImage,
+  xray: xrayImage,
+};
 
 const illustrationForService = (category: string) => {
   switch (category) {
@@ -72,14 +89,19 @@ export const ServicesSection: React.FC = () => {
             <article key={service.id} className="service-row grid min-w-0 gap-4 border-b border-[#dfe6e1] py-5 transition-colors duration-200 hover:bg-[#f2f6f2] md:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)_auto] md:items-center md:gap-8">
               <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                 {(() => {
+                  const image = serviceImages[service.category];
                   const illustration = illustrationForService(service.category);
                   const IllustrationIcon = illustration.Icon;
                   return (
-                    <div role="img" aria-label={`${language === 'fil' ? service.titleFil : service.title} illustration`} className={`relative flex h-[76px] w-[100px] shrink-0 items-center justify-center overflow-hidden border border-white sm:h-[88px] sm:w-[120px] ${illustration.color}`}>
-                      <span className={`absolute -right-3 -top-5 h-16 w-16 rounded-full ${illustration.accent}`} />
-                      <span className={`absolute -bottom-8 -left-3 h-16 w-16 rounded-full ${illustration.accent}`} />
-                      <IllustrationIcon className="relative h-9 w-9 stroke-[1.6] sm:h-10 sm:w-10" aria-hidden="true" />
-                    </div>
+                    image
+                      ? <img src={image} alt={language === 'fil' ? service.titleFil : service.title} className="h-[76px] w-[100px] shrink-0 border border-white object-cover sm:h-[88px] sm:w-[120px]" />
+                      : (
+                        <div role="img" aria-label={`${language === 'fil' ? service.titleFil : service.title} illustration`} className={`relative flex h-[76px] w-[100px] shrink-0 items-center justify-center overflow-hidden border border-white sm:h-[88px] sm:w-[120px] ${illustration.color}`}>
+                          <span className={`absolute -right-3 -top-5 h-16 w-16 rounded-full ${illustration.accent}`} />
+                          <span className={`absolute -bottom-8 -left-3 h-16 w-16 rounded-full ${illustration.accent}`} />
+                          <IllustrationIcon className="relative h-9 w-9 stroke-[1.6] sm:h-10 sm:w-10" aria-hidden="true" />
+                        </div>
+                      )
                   );
                 })()}
                 <div className="min-w-0">

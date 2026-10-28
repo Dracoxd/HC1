@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { CalendarDays, ArrowDown } from 'lucide-react';
+import { CalendarDays, ArrowDown, Clock3, MapPin } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
 import { isClinicOpenBySchedule } from '../clinicHours';
 
 export const Hero: React.FC = () => {
-  const { language, setActiveSection, setBookingModalOpen, clinicOpen, appointmentRequestAvailability } = useHealthCenter();
+  const { language, setActiveSection, setBookingModalOpen, clinicOpen, appointmentRequestAvailability, siteContent } = useHealthCenter();
+  const clinicAddress = language === 'fil' ? siteContent.settings.clinicAddressFil : siteContent.settings.clinicAddress;
+  const clinicHours = language === 'fil' ? siteContent.settings.clinicHoursFil : siteContent.settings.clinicHours;
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const openBySchedule = clinicOpen ?? isClinicOpenBySchedule(new Date(currentTime));
 
@@ -37,6 +39,10 @@ export const Hero: React.FC = () => {
               <button onClick={() => handleScrollTo('services')} className="inline-flex items-center gap-2 px-5 py-3 text-sm font-semibold text-white border border-white/40 rounded-sm hover:border-white hover:bg-white/10 transition-colors">
                 View services <ArrowDown className="w-4 h-4" />
               </button>
+              <div className="min-w-0 max-w-[290px] space-y-1.5 text-xs leading-relaxed text-white/85 sm:ml-2">
+                <p className="flex items-start gap-2"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{clinicAddress}</span></p>
+                <p className="flex items-start gap-2"><Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{clinicHours}</span></p>
+              </div>
             </div>
           </div>
           <div className={`flex min-h-24 min-w-56 items-center justify-center gap-4 self-end rounded-md border px-7 py-5 text-2xl font-extrabold shadow-lg sm:min-h-28 sm:min-w-64 sm:self-center sm:px-9 sm:text-3xl ${openBySchedule ? 'border-emerald-200/50 bg-emerald-950/50 text-white' : 'border-rose-200/60 bg-rose-950/55 text-white'}`} role="status" aria-live="polite">

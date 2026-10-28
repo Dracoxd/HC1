@@ -33,7 +33,7 @@ const illustrationForService = (category: string) => {
 };
 
 export const ServicesSection: React.FC = () => {
-  const { t, language, openBookingForProgram, clinicOpen, appointmentRequestAvailability, siteContent } = useHealthCenter();
+  const { language, openBookingForProgram, clinicOpen, appointmentRequestAvailability, siteContent } = useHealthCenter();
   const bookingEnabled = clinicOpen === true && appointmentRequestAvailability === 'available';
   const bookingLabel = appointmentRequestAvailability === 'pending'
     ? 'Appointment under review'
@@ -56,7 +56,6 @@ export const ServicesSection: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-6">
           <div className="max-w-2xl">
             <div className="text-xs font-bold text-[#2c7a5f] uppercase mb-2">Health services</div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#0f4d3c]">{t.servicesTitle}</h2>
             <p className="mt-2 text-sm text-[#6b7280]">Schedules, locations, and care information.</p>
           </div>
         </div>

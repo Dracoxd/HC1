@@ -45,8 +45,8 @@ export const Hero: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className={`flex min-h-24 min-w-56 items-center justify-center gap-4 self-end rounded-md border px-7 py-5 text-2xl font-extrabold shadow-lg sm:min-h-28 sm:min-w-64 sm:self-center sm:px-9 sm:text-3xl ${openBySchedule ? 'border-emerald-200/50 bg-emerald-950/50 text-white' : 'border-rose-200/60 bg-rose-950/55 text-white'}`} role="status" aria-live="polite">
-            <span className={`h-4 w-4 shrink-0 rounded-full ring-4 ${openBySchedule ? 'bg-emerald-400 ring-emerald-300/20' : 'bg-rose-400 ring-rose-300/20'}`} />
+          <div className={`flex min-h-20 min-w-0 max-w-full items-center justify-center gap-3 self-end rounded-md border px-5 py-4 text-xl font-extrabold leading-tight shadow-lg sm:min-h-28 sm:min-w-64 sm:self-center sm:gap-4 sm:px-9 sm:py-5 sm:text-3xl ${openBySchedule ? 'border-emerald-200/50 bg-emerald-950/50 text-white' : 'border-rose-200/60 bg-rose-950/55 text-white'}`} role="status" aria-live="polite">
+            <span className={`h-3.5 w-3.5 shrink-0 rounded-full ring-4 sm:h-4 sm:w-4 ${openBySchedule ? 'bg-emerald-400 ring-emerald-300/20' : 'bg-rose-400 ring-rose-300/20'}`} />
             {openBySchedule
               ? (language === 'fil' ? 'BUKAS NGAYON' : 'OPEN NOW')
               : (language === 'fil' ? 'SARADO NGAYON' : 'CLOSED NOW')}

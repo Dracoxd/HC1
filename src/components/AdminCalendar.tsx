@@ -177,17 +177,17 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
 
   return (
     <section className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.8fr)]">
-      <div className="min-w-0 border border-[#dfe6e1] bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#dfe6e1] p-4">
+      <div className="min-w-0 overflow-hidden rounded-md border border-[#dce7e1] bg-white shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#dce7e1] p-4">
           <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-            <button type="button" onClick={() => moveCalendar(-1)} aria-label="Previous date range" className="shrink-0 border border-[#d9e1dc] p-2 hover:bg-[#f4f6f3]"><ChevronLeft className="h-4 w-4" /></button>
-            <button type="button" onClick={() => setSelectedDate(todayString())} className="shrink-0 border border-[#d9e1dc] px-2.5 py-2 text-xs font-bold hover:bg-[#f4f6f3] sm:px-3">Today</button>
-            <button type="button" onClick={() => moveCalendar(1)} aria-label="Next date range" className="shrink-0 border border-[#d9e1dc] p-2 hover:bg-[#f4f6f3]"><ChevronRight className="h-4 w-4" /></button>
+            <button type="button" onClick={() => moveCalendar(-1)} aria-label="Previous date range" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-[#dce7e1] hover:bg-[#f2f7f4]"><ChevronLeft className="h-4 w-4" /></button>
+            <button type="button" onClick={() => setSelectedDate(todayString())} className="min-h-11 shrink-0 rounded-sm border border-[#dce7e1] px-3 py-2 text-xs font-bold hover:bg-[#f2f7f4]">Today</button>
+            <button type="button" onClick={() => moveCalendar(1)} aria-label="Next date range" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-[#dce7e1] hover:bg-[#f2f7f4]"><ChevronRight className="h-4 w-4" /></button>
             <h2 className="ml-1 min-w-0 truncate text-sm font-bold sm:ml-2 sm:text-base">{calendarTitle}</h2>
           </div>
-          <div className="flex shrink-0 border border-[#d9e1dc] p-0.5">
+          <div className="flex shrink-0 rounded-sm border border-[#dce7e1] p-0.5">
             {(['month', 'week', 'day'] as const).map((option) => (
-              <button key={option} type="button" onClick={() => setView(option)} className={`min-h-11 px-2.5 py-1.5 text-[11px] font-bold capitalize sm:px-3 sm:text-xs ${view === option ? 'bg-[#173a37] text-white' : 'text-[#66736f] hover:bg-[#f4f6f3]'}`}>{option}</button>
+              <button key={option} type="button" onClick={() => setView(option)} className={`min-h-11 px-2.5 py-1.5 text-[11px] font-bold capitalize sm:px-3 sm:text-xs ${view === option ? 'bg-[#0f4d3c] text-white' : 'text-[#66736f] hover:bg-[#f2f7f4]'}`}>{option}</button>
             ))}
           </div>
         </div>
@@ -232,7 +232,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
       </div>
 
       <aside className="space-y-4">
-        <section className="border border-[#dfe6e1] bg-white">
+        <section className="overflow-hidden rounded-md border border-[#dce7e1] bg-white shadow-sm">
           <header className="border-b border-[#edf1ee] px-4 py-3">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#17645c]"><CalendarDays className="h-4 w-4" />Selected date</div>
             <h2 className="mt-1 text-sm font-bold">{formatDate(selectedDate, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</h2>
@@ -248,7 +248,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
           </div>
         </section>
 
-        <form onSubmit={handleSave} className="space-y-4 border border-[#dfe6e1] bg-white p-4">
+        <form onSubmit={handleSave} className="space-y-4 rounded-md border border-[#dce7e1] bg-white p-4 shadow-sm">
           <div>
             <h2 className="text-sm font-bold">Manage availability</h2>
             <p className="mt-1 text-xs text-[#66736f]">Capacity counts accepted appointments only. Set 0 for unlimited.</p>
@@ -274,7 +274,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
             );
           })}
           {error && <p role="alert" className="text-xs text-rose-800">{error}</p>}
-          <button type="submit" disabled={saving} className="min-h-11 w-full bg-[#17645c] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#104f49] disabled:opacity-60">{saving ? 'Saving availability...' : 'Save availability'}</button>
+          <button type="submit" disabled={saving} className="min-h-11 w-full rounded-sm bg-[#0f4d3c] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#2c7a5f] disabled:opacity-60">{saving ? 'Saving availability...' : 'Save availability'}</button>
         </form>
       </aside>
     </section>

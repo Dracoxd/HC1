@@ -56,10 +56,10 @@ export const AdminReports: React.FC<{ appointments: ReportAppointment[] }> = ({ 
 
   return (
     <section className="space-y-4">
-      <div className="border border-[#dfe6e1] bg-white p-4 sm:p-5">
+      <div className="rounded-md border border-[#dce7e1] bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div><h2 className="text-base font-bold">Appointment reports</h2><p className="mt-1 text-xs text-[#66736f]">Filter appointment records and export the results. Contact details are included in the admin-only download.</p></div>
-          <button type="button" onClick={exportCsv} disabled={filtered.length === 0} className="min-h-11 bg-[#17645c] px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">Download CSV ({filtered.length})</button>
+          <button type="button" onClick={exportCsv} disabled={filtered.length === 0} className="min-h-11 rounded-sm bg-[#0f4d3c] px-4 text-xs font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-50">Download CSV ({filtered.length})</button>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <label className="text-xs font-semibold text-[#66736f]">Appointment from<input type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} className="mt-1 block min-h-11 w-full border border-[#d9e1dc] px-3 text-sm text-[#17312e]" /></label>
@@ -76,11 +76,11 @@ export const AdminReports: React.FC<{ appointments: ReportAppointment[] }> = ({ 
           ['Accepted', acceptedCount],
           ['Completed', completedCount],
         ].map(([label, value]) => (
-          <div key={String(label)} className="border border-[#dfe6e1] bg-white p-3 sm:p-4"><div className="text-2xl font-bold">{value}</div><div className="mt-1 text-xs text-[#66736f]">{label}</div></div>
+          <div key={String(label)} className="rounded-md border border-[#dce7e1] bg-white p-3 shadow-sm sm:p-4"><div className="text-2xl font-bold">{value}</div><div className="mt-1 text-xs text-[#66736f]">{label}</div></div>
         ))}
       </div>
 
-      <div className="overflow-x-auto border border-[#dfe6e1] bg-white">
+      <div className="overflow-x-auto rounded-md border border-[#dce7e1] bg-white shadow-sm">
         <table className="w-full min-w-[720px] border-collapse text-left text-xs">
           <thead className="bg-[#f2f6f2] text-[10px] uppercase tracking-wide text-[#66736f]"><tr>{['Appointment date', 'Patient', 'Service', 'Status', 'Reference'].map((heading) => <th key={heading} className="px-3 py-3 font-bold">{heading}</th>)}</tr></thead>
           <tbody className="divide-y divide-[#edf1ee]">

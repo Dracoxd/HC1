@@ -417,7 +417,7 @@ export const AdminContentManager: React.FC = () => {
   return (
     <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
       <div className="min-w-0 space-y-4">
-        <section className="border border-[#dfe6e1] bg-white p-4 sm:p-5">
+        <section className="rounded-md border border-[#dce7e1] bg-white p-4 shadow-sm sm:p-5">
           <div className="flex flex-wrap gap-2" role="tablist" aria-label="Website content type">
             {contentTypes.map((item) => (
               <button key={item.id} type="button" role="tab" aria-selected={type === item.id} onClick={() => chooseType(item.id)}
@@ -449,7 +449,7 @@ export const AdminContentManager: React.FC = () => {
             {loading && <p className="p-4 text-xs text-[#66736f]">Loading website content...</p>}
           </div>
         </section>
-        <form onSubmit={saveSettings} className="space-y-3 border border-[#dfe6e1] bg-white p-4 sm:p-5">
+        <form onSubmit={saveSettings} className="space-y-3 rounded-md border border-[#dce7e1] bg-white p-4 shadow-sm sm:p-5">
           <div><h2 className="text-sm font-bold">Clinic hours and contact</h2><p className="mt-1 text-xs text-[#66736f]">These details are shown on the public clinic information section.</p></div>
           {settingsFields.map((field) => (
             <label key={field.key} className="block text-xs font-semibold text-[#66736f]">
@@ -465,7 +465,7 @@ export const AdminContentManager: React.FC = () => {
         </form>
       </div>
 
-      <form onSubmit={saveContent} className="min-w-0 space-y-3 border border-[#dfe6e1] bg-white p-4 sm:p-5">
+      <form onSubmit={saveContent} className="min-w-0 space-y-3 rounded-md border border-[#dce7e1] bg-white p-4 shadow-sm sm:p-5">
         <div><h2 className="text-sm font-bold">{selectedId ? 'Edit public content' : 'Select or create an item'}</h2><p className="mt-1 text-xs text-[#66736f]">Edits appear on the website after publishing. English and Filipino content are separate fields.</p></div>
         {selectedId && <>
           <label className="block text-xs font-semibold text-[#66736f]">Content ID<input value={selectedId} readOnly className="mt-1 block min-h-10 w-full border border-[#d9e1dc] bg-[#f7f9f7] px-3 font-mono text-xs text-[#66736f]" /></label>

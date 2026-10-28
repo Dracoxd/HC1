@@ -1,9 +1,10 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { auth } from '../firebase';
-import { CalendarCheck2, CalendarDays, Check, CheckCircle2, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, Trash2, X } from 'lucide-react';
+import { CalendarDays, Check, CheckCircle2, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, Trash2, X } from 'lucide-react';
 import { AdminCalendar, SlotSetting, SlotSettingsForm } from './AdminCalendar';
 import { AdminContentManager } from './AdminContentManager';
 import { AdminReports } from './AdminReports';
+import centerPhoto from '../assets/images/MR FLORES.png';
 
 interface AppointmentRow {
   id: string;
@@ -214,50 +215,50 @@ export const AdminPanel: React.FC = () => {
   };
 
   return (
-    <main className="admin-panel-enter min-h-screen bg-[#f4f6f3] text-[#17312e]">
-      <header className="border-b border-[#dfe6e1] bg-white px-3 py-3 sm:px-8 sm:py-4">
+    <main className="admin-panel-enter min-h-screen bg-[#f3f7f4] text-[#17312e]">
+      <header className="border-b border-[#0b3f32] bg-[#0f4d3c] px-4 py-4 text-white sm:px-8 sm:py-5">
         <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-2 sm:gap-4">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#17645c] text-white sm:h-10 sm:w-10"><CalendarCheck2 className="h-5 w-5" /></div>
-            <div className="min-w-0"><div className="flex flex-wrap items-center gap-x-2 gap-y-0.5"><span className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#17645c] sm:text-[11px] sm:tracking-[0.16em]">Health center staff</span><span className="border border-[#b7d6cc] bg-[#edf7f2] px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider text-[#17645c] sm:px-2 sm:text-[10px]">ADMIN</span></div><h1 className="mt-0.5 truncate text-sm font-bold sm:text-lg">Appointment management</h1></div>
+            <img src={centerPhoto} alt="" className="h-10 w-10 shrink-0 rounded-full border border-white/25 object-cover sm:h-12 sm:w-12" />
+            <div className="min-w-0"><div className="flex flex-wrap items-center gap-x-2 gap-y-0.5"><span className="text-[9px] font-bold uppercase tracking-[0.12em] text-white/70 sm:text-[11px] sm:tracking-[0.16em]">Health center staff</span><span className="border border-white/30 bg-white/10 px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider text-white sm:px-2 sm:text-[10px]">ADMIN</span></div><h1 className="mt-0.5 truncate text-sm font-bold text-white sm:text-lg">Appointment management</h1></div>
           </div>
-          <button type="button" onClick={() => void auth.signOut()} className="shrink-0 border border-[#d9e1dc] px-2.5 py-2 text-xs font-bold text-[#66736f] hover:bg-[#f4f6f3] hover:text-[#17312e] sm:px-4 sm:text-sm">Sign out</button>
+          <button type="button" onClick={() => void auth.signOut()} className="min-h-11 shrink-0 border border-white/30 px-3 py-2 text-xs font-bold text-white hover:bg-white/10 sm:px-4 sm:text-sm">Sign out</button>
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-[1500px] px-3 py-4 sm:px-8 sm:py-8">
+      <div className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-8 sm:py-8">
         <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <p className="text-sm text-[#66736f]">Review appointment requests, contact patients, and manage confirmations.</p>
-          <div className="flex min-w-0 flex-wrap items-center gap-2 border border-[#dfe6e1] bg-white px-3 py-3 sm:gap-3 sm:px-4">
-            <span className={`h-3 w-3 shrink-0 rounded-full ${clinicOpen === null ? 'bg-slate-400' : clinicOpen ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-            <div className="mr-auto min-w-0 sm:mr-2"><div className="text-xs font-bold">{clinicOpen === null ? 'LOADING STATUS' : clinicOpen ? 'OPEN NOW' : 'CLOSED NOW'}</div><div className="text-[10px] text-[#66736f]">Public website status</div></div>
-            <button type="button" disabled={clinicStatusSaving || clinicOpen === null} onClick={() => void updateClinicStatus(!clinicOpen)} className={`min-h-11 shrink-0 px-3 text-xs font-bold text-white disabled:opacity-60 sm:px-4 ${clinicOpen ? 'bg-rose-700 hover:bg-rose-800' : 'bg-[#17645c] hover:bg-[#104f49]'}`}>
+          <div><p className="text-sm font-medium text-[#52635b]">Review appointment requests, contact patients, and manage confirmations.</p><p className="mt-1 text-xs text-[#7b8982]">Changes sync with the public website automatically.</p></div>
+          <div className="flex min-w-0 flex-wrap items-center gap-3 rounded-md border border-[#dce7e1] bg-white px-4 py-3 shadow-sm sm:gap-4">
+            <span className={`h-3 w-3 shrink-0 rounded-full ring-4 ${clinicOpen === null ? 'bg-slate-400 ring-slate-100' : clinicOpen ? 'bg-emerald-600 ring-emerald-100' : 'bg-rose-600 ring-rose-100'}`} />
+            <div className="mr-auto min-w-0 sm:mr-2"><div className="text-xs font-bold tracking-wide">{clinicOpen === null ? 'LOADING STATUS' : clinicOpen ? 'OPEN NOW' : 'CLOSED NOW'}</div><div className="text-[10px] text-[#7b8982]">Live public website status</div></div>
+            <button type="button" disabled={clinicStatusSaving || clinicOpen === null} onClick={() => void updateClinicStatus(!clinicOpen)} className={`min-h-11 shrink-0 rounded-sm px-4 text-xs font-bold text-white disabled:opacity-60 ${clinicOpen ? 'bg-rose-700 hover:bg-rose-800' : 'bg-[#0f4d3c] hover:bg-[#2c7a5f]'}`}>
               {clinicStatusSaving ? 'Saving...' : clinicOpen === null ? 'Loading...' : clinicOpen ? 'CLOSE NOW' : 'OPEN NOW'}
             </button>
           </div>
         </div>
 
-        <section aria-label="Appointment summary" className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+        <section aria-label="Appointment summary" className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {[
-            { label: 'Awaiting review', value: counts.pending, icon: Clock3, color: 'text-amber-700', bg: 'bg-amber-50' },
-            { label: 'Accepted', value: counts.confirmed, icon: Check, color: 'text-emerald-700', bg: 'bg-emerald-50' },
-            { label: 'Rejected or cancelled', value: counts.rejected, icon: X, color: 'text-rose-700', bg: 'bg-rose-50' },
-          ].map(({ label, value, icon: Icon, color, bg }) => (
-            <div key={label} className="flex min-w-0 items-center gap-2 border border-[#dfe6e1] bg-white p-3 sm:gap-4 sm:p-4">
+            { label: 'Awaiting review', value: counts.pending, icon: Clock3, color: 'text-amber-800', bg: 'bg-amber-50', border: 'border-l-amber-400' },
+            { label: 'Accepted', value: counts.confirmed, icon: Check, color: 'text-emerald-800', bg: 'bg-emerald-50', border: 'border-l-emerald-500' },
+            { label: 'Rejected or cancelled', value: counts.rejected, icon: X, color: 'text-rose-800', bg: 'bg-rose-50', border: 'border-l-rose-500' },
+          ].map(({ label, value, icon: Icon, color, bg, border }) => (
+            <div key={label} className={`flex min-w-0 items-center gap-2 border border-[#dce7e1] border-l-4 bg-white p-3 shadow-sm sm:gap-4 sm:p-4 ${border}`}>
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center ${bg} ${color} sm:h-10 sm:w-10`}><Icon className="h-5 w-5" /></div>
               <div className="min-w-0"><div className="text-2xl font-bold leading-none">{value}</div><div className="mt-1.5 text-[11px] font-medium leading-tight text-[#66736f] sm:text-xs">{label}</div></div>
             </div>
           ))}
         </section>
 
-        <nav aria-label="Admin sections" className="mb-4 flex gap-1 overflow-x-auto border-b border-[#dfe6e1]">
+        <nav aria-label="Admin sections" className="mb-5 flex gap-1 overflow-x-auto rounded-md border border-[#dce7e1] bg-white p-1 shadow-sm">
           {[
             { id: 'requests', label: 'Appointment requests' },
             { id: 'calendar', label: 'Calendar & availability' },
             { id: 'content', label: 'Website content' },
             { id: 'reports', label: 'Reports & export' },
           ].map(({ id, label }) => (
-            <button key={id} type="button" onClick={() => setActiveTab(id as 'requests' | 'calendar' | 'content' | 'reports')} className={`min-h-11 shrink-0 border-b-2 px-3 py-3 text-xs font-bold sm:px-4 sm:text-sm ${activeTab === id ? 'border-[#17645c] text-[#17645c]' : 'border-transparent text-[#66736f] hover:text-[#17312e]'}`}>{label}</button>
+            <button key={id} type="button" onClick={() => setActiveTab(id as 'requests' | 'calendar' | 'content' | 'reports')} className={`min-h-11 shrink-0 rounded-sm px-3 py-2.5 text-xs font-bold sm:px-4 sm:text-sm ${activeTab === id ? 'bg-[#0f4d3c] text-white' : 'text-[#66736f] hover:bg-[#f2f7f4] hover:text-[#0f4d3c]'}`}>{label}</button>
           ))}
         </nav>
 
@@ -274,8 +275,8 @@ export const AdminPanel: React.FC = () => {
         ) : activeTab === 'reports' ? (
           <AdminReports appointments={appointments} />
         ) : (
-        <section className="grid min-w-0 overflow-hidden border border-[#dfe6e1] bg-white lg:min-h-[640px] lg:grid-cols-[350px_minmax(0,1fr)]">
-          <aside className={`${selected ? 'hidden lg:block' : ''} min-w-0 border-b border-[#dfe6e1] lg:border-b-0 lg:border-r`}>
+        <section className="grid min-w-0 overflow-hidden rounded-md border border-[#dce7e1] bg-white shadow-sm lg:min-h-[640px] lg:grid-cols-[350px_minmax(0,1fr)]">
+          <aside className={`${selected ? 'hidden lg:block' : ''} min-w-0 border-b border-[#dce7e1] lg:border-b-0 lg:border-r`}>
             <div className="border-b border-[#edf1ee] p-4">
               <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">Appointment requests</h2><span className="text-xs text-[#66736f]">{filteredAppointments.length} shown</span></div>
               <label className="flex h-10 items-center gap-2 border border-[#d9e1dc] px-3 text-[#66736f] focus-within:border-[#17645c]">
@@ -305,7 +306,7 @@ export const AdminPanel: React.FC = () => {
             </div>
           </aside>
 
-          <section className={`${selected ? '' : 'hidden lg:block'} min-w-0 bg-[#f8faf8]`}>
+          <section className={`${selected ? '' : 'hidden lg:block'} min-w-0 bg-[#f8faf9]`}>
             {!selected ? (
               <div className="flex min-h-[420px] flex-col items-center justify-center px-6 text-center">
                 <CalendarDays className="h-9 w-9 text-[#9aaba0]" />

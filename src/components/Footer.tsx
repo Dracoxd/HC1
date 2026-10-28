@@ -1,10 +1,12 @@
 import React from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
+import { Clock3, MapPin, Phone } from 'lucide-react';
 
 import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const Footer: React.FC = () => {
-  const { setActiveSection } = useHealthCenter();
+  const { setActiveSection, siteContent } = useHealthCenter();
+  const { clinicHours, clinicAddress, contactPhone } = siteContent.settings;
 
   const handleNavClick = (id: string) => {
     setActiveSection(id);
@@ -12,24 +14,28 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="footer-enter bg-[#173a37] text-white border-t border-[#173a37]">
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="flex items-center gap-4">
+    <footer className="footer-enter footer-section border-t border-white/10 bg-[#0f4d3c] text-white">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+        <div className="footer-row">
+          <div className="footer-col footer-logo">
             <img src={centerPhoto} alt="" className="h-14 w-14 rounded-full border border-white/15 object-cover" />
-            <div>
-              <div className="font-bold">Mayor Moises R. Flores Health Center</div>
-            </div>
+            Mayor Moises R. Flores Health Center
           </div>
-          <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-white/80">
-            <button onClick={() => handleNavClick('overview')} className="hover:text-white">HOME</button>
-            <button onClick={() => handleNavClick('clinic-information')} className="hover:text-white">INFORMATION</button>
-            <button onClick={() => handleNavClick('appointment-schedule')} className="hover:text-white">SCHEDULE</button>
-            <button onClick={() => handleNavClick('services')} className="hover:text-white">SERVICES</button>
-          </nav>
+          <div className="footer-col footer-links">
+            <button onClick={() => handleNavClick('overview')} className="hover:underline text-white/90">Home</button>
+            <button onClick={() => handleNavClick('clinic-information')} className="hover:underline text-white/90">Information</button>
+            <button onClick={() => handleNavClick('appointment-schedule')} className="hover:underline text-white/90">Schedule</button>
+            <button onClick={() => handleNavClick('services')} className="hover:underline text-white/90">Services</button>
+          </div>
+          <div className="footer-col footer-contact">
+            <div className="mb-1 font-bold text-white">Contact</div>
+            <a className="flex items-start gap-2 hover:text-white" href={`tel:${contactPhone.replace(/[^\d+]/g, '')}`}><Phone className="mt-1 h-4 w-4 shrink-0" />{contactPhone}</a>
+            <div className="flex items-start gap-2"><MapPin className="mt-1 h-4 w-4 shrink-0" />{clinicAddress}</div>
+            <div className="flex items-start gap-2"><Clock3 className="mt-1 h-4 w-4 shrink-0" />{clinicHours}</div>
+          </div>
         </div>
-        <div className="mt-5 border-t border-white/15 pt-3 text-left text-xs text-white/60">
-          <span>© {new Date().getFullYear()} Mayor Moises R. Flores Health Center</span>
+        <div className="footer-bottom">
+          © {new Date().getFullYear()} Mayor Moises R. Flores Health Center — All rights reserved
         </div>
       </div>
     </footer>

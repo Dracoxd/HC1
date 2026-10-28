@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { Menu, X, Globe, CalendarDays, LogOut, Mail } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
+import { isClinicOpenBySchedule } from '../clinicHours';
 
 export const Header: React.FC = () => {
   const {
@@ -29,6 +30,13 @@ export const Header: React.FC = () => {
         : clinicOpen === true ? 'REQUEST AN APPOINTMENT' : clinicOpen === false ? 'CLOSED' : 'Checking availability';
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const openBySchedule = isClinicOpenBySchedule(new Date(currentTime));
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const navLinks = [
     { id: 'overview', label: 'HOME' },
@@ -44,27 +52,27 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="header-enter sticky top-0 z-40 bg-[#fbfcfa]/95 backdrop-blur-md border-b border-[#dfe6e1]">
+    <header className="header-enter sticky top-0 z-40 border-b border-[#dce7e1] bg-white/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-[68px] items-center justify-between gap-2 sm:gap-6">
           <a
             href="#overview"
             onClick={(e) => { e.preventDefault(); handleNavClick('overview'); }}
-            className="flex min-w-0 shrink items-center gap-2 text-xs font-bold text-[#18312e] transition-colors duration-200 hover:text-[#0d625a] sm:gap-3 sm:text-[15px]"
+            className="flex min-w-0 shrink items-center gap-2 text-xs font-bold text-[#0f4d3c] transition-colors duration-200 hover:text-[#2c7a5f] sm:gap-3 sm:text-[15px]"
           >
             <img src={centerPhoto} alt="Mr. Flores Health Center logo" className="h-9 w-9 shrink-0 rounded-full border border-[#dfe6e1] object-cover sm:h-11 sm:w-11" />
             <span title={t.brand} className="min-w-0 truncate sm:overflow-visible sm:whitespace-nowrap">Mayor Moises R. Flores <span className="hidden sm:inline">Health Center</span></span>
           </a>
 
-          <nav className="hidden xl:flex items-center gap-7 text-sm font-medium text-slate-600">
+          <nav className="hidden xl:flex items-center gap-7 text-sm font-medium text-[#6b7280]">
             {navLinks.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`transition-colors whitespace-nowrap shrink-0 hover:text-teal-700 py-1 cursor-pointer ${
+                className={`transition-colors whitespace-nowrap shrink-0 hover:text-[#2c7a5f] py-1 cursor-pointer ${
                   activeSection === item.id
-                    ? 'text-teal-800 font-semibold border-b-2 border-teal-700'
-                    : 'text-slate-600'
+                    ? 'text-[#0f4d3c] font-bold border-b-2 border-[#0f4d3c]'
+                    : 'text-[#6b7280]'
                 }`}
               >
                 {item.label}
@@ -73,23 +81,27 @@ export const Header: React.FC = () => {
           </nav>
 
           <div className="hidden xl:flex items-center gap-4 shrink-0">
+            <span className={`inline-flex min-h-9 w-36 items-center justify-center gap-2 rounded-full px-3 text-xs font-bold ${openBySchedule ? 'bg-[var(--color-open)] text-white' : 'bg-[var(--color-closed)] text-white'}`} role="status" aria-live="polite">
+              <span className="h-2 w-2 rounded-full bg-white/80" />
+              {openBySchedule ? 'OPEN · 7 AM–4 PM' : 'CLOSED'}
+            </span>
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-1.5 text-slate-600 hover:text-teal-800 transition-colors cursor-pointer"
+              className="flex min-h-9 items-center gap-1.5 px-2 text-[#4b5563] hover:text-[#0f4d3c] transition-colors cursor-pointer"
               title="Toggle English / Filipino"
             >
               <Globe className="w-4 h-4" />
               <span className="text-sm font-medium">{language === 'en' ? 'Filipino' : 'English'}</span>
             </button>
-            <button disabled={!bookingEnabled} onClick={() => setBookingModalOpen(true)} title={bookingEnabled ? 'Request an appointment' : 'Appointment requests are currently unavailable'} className="px-4 py-2.5 text-sm font-bold text-white bg-[#17645c] hover:bg-[#104f49] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
+            <button disabled={!bookingEnabled} onClick={() => setBookingModalOpen(true)} title={bookingEnabled ? 'Request an appointment' : 'Appointment requests are currently unavailable'} className="px-4 py-2.5 text-sm font-bold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
               <CalendarDays className="w-4 h-4" />
               <span>{bookingLabel}</span>
             </button>
-            <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-slate-600 hover:bg-[#edf3ef] hover:text-[#17645c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
+            <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
               <Mail className="h-5 w-5" />
               {unreadAdminMessageCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">{unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}</span>}
             </button>
-            <button type="button" onClick={() => void signOut(auth)} className="p-2 text-slate-600 hover:text-[#173a37]" aria-label="Sign out" title="Sign out">
+            <button type="button" onClick={() => void signOut(auth)} className="p-2 text-[#4b5563] hover:text-[#0f4d3c]" aria-label="Sign out" title="Sign out">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -97,29 +109,42 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-1 xl:hidden sm:gap-2">
             <button
               onClick={toggleLanguage}
-              className="flex h-11 w-11 items-center justify-center text-slate-600 hover:text-teal-800 xl:hidden"
+              className="flex h-11 w-11 items-center justify-center text-[#4b5563] hover:text-[#0f4d3c] xl:hidden"
               aria-label={language === 'en' ? 'Switch to Filipino' : 'Switch to English'}
               title={language === 'en' ? 'Filipino' : 'English'}
             >
               <Globe className="w-5 h-5" />
             </button>
-            <button type="button" onClick={() => setMessagesOpen(true)} className="relative flex h-11 w-11 items-center justify-center text-slate-600 hover:text-[#17645c] xl:hidden" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
+            <button type="button" onClick={() => setMessagesOpen(true)} className="relative flex h-11 w-11 items-center justify-center text-[#4b5563] hover:text-[#0f4d3c] xl:hidden" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
               <Mail className="h-5 w-5" />
               {unreadAdminMessageCount > 0 && <span aria-hidden="true" className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">{unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}</span>}
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+              className="flex h-11 w-11 items-center justify-center rounded-md text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
+        <div className="flex min-h-10 items-center justify-between border-t border-[#edf2ee] px-4 xl:hidden">
+            <nav aria-label="Main navigation" className="flex min-w-0 flex-1 items-stretch gap-1 overflow-x-auto">
+              {navLinks.map((item) => (
+                <button key={item.id} onClick={() => handleNavClick(item.id)} className={`min-h-10 shrink-0 border-b-2 px-2 text-[10px] font-semibold ${activeSection === item.id ? 'border-[#0f4d3c] text-[#0f4d3c] font-bold' : 'border-transparent text-[#6b7280]'}`}>
+                  {item.label === 'INFORMATION' ? 'Information' : item.label === 'SCHEDULE' ? 'Schedule' : item.label === 'SERVICES' ? 'Services' : 'Home'}
+                </button>
+              ))}
+            </nav>
+            <span title="Weekdays, 7:00 AM to 4:00 PM Philippines time" className={`ml-2 inline-flex min-h-8 w-[72px] shrink-0 items-center justify-center gap-1.5 rounded-full px-2 text-[10px] font-bold ${openBySchedule ? 'bg-[var(--color-open)] text-white' : 'bg-[var(--color-closed)] text-white'}`} role="status" aria-live="polite">
+              <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
+              {openBySchedule ? 'OPEN' : 'CLOSED'}
+          </span>
+        </div>
       </div>
 
       {mobileMenuOpen && (
-        <div className="xl:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 shadow-lg space-y-3">
+        <div className="xl:hidden border-t border-[#dce7e1] bg-white px-4 pt-3 pb-5 shadow-lg space-y-3">
           <div className="grid grid-cols-2 gap-2 text-sm">
             {navLinks.map((item) => (
               <button
@@ -127,8 +152,8 @@ export const Header: React.FC = () => {
                 onClick={() => handleNavClick(item.id)}
                 className={`min-h-11 text-left px-3 py-2 rounded-md transition-colors ${
                   activeSection === item.id
-                    ? 'bg-teal-50 text-teal-800 font-semibold'
-                    : 'text-slate-700 hover:bg-slate-50'
+                    ? 'bg-[#eaf3ee] text-[#0f4d3c] font-bold'
+                    : 'text-[#4b5563] hover:bg-[#f8faf9]'
                 }`}
               >
                 {item.label}
@@ -136,12 +161,12 @@ export const Header: React.FC = () => {
             ))}
           </div>
 
-          <div className="pt-3 border-t border-slate-100">
-            <button disabled={!bookingEnabled} onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="min-h-11 w-full py-2.5 px-4 text-sm font-semibold text-white bg-teal-800 hover:bg-teal-900 rounded-md flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
+          <div className="pt-3 border-t border-[#edf2ee]">
+            <button disabled={!bookingEnabled} onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="min-h-11 w-full py-2.5 px-4 text-sm font-semibold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-md flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
               <CalendarDays className="w-4 h-4" />
               <span>{bookingLabel}</span>
             </button>
-            <button type="button" onClick={() => void signOut(auth)} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+            <button type="button" onClick={() => void signOut(auth)} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-[#dce7e1] px-4 text-sm font-semibold text-[#4b5563] hover:bg-[#f8faf9]">
               <LogOut className="h-4 w-4" />
               Sign out
             </button>

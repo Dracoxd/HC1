@@ -653,7 +653,7 @@ export const RouteFinder: React.FC = () => {
 
   return (
     <aside aria-label="Live directions map" className="route-enter fixed z-40 bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-[max(0.75rem,env(safe-area-inset-right))] w-[min(360px,calc(100vw-1.5rem))] max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-y-auto bg-[#fcfdfb] border border-[#d7dfda] shadow-[0_10px_32px_rgba(23,58,55,0.18)] rounded-sm sm:bottom-5 sm:right-5">
-      <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#173a37] text-white">
+      <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#0f4d3c] text-white">
         <div className="min-w-0">
           <div className="text-sm font-bold">Navigate to health center</div>
           <div className="text-[11px] text-white/75 truncate">{destinationName}</div>

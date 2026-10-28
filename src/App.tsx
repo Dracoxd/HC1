@@ -35,7 +35,7 @@ const AppContent: React.FC<{ user: User }> = ({ user }) => {
   }, [setNotificationToast]);
 
   return (
-    <div className="public-page-shell min-h-screen flex flex-col text-[#1a2b29] antialiased selection:bg-[#dce8df] selection:text-[#123b39]">
+    <div className="public-page-shell min-h-screen flex flex-col text-[#374151] antialiased selection:bg-[#eaf3ee] selection:text-[#0f4d3c]">
       <Header />
 
       <main key={activeSection} className="public-view-enter flex-1">
@@ -60,7 +60,7 @@ const AppContent: React.FC<{ user: User }> = ({ user }) => {
       <OutreachBookingModal user={user} />
 
       {notificationToast && (
-        <div className="fixed bottom-5 right-5 z-50 bg-[#173a37] text-white px-4 py-3 rounded-md shadow-lg border border-white/10 text-sm font-semibold flex items-center gap-2 max-w-sm animate-fade-in">
+        <div className="fixed bottom-5 right-5 z-50 bg-[#0f4d3c] text-white px-4 py-3 rounded-md shadow-lg border border-white/10 text-sm font-semibold flex items-center gap-2 max-w-sm animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
           <span>{notificationToast}</span>
         </div>

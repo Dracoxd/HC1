@@ -2,8 +2,19 @@
 
 @layer base {
   :root {
-    font-family: 'Manrope', sans-serif;
-    color: #182321;
+    --color-dark-green: #0f4d3c;
+    --color-medium-green: #2c7a5f;
+    --color-open: #198b51;
+    --color-closed: #ef4444;
+    --color-body: #374151;
+    --color-light-text: #6b7280;
+    --color-card-bg: #ffffff;
+    --color-page-bg: #f8faf9;
+    --color-mint: #eaf3ee;
+    --color-border: #dce7e1;
+    --color-amber: #f4c95d;
+    font-family: 'Inter', sans-serif;
+    color: var(--color-body);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
   }
@@ -11,7 +22,7 @@
   body {
     margin: 0;
     font-family: inherit;
-    background: #eaf1ec;
+    background: var(--color-page-bg);
   }
 
   button, a, input, select, textarea {
@@ -20,8 +31,123 @@
 
   h1, h2, h3 {
     font-family: inherit;
+    font-weight: bold;
     letter-spacing: 0;
     text-wrap: balance;
+  }
+
+  .card {
+    background: var(--color-card-bg);
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(23, 58, 55, 0.04);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .section-spacing {
+    padding: 32px 0;
+  }
+
+  .status-badge-open {
+    background: var(--color-open);
+    color: #fff;
+    border-radius: 0.5rem;
+    padding: 0.25em 0.75em;
+    font-weight: bold;
+    font-size: 0.95em;
+  }
+  .status-badge-closed {
+    background: var(--color-closed);
+    color: #fff;
+    border-radius: 0.5rem;
+    padding: 0.25em 0.75em;
+    font-weight: bold;
+    font-size: 0.95em;
+  }
+
+  .breadcrumb {
+    color: var(--color-light-text);
+    font-size: 0.97em;
+    margin-bottom: 12px;
+  }
+
+  .holiday-advisory {
+    background: #FFF9E5;
+    color: #B45309;
+    border-left: 6px solid #FBBF24;
+    font-weight: bold;
+    padding: 16px 20px;
+    margin: 18px 0 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    border-radius: 0.5rem;
+    font-size: 1em;
+  }
+
+  .holiday-advisory .icon {
+    font-size: 1.3em;
+    margin-right: 0.5em;
+  }
+
+  .bullet-list {
+    padding-left: 1.2em;
+    margin: 0.5em 0 0.5em 0;
+  }
+
+  .bullet-list li {
+    margin-bottom: 0.3em;
+    line-height: 1.5;
+  }
+
+  .footer-section {
+    padding: 24px 0 0 0;
+    margin: 0;
+  }
+
+  .footer-section .footer-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .footer-section .footer-col {
+    flex: 1 1 0;
+    min-width: 180px;
+    margin-bottom: 0;
+  }
+
+  .footer-section .footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    margin-top: 18px;
+    padding-top: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    text-align: left;
+  }
+
+  .footer-section .footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
+
+  .footer-section .footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    font-size: 1em;
+  }
+
+  .footer-section .footer-contact {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.82);
+    margin-top: 0.5em;
+    line-height: 1.7;
   }
 
   button, a {
@@ -29,25 +155,26 @@
   }
 
   :focus-visible {
-    outline: 3px solid rgba(15, 118, 110, 0.4);
+    outline: 3px solid rgba(44, 122, 95, 0.45);
     outline-offset: 2px;
   }
 }
 
 .public-page-shell {
-  background-color: #edf3ee;
-  background-image:
-    radial-gradient(ellipse at 8% 12%, rgba(181, 211, 192, 0.42), transparent 32rem),
-    radial-gradient(ellipse at 92% 38%, rgba(213, 225, 203, 0.38), transparent 36rem),
-    linear-gradient(145deg, #f8faf7 0%, #edf3ee 52%, #f5f5ee 100%);
-  background-attachment: fixed;
+  background-color: var(--color-page-bg);
+  color: var(--color-body);
 }
 
 .site-section-bg {
-  background-color: #f1f5f0;
-  background-image:
-    radial-gradient(ellipse at 10% 0%, rgba(199, 222, 205, 0.30), transparent 28rem),
-    linear-gradient(120deg, rgba(250, 252, 249, 0.97), rgba(237, 244, 238, 0.94) 58%, rgba(247, 247, 240, 0.97));
+  background-color: var(--color-page-bg);
+  background-image: linear-gradient(180deg, #ffffff 0%, var(--color-page-bg) 100%);
+}
+
+.site-card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px rgba(15, 77, 60, 0.045);
 }
 
 .map-dark-tiles {

@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { Menu, X, Globe, CalendarDays, LogOut, Mail } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
-import { isClinicOpenBySchedule } from '../clinicHours';
 
 export const Header: React.FC = () => {
   const {
@@ -21,23 +20,8 @@ export const Header: React.FC = () => {
     unreadMessagesError,
   } = useHealthCenter();
   const bookingEnabled = clinicOpen === true && appointmentRequestAvailability === 'available';
-  const bookingLabel = appointmentRequestAvailability === 'pending'
-    ? 'Appointment under review'
-    : appointmentRequestAvailability === 'checking'
-      ? 'Checking request status'
-      : appointmentRequestAvailability === 'error'
-        ? 'Unable to check request'
-        : clinicOpen === true ? 'REQUEST AN APPOINTMENT' : clinicOpen === false ? 'CLOSED' : 'Checking availability';
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
-  const openBySchedule = isClinicOpenBySchedule(new Date(currentTime)) && clinicOpen !== false;
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCurrentTime(Date.now()), 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
-
   const navLinks = [
     { id: 'overview', label: 'HOME' },
     { id: 'clinic-information', label: 'INFORMATION' },
@@ -81,10 +65,6 @@ export const Header: React.FC = () => {
           </nav>
 
           <div className="hidden xl:flex items-center gap-4 shrink-0">
-            <span className={`inline-flex min-h-9 w-36 items-center justify-center gap-2 rounded-full px-3 text-xs font-bold ${openBySchedule ? 'bg-[var(--color-open)] text-white' : 'bg-[var(--color-closed)] text-white'}`} role="status" aria-live="polite">
-              <span className="h-2 w-2 rounded-full bg-white/80" />
-              {openBySchedule ? 'OPEN · 7 AM–4 PM' : 'CLOSED'}
-            </span>
             <button
               onClick={toggleLanguage}
               className="flex min-h-9 items-center gap-1.5 px-2 text-[#4b5563] hover:text-[#0f4d3c] transition-colors cursor-pointer"
@@ -93,10 +73,10 @@ export const Header: React.FC = () => {
               <Globe className="w-4 h-4" />
               <span className="text-sm font-medium">{language === 'en' ? 'Filipino' : 'English'}</span>
             </button>
-            <button disabled={!bookingEnabled} onClick={() => setBookingModalOpen(true)} title={bookingEnabled ? 'Request an appointment' : 'Appointment requests are currently unavailable'} className="px-4 py-2.5 text-sm font-bold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
+            {bookingEnabled && <button onClick={() => setBookingModalOpen(true)} title="Request an appointment" className="px-4 py-2.5 text-sm font-bold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
-              <span>{bookingLabel}</span>
-            </button>
+              <span>REQUEST AN APPOINTMENT</span>
+            </button>}
             <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
               <Mail className="h-5 w-5" />
               {unreadAdminMessageCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">{unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}</span>}
@@ -136,10 +116,6 @@ export const Header: React.FC = () => {
                 </button>
               ))}
             </nav>
-            <span title="Weekdays, 7:00 AM to 4:00 PM Philippines time" className={`ml-2 inline-flex min-h-8 w-[72px] shrink-0 items-center justify-center gap-1.5 rounded-full px-2 text-[10px] font-bold ${openBySchedule ? 'bg-[var(--color-open)] text-white' : 'bg-[var(--color-closed)] text-white'}`} role="status" aria-live="polite">
-              <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-              {openBySchedule ? 'OPEN' : 'CLOSED'}
-          </span>
         </div>
       </div>
 
@@ -162,10 +138,10 @@ export const Header: React.FC = () => {
           </div>
 
           <div className="pt-3 border-t border-[#edf2ee]">
-            <button disabled={!bookingEnabled} onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="min-h-11 w-full py-2.5 px-4 text-sm font-semibold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-md flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50">
+            {bookingEnabled && <button onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="min-h-11 w-full py-2.5 px-4 text-sm font-semibold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-md flex items-center justify-center gap-2">
               <CalendarDays className="w-4 h-4" />
-              <span>{bookingLabel}</span>
-            </button>
+              <span>REQUEST AN APPOINTMENT</span>
+            </button>}
             <button type="button" onClick={() => void signOut(auth)} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-[#dce7e1] px-4 text-sm font-semibold text-[#4b5563] hover:bg-[#f8faf9]">
               <LogOut className="h-4 w-4" />
               Sign out

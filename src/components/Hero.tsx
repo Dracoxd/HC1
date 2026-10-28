@@ -7,7 +7,7 @@ import { isClinicOpenBySchedule } from '../clinicHours';
 export const Hero: React.FC = () => {
   const { language, setActiveSection, setBookingModalOpen, clinicOpen, appointmentRequestAvailability } = useHealthCenter();
   const [currentTime, setCurrentTime] = useState(() => Date.now());
-  const openBySchedule = isClinicOpenBySchedule(new Date(currentTime)) && clinicOpen !== false;
+  const openBySchedule = clinicOpen ?? isClinicOpenBySchedule(new Date(currentTime));
 
   useEffect(() => {
     const timer = window.setInterval(() => setCurrentTime(Date.now()), 60_000);

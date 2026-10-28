@@ -10,17 +10,6 @@ import maternityImage from '../assets/images/MATERNITY.png';
 import medicinesImage from '../assets/images/MEDS.jpg';
 import xrayImage from '../assets/images/XRAY.jpg';
 
-const categories = [
-  { id: 'all', label: 'ALL SERVICES' },
-  { id: 'checkup', label: 'DOCTOR VISIT' },
-  { id: 'maternity', label: 'MATERNITY' },
-  { id: 'dental', label: 'DENTAL' },
-  { id: 'animal_bite', label: 'ANIMAL BITE' },
-  { id: 'xray', label: 'X-RAY' },
-  { id: 'nutrition', label: 'CHILD NUTRITION' },
-  { id: 'pharmacy', label: 'MEDICINES' },
-];
-
 const serviceImages: Partial<Record<ServiceDetail['category'], string>> = {
   animal_bite: animalBiteImage,
   nutrition: bnsImage,
@@ -54,11 +43,7 @@ export const ServicesSection: React.FC = () => {
         ? 'Unable to check request'
         : clinicOpen === true ? 'REQUEST AN APPOINTMENT' : clinicOpen === false ? 'CLOSED' : 'Checking availability';
 
-  const [activeCategory, setActiveCategory] = useState('all');
   const [selectedService, setSelectedService] = useState<ServiceDetail | null>(null);
-  const filteredServices = activeCategory === 'all'
-    ? siteContent.services
-    : siteContent.services.filter((service) => service.category === activeCategory);
   const servicePreview = (description: string) => {
     const firstSentence = description.trim().match(/^.*?[.!?](?=\s|$)/)?.[0] ?? description.trim();
     return firstSentence.length > 150 ? `${firstSentence.slice(0, 147).trimEnd()}...` : firstSentence;
@@ -76,22 +61,8 @@ export const ServicesSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="mb-6 flex gap-1 overflow-x-auto border-b border-[#dce7e1]" role="tablist" aria-label="Filter health services">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              role="tab"
-              aria-selected={activeCategory === category.id}
-              onClick={() => setActiveCategory(category.id)}
-              className={`min-h-11 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors duration-200 ${activeCategory === category.id ? 'border-[#0f4d3c] font-bold text-[#0f4d3c]' : 'border-transparent font-medium text-[#6b7280] hover:text-[#2c7a5f]'}`}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
-
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredServices.map((service) => (
+          {siteContent.services.map((service) => (
             <article key={service.id} className="site-card service-row lift-on-hover flex min-w-0 flex-col overflow-hidden transition-colors duration-200 hover:border-[#9bbdad]">
                 {(() => {
                   const image = serviceImages[service.category];
@@ -120,7 +91,7 @@ export const ServicesSection: React.FC = () => {
               </div>
             </article>
           ))}
-          {filteredServices.length === 0 && <p className="col-span-full py-8 text-sm text-[#6b7280]">{language === 'fil' ? 'Walang serbisyong kasalukuyang nasa kategoryang ito.' : 'No services are currently available in this category.'}</p>}
+          {siteContent.services.length === 0 && <p className="col-span-full py-8 text-sm text-[#6b7280]">{language === 'fil' ? 'Walang serbisyong nailathala sa ngayon.' : 'No services have been published yet.'}</p>}
         </div>
 
       </div>

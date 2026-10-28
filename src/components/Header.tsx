@@ -31,7 +31,7 @@ export const Header: React.FC = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
-  const openBySchedule = isClinicOpenBySchedule(new Date(currentTime));
+  const openBySchedule = isClinicOpenBySchedule(new Date(currentTime)) && clinicOpen !== false;
 
   useEffect(() => {
     const timer = window.setInterval(() => setCurrentTime(Date.now()), 60_000);

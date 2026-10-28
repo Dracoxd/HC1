@@ -72,7 +72,7 @@ export const ServicesSection: React.FC = () => {
           <div className="max-w-2xl">
             <div className="text-xs font-bold text-[#2c7a5f] uppercase mb-2">Health services</div>
             <h2 className="text-2xl sm:text-3xl font-bold text-[#0f4d3c]">{t.servicesTitle}</h2>
-            <p className="mt-2 text-sm text-[#6b7280]">Schedules, locations, and service requirements.</p>
+            <p className="mt-2 text-sm text-[#6b7280]">Schedules, locations, and care information.</p>
           </div>
         </div>
 
@@ -140,7 +140,6 @@ export const ServicesSection: React.FC = () => {
               <div><div className="font-bold text-[#0f4d3c]">Schedule</div><p className="mt-1 text-[#6b7280]">{language === 'fil' ? selectedService.scheduleFil : selectedService.schedule}</p></div>
               <div><div className="font-bold text-[#0f4d3c]">Location</div><p className="mt-1 text-[#6b7280]">{selectedService.location}</p></div>
               <div><div className="font-bold text-[#0f4d3c]">Care team</div><p className="mt-1 text-[#6b7280]">{selectedService.keyPersonnel.join(', ')}</p></div>
-              <div><div className="font-bold text-[#0f4d3c]">Requirements</div>{selectedService.requirements.length > 0 ? <ul className="mt-1 list-disc space-y-1 pl-5 text-[#6b7280]">{(language === 'fil' ? selectedService.requirementsFil : selectedService.requirements).map((requirement, index) => <li key={`${selectedService.id}-requirement-${index}`}>{requirement}</li>)}</ul> : <p className="mt-1 text-[#6b7280]">Ask the clinic about current requirements.</p>}</div>
             </div>
             <button disabled={!bookingEnabled} onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex min-h-11 items-center justify-center rounded-sm bg-[#0f4d3c] px-4 py-3 text-sm font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-50">{bookingLabel}</button>
           </section>

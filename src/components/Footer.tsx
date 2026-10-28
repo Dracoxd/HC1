@@ -1,12 +1,12 @@
 import React from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { Clock3, MapPin, Phone } from 'lucide-react';
+import { Clock3, MapPin } from 'lucide-react';
 
 import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const Footer: React.FC = () => {
   const { setActiveSection, siteContent } = useHealthCenter();
-  const { clinicHours, clinicAddress, contactPhone } = siteContent.settings;
+  const { clinicHours, clinicAddress } = siteContent.settings;
 
   const handleNavClick = (id: string) => {
     setActiveSection(id);
@@ -29,7 +29,6 @@ export const Footer: React.FC = () => {
           </div>
           <div className="footer-col footer-contact">
             <div className="mb-1 font-bold text-white">Contact</div>
-            <a className="flex items-start gap-2 hover:text-white" href={`tel:${contactPhone.replace(/[^\d+]/g, '')}`}><Phone className="mt-1 h-4 w-4 shrink-0" />{contactPhone}</a>
             <div className="flex items-start gap-2"><MapPin className="mt-1 h-4 w-4 shrink-0" />{clinicAddress}</div>
             <div className="flex items-start gap-2"><Clock3 className="mt-1 h-4 w-4 shrink-0" />{clinicHours}</div>
           </div>

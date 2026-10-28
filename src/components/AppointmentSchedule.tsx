@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarDays, Clock3, MapPin, Phone } from 'lucide-react';
+import { CalendarDays, Clock3, MapPin } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 
 interface ScheduleSlot {
@@ -88,48 +88,36 @@ export const AppointmentSchedule: React.FC = () => {
                 <CalendarDays className="h-8 w-8 text-[#2c7a5f]" aria-hidden="true" />
                 <h3 className="mt-4 text-xl font-bold text-[#0f4d3c]">{isFilipino ? 'Iskedyul ng appointment' : 'Appointment schedule'}</h3>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#6b7280]">
-                  {isFilipino ? 'Lalabas dito ang mga kumpirmadong schedule kapag mayroon na. Tumawag sa health center para magtanong o mag-book.' : 'Confirmed appointment times will appear here when available. Call the health center to ask a question or request an appointment.'}
+                  {isFilipino ? 'Lalabas dito ang mga oras ng appointment kapag naaprubahan na ng clinic staff.' : 'Approved appointment times will appear here after clinic staff accept them.'}
                 </p>
-                <a href={`tel:${settings.contactPhone.replace(/[^\d+]/g, '')}`} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-sm bg-[#0f4d3c] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#2c7a5f]">
-                  <Phone className="h-4 w-4" />{isFilipino ? 'Tumawag sa health center' : 'Call the health center'}
-                </a>
               </div>
               <aside className="site-card p-5 sm:p-6">
                 <h3 className="text-sm font-bold text-[#0f4d3c]">{isFilipino ? 'Mabilisang impormasyon' : 'Quick information'}</h3>
                 <dl className="mt-4 space-y-4 text-sm">
                   <div><dt className="flex items-center gap-2 font-semibold text-[#374151]"><Clock3 className="h-4 w-4 text-[#2c7a5f]" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</dt><dd className="mt-1 pl-6 text-[#6b7280]">{isFilipino ? settings.clinicHoursFil : settings.clinicHours}</dd></div>
                   <div><dt className="flex items-center gap-2 font-semibold text-[#374151]"><MapPin className="h-4 w-4 text-[#2c7a5f]" />{isFilipino ? 'Lokasyon' : 'Location'}</dt><dd className="mt-1 pl-6 text-[#6b7280]">{isFilipino ? settings.clinicAddressFil : settings.clinicAddress}</dd></div>
-                  <div><dt className="flex items-center gap-2 font-semibold text-[#374151]"><Phone className="h-4 w-4 text-[#2c7a5f]" />{isFilipino ? 'Telepono' : 'Phone'}</dt><dd className="mt-1 pl-6 text-[#6b7280]"><a className="hover:text-[#0f4d3c]" href={`tel:${settings.contactPhone.replace(/[^\d+]/g, '')}`}>{settings.contactPhone}</a></dd></div>
                 </dl>
               </aside>
             </div>
           ) : (
-            <div className="site-card overflow-hidden">
-              <div className="hidden grid-cols-[minmax(220px,0.8fr)_minmax(0,1.5fr)] bg-[#eaf3ee] px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-[#6b7280] sm:grid">
-                <span>{isFilipino ? 'Petsa' : 'Date'}</span>
-                <span>{isFilipino ? 'Mga oras' : 'Time slots'}</span>
-              </div>
-              {dates.map((date) => (
-                <article key={date} className="grid min-w-0 gap-3 border-t border-[#dce7e1] px-3 py-4 sm:grid-cols-[minmax(220px,0.8fr)_minmax(0,1.5fr)] sm:items-center sm:px-5">
-                  <div>
-                    <div className="text-[11px] font-bold text-[#2c7a5f]">{date}</div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {dates.flatMap((date) => appointmentsByDate[date]
+                .slice()
+                .sort((first, second) => (timeOrder[first.time] ?? 99) - (timeOrder[second.time] ?? 99))
+                .map((slot) => (
+                  <article key={`${date}-${slot.time}`} className="site-card p-5 transition-colors hover:border-[#9bbdad]">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-[#2c7a5f]">{date}</p>
                     <h3 className="mt-1 text-sm font-bold text-[#0f4d3c]">{dateLabel(date)}</h3>
-                  </div>
-                  <div className="flex min-w-0 flex-wrap gap-2">
-                    {appointmentsByDate[date]
-                      .sort((first, second) => (timeOrder[first.time] ?? 99) - (timeOrder[second.time] ?? 99))
-                      .map((slot) => (
-                        <div key={slot.time} className="flex min-h-11 min-w-0 max-w-full items-center gap-2 rounded-sm border border-[#dce7e1] bg-white px-2.5 py-2 sm:px-3">
-                          <Clock3 className="h-4 w-4 shrink-0 text-[#2c7a5f]" />
-                          <span className="text-sm font-bold text-[#0f4d3c]">{timeLabels[slot.time] ?? slot.time}</span>
-                          <span className="border-l border-[#dce7e1] pl-2 text-xs text-[#6b7280]">
-                            {slot.bookedCount} {isFilipino ? 'kumpirmado' : `accepted ${slot.bookedCount === 1 ? 'appointment' : 'appointments'}`}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                </article>
-              ))}
+                    <div className="mt-5 flex items-center gap-2 border-t border-[#e7eee9] pt-4">
+                      <Clock3 className="h-5 w-5 shrink-0 text-[#2c7a5f]" />
+                      <span className="text-base font-bold text-[#0f4d3c]">{timeLabels[slot.time] ?? slot.time}</span>
+                    </div>
+                    <p className="mt-3 text-sm text-[#6b7280]">
+                      <strong className="text-[#374151]">{slot.bookedCount}</strong> {isFilipino ? 'appointment na naaprubahan' : `accepted ${slot.bookedCount === 1 ? 'appointment' : 'appointments'}`}
+                    </p>
+                  </article>
+                )))
+              }
             </div>
           )
         )}

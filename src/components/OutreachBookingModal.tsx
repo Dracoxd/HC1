@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { AlertCircle, CalendarDays, CheckCircle2, Clock, X } from 'lucide-react';
 import type { User } from 'firebase/auth';
@@ -57,6 +57,8 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   const [slotSettings, setSlotSettings] = useState<PublicSlotSetting[]>([]);
   const [pendingRequest, setPendingRequest] = useState<PendingAppointmentRequest | null>(null);
   const [pendingRequestLoaded, setPendingRequestLoaded] = useState(false);
+  const [formStep, setFormStep] = useState<1 | 2>(1);
+  const appointmentFormRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (selectedProgramForBooking && services.some((service) => service.id === selectedProgramForBooking)) {
@@ -78,6 +80,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
       setPhone('');
       setEmail('');
       setPrivacyConsent(false);
+      setFormStep(1);
     }
   }, [bookingModalOpen]);
 
@@ -139,6 +142,13 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   const slotUnavailable = dateBlocked || timeBlocked;
 
   const handleClose = () => setBookingModalOpen(false);
+
+  const handleContinueToSchedule = () => {
+    if (appointmentFormRef.current?.reportValidity()) {
+      setError('');
+      setFormStep(2);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -222,11 +232,11 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/60 p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) handleClose(); }}>
       <section role="dialog" aria-modal="true" aria-labelledby="appointment-title" className="my-0 max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-2xl overflow-y-auto bg-white shadow-2xl sm:my-5 sm:max-h-[92vh]">
-        <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:gap-5 sm:px-7 sm:py-5">
+        <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:gap-5 sm:px-7 sm:py-5">
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-teal-800">Mayor Moises R. Flores Health Center</div>
-            <h2 id="appointment-title" className="mt-1 text-xl font-bold text-slate-950 sm:text-2xl">{receipt ? (isFilipino ? 'Natanggap ang request' : 'Request received') : (isFilipino ? 'Online appointment request' : 'Request an appointment')}</h2>
-            {!receipt && <p className="mt-1 text-sm text-slate-600">{isFilipino ? 'Ipadala ang iyong kahilingan. Tatawagan ka ng kawani para kumpirmahin ang oras.' : 'Send your preferred schedule. Clinic staff will contact you to confirm.'}</p>}
+            <div className="text-[11px] font-bold uppercase tracking-wider text-teal-800">Mayor Moises R. Flores Health Center</div>
+            <h2 id="appointment-title" className="mt-1 text-lg font-bold text-slate-950 sm:text-2xl">{receipt ? (isFilipino ? 'Natanggap ang request' : 'Request received') : (isFilipino ? 'Online appointment request' : 'Request an appointment')}</h2>
+            {!receipt && <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">{isFilipino ? 'Ilagay ang iyong detalye at napiling schedule.' : 'Enter your details and preferred schedule.'}</p>}
           </div>
           <button onClick={handleClose} aria-label="Close appointment form" className="p-2 text-slate-500 hover:text-slate-900"><X className="w-5 h-5" /></button>
         </header>
@@ -268,7 +278,25 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
               : 'Checking for pending appointment requests...')}
           </p>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-5 px-4 py-5 sm:px-7 sm:py-6">
+          <form
+            ref={appointmentFormRef}
+            onSubmit={(event) => {
+              if (formStep === 1) {
+                event.preventDefault();
+                handleContinueToSchedule();
+              } else {
+                void handleSubmit(event);
+              }
+            }}
+            className="space-y-4 px-4 py-4 sm:space-y-5 sm:px-7 sm:py-6"
+          >
+            <div className="flex items-center gap-3" aria-label={isFilipino ? `Hakbang ${formStep} ng 2` : `Step ${formStep} of 2`}>
+              <span className="shrink-0 text-xs font-bold text-[#0f4d3c]">{isFilipino ? `Hakbang ${formStep} / 2` : `Step ${formStep} of 2`}</span>
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#e7eee9]" role="progressbar" aria-valuemin={1} aria-valuemax={2} aria-valuenow={formStep}>
+                <div className={`h-full rounded-full bg-[#2c7a5f] transition-[width] ${formStep === 1 ? 'w-1/2' : 'w-full'}`} />
+              </div>
+              <span className="text-xs font-semibold text-[#66736f]">{formStep === 1 ? (isFilipino ? 'Iyong detalye' : 'Your details') : (isFilipino ? 'Schedule' : 'Schedule')}</span>
+            </div>
             {!canSubmitAppointment && (
               <p role="status" className="border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
                 {clinicOpen === false
@@ -276,61 +304,68 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
                   : (isFilipino ? 'Tinitingnan ang availability ng appointment...' : 'Checking appointment availability...')}
               </p>
             )}
-            <div className="grid sm:grid-cols-2 gap-4">
+            {formStep === 1 ? <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               <div className="sm:col-span-2">
-                <label htmlFor="appointment-service" className="block text-sm font-semibold text-slate-800 mb-1.5">{isFilipino ? 'Serbisyo' : 'Service'}</label>
-                <select id="appointment-service" value={serviceId} onChange={(event) => setServiceId(event.target.value)} className="w-full px-3.5 py-3 bg-white border border-slate-300 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-700">
+                <label htmlFor="appointment-service" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Serbisyo' : 'Service'}</label>
+                <select id="appointment-service" required value={serviceId} onChange={(event) => setServiceId(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-700">
                   {services.map((service) => <option key={service.id} value={service.id}>{isFilipino ? service.titleFil : service.title}</option>)}
                 </select>
                 {services.length === 0 && <p role="status" className="mt-2 text-xs text-amber-800">{isFilipino ? 'Walang kasalukuyang nailathalang serbisyo para sa appointment request.' : 'There are no published services available for appointment requests.'}</p>}
               </div>
               <div>
-                <label htmlFor="appointment-name" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formFullName} *</label>
-                <input id="appointment-name" required minLength={2} maxLength={120} autoComplete="name" value={patientName} onChange={(event) => setPatientName(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
+                <label htmlFor="appointment-name" className="mb-1 block text-sm font-semibold text-slate-800">{t.formFullName} *</label>
+                <input id="appointment-name" required minLength={2} maxLength={120} autoComplete="name" value={patientName} onChange={(event) => setPatientName(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
               <div>
-                <label htmlFor="appointment-phone" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formPhone} *</label>
-                <input id="appointment-phone" required type="tel" inputMode="tel" autoComplete="tel" minLength={7} maxLength={32} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="09XX XXX XXXX" className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
+                <label htmlFor="appointment-phone" className="mb-1 block text-sm font-semibold text-slate-800">{t.formPhone} *</label>
+                <input id="appointment-phone" required type="tel" inputMode="tel" autoComplete="tel" minLength={7} maxLength={32} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="09XX XXX XXXX" className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
               <div>
-                <label htmlFor="appointment-email" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formEmail}</label>
-                <input id="appointment-email" type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
+                <label htmlFor="appointment-email" className="mb-1 block text-sm font-semibold text-slate-800">{t.formEmail}</label>
+                <input id="appointment-email" type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
               <div>
-                <label htmlFor="appointment-zone" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formZone} *</label>
-                <select id="appointment-zone" required value={zone} onChange={(event) => setZone(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700">
+                <label htmlFor="appointment-zone" className="mb-1 block text-sm font-semibold text-slate-800">{t.formZone} *</label>
+                <select id="appointment-zone" required value={zone} onChange={(event) => setZone(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 bg-white px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700">
                   <option>San Pedro</option><option>Magtanggol</option><option>Tabacalera</option>
                 </select>
               </div>
+              <div className="sm:col-span-2">
+                <button type="button" onClick={handleContinueToSchedule} className="mt-1 min-h-12 w-full rounded-sm bg-[#0f4d3c] px-4 py-3 text-base font-bold text-white hover:bg-[#2c7a5f]">
+                  {isFilipino ? 'Magpatuloy sa schedule' : 'Continue to schedule'}
+                </button>
+              </div>
+            </div> : <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               <div>
-                <label htmlFor="appointment-date" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formDate} *</label>
-                <input id="appointment-date" required type="date" min={today} value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700" />
+                <label htmlFor="appointment-date" className="mb-1 block text-sm font-semibold text-slate-800">{t.formDate} *</label>
+                <input id="appointment-date" required type="date" min={today} value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
               <div>
-                <label htmlFor="appointment-time" className="block text-sm font-semibold text-slate-800 mb-1.5">{t.formTimeSlot} *</label>
-                <select id="appointment-time" value={preferredTime} onChange={(event) => setPreferredTime(event.target.value)} className="w-full px-3.5 py-3 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-700">
+                <label htmlFor="appointment-time" className="mb-1 block text-sm font-semibold text-slate-800">{t.formTimeSlot} *</label>
+                <select id="appointment-time" required value={preferredTime} onChange={(event) => setPreferredTime(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700">
                   <option value="morning">Morning</option><option value="afternoon">Afternoon</option>
                 </select>
               </div>
-            </div>
+              <div className="sm:col-span-2">
+                <label className="flex items-start gap-3 border-t border-slate-200 pt-4 text-sm leading-relaxed text-slate-600">
+                  <input type="checkbox" required checked={privacyConsent} onChange={(event) => setPrivacyConsent(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-teal-800" />
+                  <span>{isFilipino ? 'Pumapayag akong gamitin ng health center staff ang aking contact details para suriin at sagutin ang appointment request na ito.' : 'I agree that health center staff may use my contact details to review and respond to this appointment request.'}</span>
+                </label>
+              </div>
+            </div>}
 
             {slotUnavailable && <p role="status" className="text-sm font-semibold text-rose-800">{isFilipino ? 'Sarado ang napiling petsa o time slot. Pumili ng ibang schedule.' : 'This date or time slot is blocked by clinic staff. Choose a different schedule.'}</p>}
             {availabilityError && <p role="status" className="text-xs text-amber-800">{isFilipino ? 'Hindi ma-check ang availability. Susuriin muli ang napiling schedule kapag ipinadala.' : 'Availability could not be checked. The server will verify your selected schedule when you submit.'}</p>}
 
-            <label className="flex items-start gap-3 border-t border-slate-200 pt-4 text-sm text-slate-600">
-              <input type="checkbox" required checked={privacyConsent} onChange={(event) => setPrivacyConsent(event.target.checked)} className="mt-0.5 h-4 w-4 accent-teal-800" />
-              <span>{isFilipino ? 'Pumapayag akong gamitin ng health center staff ang aking contact details para suriin at sagutin ang appointment request na ito.' : 'I agree that health center staff may use my contact details to review and respond to this appointment request.'}</span>
-            </label>
-
             {error && <p role="alert" className="flex items-start gap-2 text-sm text-rose-800"><AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />{error}</p>}
 
-            <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-slate-200 pt-4">
-              <p className="flex items-center gap-2 text-xs text-slate-500"><Clock className="w-4 h-4" />{isFilipino ? 'Pending ang request hanggang makumpirma ng staff.' : 'Requests remain pending until staff confirm.'}</p>
-              <div className="flex justify-end gap-3">
-                <button type="button" onClick={handleClose} className="min-h-11 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 rounded-md">{isFilipino ? 'Kanselahin' : 'Cancel'}</button>
-                <button type="submit" disabled={submitting || !canSubmitAppointment || !selectedService || !privacyConsent} className="inline-flex min-h-11 items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-teal-900 hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-60 rounded-md"><CalendarDays className="w-4 h-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send appointment request')}</button>
+            {formStep === 2 && <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { setError(''); setFormStep(1); }} className="min-h-11 flex-1 rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:flex-none">{isFilipino ? 'Bumalik' : 'Back'}</button>
+                <button type="button" onClick={handleClose} className="min-h-11 flex-1 rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:flex-none">{isFilipino ? 'Kanselahin' : 'Cancel'}</button>
               </div>
-            </div>
+              <button type="submit" disabled={submitting || !canSubmitAppointment || !selectedService || !privacyConsent} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#0f4d3c] px-5 py-2.5 text-base font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"><CalendarDays className="h-4 w-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send request')}</button>
+            </div>}
           </form>
         )}
       </section>

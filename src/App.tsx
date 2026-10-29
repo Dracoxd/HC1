@@ -9,7 +9,7 @@ import { PublicInformation } from './components/PublicInformation';
 import { AppointmentSchedule } from './components/AppointmentSchedule';
 import { Footer } from './components/Footer';
 import { OutreachBookingModal } from './components/OutreachBookingModal';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Clock3 } from 'lucide-react';
 import { auth } from './firebase';
 import { AuthScreen } from './components/AuthScreen';
 import { AdminPanel } from './components/AdminPanel';
@@ -17,7 +17,7 @@ import { UserAppointmentChat } from './components/UserAppointmentChat';
 import patientFlowDiagram from './assets/images/DIAGRAM xd.png';
 
 const AppContent: React.FC<{ user: User }> = ({ user }) => {
-  const { activeSection, notificationToast, setNotificationToast } = useHealthCenter();
+  const { activeSection, notificationToast, setNotificationToast, appointmentRequestAvailability, language } = useHealthCenter();
 
   useEffect(() => {
     const handleStatusChange = (event: Event) => {
@@ -37,6 +37,16 @@ const AppContent: React.FC<{ user: User }> = ({ user }) => {
   return (
     <div className="public-page-shell min-h-screen flex flex-col text-[#374151] antialiased selection:bg-[#eaf3ee] selection:text-[#0f4d3c]">
       <Header />
+      {appointmentRequestAvailability === 'pending' && (
+        <div role="status" aria-live="polite" className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
+          <div className="mx-auto flex max-w-7xl items-start gap-2.5 text-sm">
+            <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+            <p>{language === 'fil'
+              ? 'Sinusuri pa ng kawani ang iyong appointment request. Mag-a-update ang abisong ito kapag may aksyon na.'
+              : 'Your appointment request is under review. This notice will update when clinic staff respond.'}</p>
+          </div>
+        </div>
+      )}
 
       <main key={activeSection} className="public-view-enter flex-1">
         {activeSection === 'clinic-information' ? (

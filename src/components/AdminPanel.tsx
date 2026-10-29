@@ -107,6 +107,7 @@ export const AdminPanel: React.FC = () => {
 
   const performAction = async (action: string, appointment: AppointmentRow) => {
     if (action === 'delete_chat' && !window.confirm('Archive this conversation for the patient? Messages will remain available in admin records, and the appointment request will be kept.')) return;
+    if (action === 'delete_appointment' && !window.confirm(`Permanently delete the appointment request for ${appointment.patient_name} (${appointment.reference_code})? Its conversation and messages will also be deleted. This cannot be undone.`)) return;
     if (action === 'complete' && !window.confirm('Mark this appointment as completed? It will be removed from the public Dates and Time Slots schedule but remain in admin records.')) return;
     if (action === 'approve') {
       const dateSettings = slotSettings.filter((setting) => setting.appointment_date === appointment.preferred_date);
@@ -142,6 +143,12 @@ export const AdminPanel: React.FC = () => {
       if (action === 'delete_chat') {
         setAppointments((current) => current.map((item) => item.id === appointment.id ? { ...item, chat_status: 'deleted' } : item));
         setMessages((current) => current.filter((message) => message.appointment_id !== appointment.id));
+        setChatInput('');
+      }
+      if (action === 'delete_appointment') {
+        setAppointments((current) => current.filter((item) => item.id !== appointment.id));
+        setMessages((current) => current.filter((message) => message.appointment_id !== appointment.id));
+        setSelectedId((current) => current === appointment.id ? '' : current);
         setChatInput('');
       }
       await loadWorkspace();
@@ -331,6 +338,7 @@ export const AdminPanel: React.FC = () => {
                     <button type="button" disabled={selected.status === 'rejected' || selected.status === 'cancelled' || selected.status === 'completed'} onClick={() => void performAction('reject', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-rose-200 px-2 text-sm font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"><X className="h-4 w-4 shrink-0" />Reject request</button>
                     {selected.status === 'confirmed' && <button type="button" onClick={() => void performAction('complete', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-sky-200 px-2 text-sm font-bold text-sky-800 hover:bg-sky-50"><CheckCircle2 className="h-4 w-4 shrink-0" />Mark completed / remove from schedule</button>}
                     {selected.chat_status !== 'deleted' && <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-[#d9e1dc] px-2 text-sm font-bold hover:bg-[#f4f6f3]"><LockKeyhole className="h-4 w-4 shrink-0" />{selected.chat_status === 'closed' ? 'Open patient chat' : 'Close patient chat'}</button>}
+                    <button type="button" onClick={() => void performAction('delete_appointment', selected)} className="mt-2 flex min-h-11 items-center justify-center gap-2 border border-rose-300 px-2 text-sm font-bold text-rose-800 hover:bg-rose-50"><Trash2 className="h-4 w-4 shrink-0" />Delete appointment record</button>
                   </div>
                 </div>
 

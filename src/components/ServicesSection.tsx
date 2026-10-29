@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { ServiceDetail } from '../types';
 import { Activity, ArrowRight, Baby, Clock, Heart, MapPin, Pill, ShieldAlert, Smile, Stethoscope, X } from 'lucide-react';
@@ -95,7 +96,7 @@ export const ServicesSection: React.FC = () => {
 
       </div>
 
-      {selectedService && (
+      {selectedService && createPortal((
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/60 p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:items-center sm:p-4" onClick={() => setSelectedService(null)}>
           <section role="dialog" aria-modal="true" aria-labelledby="service-dialog-title" onClick={(event) => event.stopPropagation()} className="max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-xl overflow-y-auto rounded-md border border-[#dce7e1] bg-white p-4 shadow-[0_18px_50px_rgba(15,77,60,0.18)] sm:max-h-[90vh] sm:p-8">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
@@ -114,7 +115,7 @@ export const ServicesSection: React.FC = () => {
             <button disabled={!bookingEnabled} onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex min-h-11 items-center justify-center rounded-sm bg-[#0f4d3c] px-4 py-3 text-sm font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-50">{bookingLabel}</button>
           </section>
         </div>
-      )}
+      ), document.body)}
     </section>
   );
 };

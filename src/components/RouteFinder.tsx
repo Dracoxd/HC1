@@ -40,7 +40,8 @@ type RouteInfo = {
 type RouteFeatureCollection = GeoJSON.FeatureCollection<GeoJSON.LineString>;
 
 const destination: L.LatLngTuple = [14.5472886, 121.0659399];
-const destinationName = 'Mayor Moises R. Flores Health Center';
+const destinationName = 'Mayor Moises R. Flores Memorial Health Center';
+const destinationAddress = 'P. Herrera Street, Barangay San Pedro, Pateros, Metro Manila, Philippines';
 const wazeUrl = `https://www.waze.com/ul?ll=${destination[0]}%2C${destination[1]}&navigate=yes`;
 const routingProfiles: Record<TravelMode, string> = {
   walking: 'routed-foot',
@@ -657,7 +658,8 @@ export const RouteFinder: React.FC = () => {
       <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#0f4d3c] text-white">
         <div className="min-w-0">
           <div className="text-sm font-bold">Navigate to health center</div>
-          <div className="text-[11px] text-white/75 truncate">{destinationName}</div>
+          <div className="text-[11px] font-semibold text-white/90">{destinationName}</div>
+          <div className="text-[10px] leading-relaxed text-white/70">{destinationAddress}</div>
           <div className="mt-1 flex items-center gap-1.5 text-[10px] text-white/80"><span className={`h-1.5 w-1.5 rounded-full ${locationStatusColor} ${origin?.source === 'gps' && origin.accuracy <= 250 ? 'animate-pulse' : ''}`} />{locationStatus}</div>
         </div>
         <div className="flex items-center gap-1 shrink-0">

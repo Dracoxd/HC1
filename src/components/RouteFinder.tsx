@@ -39,7 +39,7 @@ type RouteInfo = {
 
 type RouteFeatureCollection = GeoJSON.FeatureCollection<GeoJSON.LineString>;
 
-const destination: L.LatLngTuple = [14.5472886, 121.0659399];
+const destination: L.LatLngTuple = [14.5472631, 121.0665727];
 const destinationName = 'Mayor Moises R. Flores Memorial Health Center';
 const destinationAddress = 'P. Herrera Street, Barangay San Pedro, Pateros, Metro Manila, Philippines';
 const wazeUrl = `https://www.waze.com/ul?ll=${destination[0]}%2C${destination[1]}&navigate=yes`;
@@ -488,7 +488,7 @@ export const RouteFinder: React.FC = () => {
         if (startAccessDistance > maximumStartSnapDistance) {
           throw new Error('The nearest mapped road is too far from your start point. Pin your location closer to a street and try again.');
         }
-        if (endAccessDistance > 150) {
+        if (endAccessDistance > 40) {
           throw new Error('The health center is too far from the nearest mapped road. Please report this map issue.');
         }
         const accessFeatures: GeoJSON.FeatureCollection<GeoJSON.LineString> = { type: 'FeatureCollection', features: [] };
@@ -497,7 +497,7 @@ export const RouteFinder: React.FC = () => {
           properties: {},
           geometry: { type: 'LineString', coordinates: [[origin.longitude, origin.latitude], startSnap.location] },
         });
-        if (endAccessDistance > 5 && endAccessDistance <= 150) accessFeatures.features.push({
+        if (endAccessDistance > 5 && endAccessDistance <= 40) accessFeatures.features.push({
           type: 'Feature',
           properties: {},
           geometry: { type: 'LineString', coordinates: [endSnap.location, [destination[1], destination[0]]] },

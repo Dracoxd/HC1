@@ -39,10 +39,11 @@ type RouteInfo = {
 
 type RouteFeatureCollection = GeoJSON.FeatureCollection<GeoJSON.LineString>;
 
-const destination: L.LatLngTuple = [14.5472631, 121.0665727];
+const destination: L.LatLngTuple = [14.5472886, 121.0659399];
+const routingDestination: L.LatLngTuple = [14.5472631, 121.0665727];
 const destinationName = 'Mayor Moises R. Flores Memorial Health Center';
 const destinationAddress = 'P. Herrera Street, Barangay San Pedro, Pateros, Metro Manila, Philippines';
-const wazeUrl = `https://www.waze.com/ul?ll=${destination[0]}%2C${destination[1]}&navigate=yes`;
+const wazeUrl = `https://www.waze.com/ul?ll=${routingDestination[0]}%2C${routingDestination[1]}&navigate=yes`;
 const routingProfiles: Record<TravelMode, string> = {
   walking: 'routed-foot',
   bicycling: 'routed-bike',
@@ -447,7 +448,7 @@ export const RouteFinder: React.FC = () => {
       const requestDeadline = window.setTimeout(() => controller.abort('route-timeout'), 15000);
       setRouteError('');
       const profile = routingProfiles[travelMode];
-      const coordinates = `${origin.longitude},${origin.latitude};${destination[1]},${destination[0]}`;
+      const coordinates = `${origin.longitude},${origin.latitude};${routingDestination[1]},${routingDestination[0]}`;
       const url = `https://routing.openstreetmap.de/${profile}/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=true&alternatives=false&continue_straight=false`;
 
       try {
@@ -477,6 +478,10 @@ export const RouteFinder: React.FC = () => {
           [origin.latitude, origin.longitude],
           [startSnap.location[1], startSnap.location[0]],
         );
+        const routeEndAccessDistance = distanceBetweenLatLng(
+          routingDestination,
+          [endSnap.location[1], endSnap.location[0]],
+        );
         const endAccessDistance = distanceBetweenLatLng(
           destination,
           [endSnap.location[1], endSnap.location[0]],
@@ -488,16 +493,17 @@ export const RouteFinder: React.FC = () => {
         if (startAccessDistance > maximumStartSnapDistance) {
           throw new Error('The nearest mapped road is too far from your start point. Pin your location closer to a street and try again.');
         }
-        if (endAccessDistance > 40) {
+        if (routeEndAccessDistance > 40) {
           throw new Error('The health center is too far from the nearest mapped road. Please report this map issue.');
         }
+        if (endAccessDistance > 150) throw new Error('The health center is too far from its P. Herrera Street access point. Please report this map issue.');
         const accessFeatures: GeoJSON.FeatureCollection<GeoJSON.LineString> = { type: 'FeatureCollection', features: [] };
         if (startAccessDistance > 5 && startAccessDistance <= maximumStartSnapDistance) accessFeatures.features.push({
           type: 'Feature',
           properties: {},
           geometry: { type: 'LineString', coordinates: [[origin.longitude, origin.latitude], startSnap.location] },
         });
-        if (endAccessDistance > 5 && endAccessDistance <= 40) accessFeatures.features.push({
+        if (endAccessDistance > 5) accessFeatures.features.push({
           type: 'Feature',
           properties: {},
           geometry: { type: 'LineString', coordinates: [endSnap.location, [destination[1], destination[0]]] },
@@ -653,8 +659,8 @@ export const RouteFinder: React.FC = () => {
 
   const locationStatus = origin?.source === 'manual' ? 'Start point pinned' : origin && origin.accuracy > 250 ? 'Weak GPS signal' : origin ? 'Live location' : locating ? 'Finding location' : 'Location unavailable';
   const googleMapsUrl = origin
-    ? `https://www.google.com/maps/dir/?api=1&origin=${origin.latitude},${origin.longitude}&destination=${destination[0]},${destination[1]}&travelmode=${travelMode === 'walking' ? 'walking' : travelMode === 'bicycling' ? 'bicycling' : 'driving'}`
-    : `https://www.google.com/maps/dir/?api=1&destination=${destination[0]},${destination[1]}`;
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin.latitude},${origin.longitude}&destination=${routingDestination[0]},${routingDestination[1]}&travelmode=${travelMode === 'walking' ? 'walking' : travelMode === 'bicycling' ? 'bicycling' : 'driving'}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${routingDestination[0]},${routingDestination[1]}`;
   const locationStatusColor = origin?.source === 'manual' ? 'bg-teal-300' : origin && origin.accuracy > 250 ? 'bg-amber-300' : origin ? 'bg-emerald-300' : 'bg-slate-400';
 
   return (

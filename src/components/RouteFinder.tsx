@@ -468,6 +468,11 @@ export const RouteFinder: React.FC = () => {
           || !isValidCoordinate(endSnap.location[0], endSnap.location[1])) {
           throw new Error('The routing service did not return valid route endpoints.');
         }
+        const routeStartDistance = distanceBetweenLatLng(points[0], [startSnap.location[1], startSnap.location[0]]);
+        const routeEndDistance = distanceBetweenLatLng(points[points.length - 1], [endSnap.location[1], endSnap.location[0]]);
+        if (routeStartDistance > 150 || routeEndDistance > 150) {
+          throw new Error('The routing service returned a path that does not match your location and the health center. Please retry shortly.');
+        }
         const startAccessDistance = distanceBetweenLatLng(
           [origin.latitude, origin.longitude],
           [startSnap.location[1], startSnap.location[0]],
